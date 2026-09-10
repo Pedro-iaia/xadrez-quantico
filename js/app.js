@@ -81,7 +81,9 @@ function renderizar() {
                 peca.className = 'peca-container';
                 peca.draggable = estado.cor === chess.turn();
                 peca.ondragstart = evento => { evento.dataTransfer.setData('text/plain', casa); casaSelecionada = casa; };
-                if (estado.emaranhadaComId && !estado.colapsada) peca.classList.add('emaranhada');
+                // Toda superposição recebe o aro: h1 e h8 são estados quânticos
+                // válidos mesmo sem uma segunda casa associada ao grupo.
+                if (estado.possibilidades.length > 1 && !estado.colapsada) peca.classList.add('emaranhada');
                 if (estado.colapsada) peca.appendChild(imagem(estado.cor, estado.colapsada));
                 else {
                     const superposicao = document.createElement('div');
