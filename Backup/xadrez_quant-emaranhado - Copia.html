@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xadrez de Schrödinger Quântico v4 - Emaranhamento</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 { margin-top: 0; margin-bottom: 5px; color: #f0d9b5; }
+        #status { margin-bottom: 20px; font-size: 1.1rem; color: #b58863; height: 24px; font-weight: bold; }
+        
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #tabuleiro {
+            display: grid;
+            grid-template-columns: repeat(8, 75px);
+            grid-template-rows: repeat(8, 75px);
+            border: 4px solid #333;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .casa {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            transition: background-color 0.2s;
+            position: relative;
+            width: 75px;
+            height: 75px;
+        }
+        .clara { background-color: #f0d9b5; }
+        .escura { background-color: #b58863; }
+        
+        .casa.selecionada { background-color: #ffeb3b !important; }
+        .casa.drag-over { box-shadow: inset 0 0 12px 3px #ffeb3b; }
+
+        .peca-container {
+            width: 90%;
+            height: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            position: relative;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .peca-container:active { cursor: grabbing; }
+
+        /* Brilho de Emaranhamento Quântico */
+        .emaranhada {
+            box-shadow: 0 0 12px 4px #00f3ff;
+            animation: pulsar 2s infinite alternate;
+        }
+
+        @keyframes pulsar {
+            0% { box-shadow: 0 0 8px 2px #00f3ff; }
+            100% { box-shadow: 0 0 16px 6px #00a2ff; }
+        }
+
+        .peca-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+
+        .quantica-split {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.75;
+        }
+        .quantica-split .peca-img {
+            width: 50%;
+            height: 50%;
+            filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.4));
+        }
+
+        .painel-lateral {
+            width: 240px;
+            background-color: #2a2a35;
+            border: 2px solid #444;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .painel-titulo {
+            background-color: #3a3a45;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid #555;
+            color: #f0d9b5;
+        }
+        .historico-lista {
+            padding: 10px;
+            overflow-y: auto;
+            flex-grow: 1;
+            height: 380px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .jogada-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px solid #333;
+        }
+        .jogada-num { color: #888; width: 30px; }
+        .jogada-lance { flex-grow: 1; text-align: left; padding-left: 10px; }
+
+        .btn-desfazer {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            border-bottom-left-radius: 3px;
+            border-bottom-right-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .btn-desfazer:hover { background-color: #b71c1c; }
+        .btn-desfazer:disabled { background-color: #555; cursor: not-allowed; }
+
+        .tela-inicial {
+            width: min(560px, 100%);
+            background: #2a2a35;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .tela-inicial h2 { margin-top: 0; color: #f0d9b5; }
+        .config-grid { display: grid; gap: 14px; }
+        .config-grid label { display: grid; gap: 6px; color: #ddd; font-weight: bold; }
+        .config-grid select, .config-grid input {
+            background: #1e1e24;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 4px;
+            padding: 10px;
+            font: inherit;
+        }
+        .btn-principal {
+            width: 100%;
+            margin-top: 18px;
+            padding: 12px;
+            border: 0;
+            border-radius: 4px;
+            background: #0aa6b8;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-secundario { background: #555; margin-top: 8px; }
+        .oculto { display: none !important; }
+        .relogios { display: flex; justify-content: center; gap: 32px; margin-bottom: 12px; }
+        .relogio { min-width: 120px; padding: 8px 14px; background: #2a2a35; border-radius: 5px; text-align: center; }
+        .relogio strong { display: block; font-size: 1.5rem; color: #f0d9b5; }
+        .placar { text-align: center; color: #b58863; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <section id="telaInicial" class="tela-inicial">
+        <h2>Nova partida</h2>
+        <div class="config-grid">
+            <label>Modo
+                <select id="configModo">
+                    <option value="quantico">Quântico</option>
+                    <option value="classico">Clássico</option>
+                </select>
+            </label>
+            <label>Oponente
+                <select id="configOponente">
+                    <option value="ia">Adversário automatizado</option>
+                    <option value="humano">Dois jogadores</option>
+                </select>
+            </label>
+            <label>Nível da IA
+                <select id="configNivel">
+                    <option value="facil">Fácil</option>
+                    <option value="medio">Médio</option>
+                    <option value="dificil">Difícil</option>
+                </select>
+            </label>
+            <label>Modalidade
+                <select id="configRelogio">
+                    <option value="sem-relogio">Sem relógio</option>
+                    <option value="bullet">Bullet · 1+0</option>
+                    <option value="blitz">Blitz · 3+0</option>
+                    <option value="blitz-fischer">Blitz Fischer · 3+2</option>
+                    <option value="rapida">Rápida · 10+5</option>
+                    <option value="classica">Clássica · 30+10</option>
+                    <option value="personalizada">Personalizada</option>
+                </select>
+            </label>
+            <label id="tempoPersonalizado" class="oculto">Minutos iniciais
+                <input id="configMinutos" type="number" min="1" max="180" value="10">
+            </label>
+            <label id="incrementoPersonalizado" class="oculto">Incremento por lance (segundos)
+                <input id="configIncremento" type="number" min="0" max="60" value="5">
+            </label>
+            <label>Formato
+                <select id="configFormato">
+                    <option value="partida">Partida única</option>
+                    <option value="melhor-de-tres">Melhor de três</option>
+                </select>
+            </label>
+            <label>Quem começa
+                <select id="configInicio">
+                    <option value="sorteio">Sorteio</option>
+                    <option value="brancas">Brancas</option>
+                    <option value="pretas">Pretas</option>
+                </select>
+            </label>
+        </div>
+        <button id="btnComecar" class="btn-principal">Começar partida</button>
+    </section>
+
+    <section id="areaJogo" class="oculto">
+
+    <h1>Xadrez de Schrödinger Quântico</h1>
+    <div id="status">Turno das Brancas</div>
+    <div id="placar" class="placar"></div>
+    <div id="relogios" class="relogios oculto">
+        <div id="relogioBrancas" class="relogio">Brancas<strong>--:--</strong></div>
+        <div id="relogioPretas" class="relogio">Pretas<strong>--:--</strong></div>
+    </div>
+
+    <div class="container">
+        <div id="tabuleiro"></div>
+
+        <div class="painel-lateral">
+            <div class="painel-titulo">Histórico de Lances</div>
+            <div id="historico" class="historico-lista"></div>
+            <div id="didatica" class="historico-lista"></div>
+            <button id="btnDesfazer" class="btn-desfazer" onclick="desfazerJogada()" disabled>Desfazer Jogada</button>
+        </div>
+    </div>
+
+    <button id="btnVoltarConfiguracao" class="btn-principal btn-secundario">Voltar à configuração</button>
+    </section>
+
+<script>
+    const chess = new Chess();
+    const nomesPecas = { p: 'Peão', n: 'Cavalo', b: 'Bispo', r: 'Torre', q: 'Dama', k: 'Rei' };
+    const colunas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const svgPecas = {
+        w: {
+            p: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+            n: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+            b: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+            r: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+            q: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+            k: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg'
+        },
+        b: {
+            p: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+            n: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+            b: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+                r: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chess_rdt45.svg',
+            q: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+            k: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+        }
+    };
+    let pecasQuanticas = {};
+    let casaSelecionada = null;
+    let historicoEstadosQuanticos = [];
+    let configuracaoPartida = null;
+    let relogioPartida = { ativo: false, ultimoInstante: 0, intervalId: null, segundos: { w: 0, b: 0 }, incremento: 0 };
+    let placarTorneio = { w: 0, b: 0, empates: 0, partida: 1 };
+    let partidaEncerrada = false;
+
+    function inicializarPecasQuanticas() {
+        pecasQuanticas = {};
+        if (configuracaoPartida?.modo === 'classico') {
+            for (const coluna of colunas) {
+                pecasQuanticas[`${coluna}2`] = { possibilidades: ['p'], cor: 'w', colapsada: 'p', emaranhadaComId: null };
+                pecasQuanticas[`${coluna}7`] = { possibilidades: ['p'], cor: 'b', colapsada: 'p', emaranhadaComId: null };
+            }
+            const pecas = { a: 'r', b: 'n', c: 'b', d: 'q', e: 'k', f: 'b', g: 'n', h: 'r' };
+            for (const coluna of colunas) {
+                pecasQuanticas[`${coluna}1`] = { possibilidades: [pecas[coluna]], cor: 'w', colapsada: pecas[coluna], emaranhadaComId: null };
+                pecasQuanticas[`${coluna}8`] = { possibilidades: [pecas[coluna]], cor: 'b', colapsada: pecas[coluna], emaranhadaComId: null };
+            }
+            return;
+        }
+        const grupos = [
+            [['b1', 'c1'], ['n', 'b']], [['f1', 'g1'], ['n', 'b']],
+            [['a1', 'd1'], ['r', 'q']], [['h1'], ['r', 'q']], [['e1'], ['k']],
+            [['b8', 'c8'], ['n', 'b']], [['f8', 'g8'], ['n', 'b']],
+            [['a8', 'd8'], ['r', 'q']], [['h8'], ['r', 'q']], [['e8'], ['k']]
+        ];
+        let grupoId = 1;
+        for (const [casas, possibilidades] of grupos) {
+            for (const casa of casas) {
+                const cor = Number(casa[1]) <= 2 ? 'w' : 'b';
+                pecasQuanticas[casa] = {
+                    possibilidades: [...possibilidades],
+                    cor,
+                    colapsada: possibilidades.length === 1 ? possibilidades[0] : null,
+                    emaranhadaComId: casas.length > 1 ? grupoId : null
+                };
+            }
+            if (casas.length > 1) grupoId++;
+        }
+        for (let coluna of colunas) {
+            pecasQuanticas[`${coluna}2`] = { possibilidades: ['p'], cor: 'w', colapsada: 'p', emaranhadaComId: null };
+            pecasQuanticas[`${coluna}7`] = { possibilidades: ['p'], cor: 'b', colapsada: 'p', emaranhadaComId: null };
+        }
+    }
+
+    function salvarEstadoQuantico() {
+        historicoEstadosQuanticos.push(JSON.parse(JSON.stringify(pecasQuanticas)));
+    }
+
+    function criarImagem(cor, tipo) {
+        const imagem = document.createElement('img');
+        imagem.src = svgPecas[cor][tipo];
+        imagem.className = 'peca-img';
+        imagem.alt = nomesPecas[tipo];
+        return imagem;
+    }
+
+    function renderizarTabuleiro() {
+        const tabuleiro = document.getElementById('tabuleiro');
+        tabuleiro.innerHTML = '';
+        for (let linha = 8; linha >= 1; linha--) {
+            for (let coluna = 0; coluna < 8; coluna++) {
+                const casa = `${colunas[coluna]}${linha}`;
+                const elemento = document.createElement('div');
+                elemento.className = `casa ${(linha + coluna) % 2 !== 0 ? 'clara' : 'escura'}`;
+                elemento.dataset.casa = casa;
+                if (casaSelecionada === casa) elemento.classList.add('selecionada');
+                elemento.addEventListener('click', () => clicarCasa(casa));
+                elemento.addEventListener('dragover', evento => { evento.preventDefault(); elemento.classList.add('drag-over'); });
+                elemento.addEventListener('dragleave', () => elemento.classList.remove('drag-over'));
+                elemento.addEventListener('drop', evento => {
+                    evento.preventDefault();
+                    elemento.classList.remove('drag-over');
+                    executarMovimento(evento.dataTransfer.getData('text/plain'), casa);
+                });
+
+                const pecaQ = pecasQuanticas[casa];
+                if (pecaQ && chess.get(casa)) {
+                    const recipiente = document.createElement('div');
+                    recipiente.className = 'peca-container';
+                    recipiente.draggable = pecaQ.cor === chess.turn();
+                    if (pecaQ.emaranhadaComId && !pecaQ.colapsada) recipiente.classList.add('emaranhada');
+                    recipiente.addEventListener('dragstart', evento => {
+                        casaSelecionada = casa;
+                        evento.dataTransfer.setData('text/plain', casa);
+                    });
+                    recipiente.addEventListener('dragend', () => { casaSelecionada = null; renderizarTabuleiro(); });
+                    if (pecaQ.colapsada) recipiente.appendChild(criarImagem(pecaQ.cor, pecaQ.colapsada));
+                    else {
+                        const superposicao = document.createElement('div');
+                        superposicao.className = 'quantica-split';
+                        pecaQ.possibilidades.forEach(tipo => superposicao.appendChild(criarImagem(pecaQ.cor, tipo)));
+                        recipiente.appendChild(superposicao);
+                    }
+                    elemento.appendChild(recipiente);
+                }
+                tabuleiro.appendChild(elemento);
+            }
+        }
+        atualizarStatusEHistorial();
+    }
+
+    function clicarCasa(casa) {
+        if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b') return;
+        const peca = chess.get(casa);
+        if (casaSelecionada === null) {
+            if (peca && peca.color === chess.turn()) { casaSelecionada = casa; renderizarTabuleiro(); }
+        } else {
+            const origem = casaSelecionada;
+            casaSelecionada = null;
+            if (origem === casa) renderizarTabuleiro();
+            else executarMovimento(origem, casa);
+        }
+    }
+
+    function executarMovimento(origem, destino) {
+        const pecaQ = pecasQuanticas[origem];
+        if (!pecaQ) return renderizarTabuleiro();
+        let tipoEscolhido = null;
+        for (const possibilidade of pecaQ.possibilidades) {
+            chess.put({ type: possibilidade, color: pecaQ.cor }, origem);
+            if (chess.move({ from: origem, to: destino, promotion: 'q' })) {
+                tipoEscolhido = possibilidade;
+                chess.undo();
+                break;
+            }
+            chess.remove(origem);
+        }
+        if (!tipoEscolhido) {
+            chess.put({ type: pecaQ.colapsada || pecaQ.possibilidades[0], color: pecaQ.cor }, origem);
+            alert('❌ Movimento inválido quânticamente!');
+            return renderizarTabuleiro();
+        }
+
+        salvarEstadoQuantico();
+        let mensagem = '';
+        if (!pecaQ.colapsada && pecaQ.possibilidades.length > 1) {
+            pecaQ.colapsada = tipoEscolhido;
+            pecaQ.possibilidades = [tipoEscolhido];
+            mensagem = `🔮 Colapso! A peça em ${destino} revelou-se um: ${nomesPecas[tipoEscolhido]}.`;
+            if (pecaQ.emaranhadaComId) {
+                for (const casa of Object.keys(pecasQuanticas)) {
+                    const par = pecasQuanticas[casa];
+                    if (casa !== origem && par.emaranhadaComId === pecaQ.emaranhadaComId && !par.colapsada) {
+                        const oposta = par.possibilidades.find(tipo => tipo !== tipoEscolhido);
+                        if (oposta) {
+                            par.colapsada = oposta;
+                            par.possibilidades = [oposta];
+                            mensagem += `\n⛓️ O par em ${casa} colapsou para: ${nomesPecas[oposta]}!`;
+                        }
+                    }
+                }
+            }
+        }
+        chess.put({ type: tipoEscolhido, color: pecaQ.cor }, origem);
+        chess.move({ from: origem, to: destino, promotion: 'q' });
+        pecasQuanticas[destino] = pecaQ;
+        delete pecasQuanticas[origem];
+        iniciarRelogioSeNecessario();
+        relogioPartida.segundos[pecaQ.cor] += relogioPartida.incremento;
+        atualizarRelogios();
+        renderizarTabuleiro();
+        if (mensagem) alert(mensagem);
+        if (chess.game_over()) {
+            const vencedor = chess.in_checkmate() ? (chess.turn() === 'w' ? 'b' : 'w') : null;
+            registrarResultado(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate');
+        } else agendarLanceDaIA();
+    }
+
+    function desfazerJogada() {
+        if (!historicoEstadosQuanticos.length) return;
+        chess.undo();
+        pecasQuanticas = historicoEstadosQuanticos.pop();
+        renderizarTabuleiro();
+    }
+
+    function atualizarStatusEHistorial() {
+        const status = document.getElementById('status');
+        status.innerText = chess.in_checkmate() ? 'Fim de Jogo: Xeque-Mate!' : chess.in_draw() ? 'Fim de Jogo: Empate!' : `Turno das ${chess.turn() === 'w' ? 'Brancas' : 'Pretas'}`;
+        const historico = document.getElementById('historico');
+        historico.innerHTML = '';
+        chess.history().forEach((lance, indice) => {
+            if (indice % 2 === 0) {
+                const linha = document.createElement('div');
+                linha.className = 'jogada-linha';
+                linha.innerHTML = `<span class="jogada-num">${Math.floor(indice / 2) + 1}.</span><span class="jogada-lance">${lance}</span><span class="jogada-lance">${chess.history()[indice + 1] || ''}</span>`;
+                historico.appendChild(linha);
+            }
+        });
+        const abertura = {
+            'e4 e5': 'Abertura do Jogo Italiano: desenvolvimento rápido e disputa pelo centro.',
+            'e4 c5': 'Defesa Siciliana: as Pretas respondem de forma assimétrica ao peão do rei.',
+            'e4 e6': 'Defesa Francesa: estrutura sólida e pressão sobre o centro branco.',
+            'd4 d5': 'Jogo de Dama: luta central mais estratégica e posicional.',
+            'd4 Cf6': 'Defesa Índia: as Pretas desenvolvem o cavalo antes de definir o centro.'
+        };
+        const sequencia = chess.history().slice(0, 2).join(' ');
+        document.getElementById('didatica').textContent = abertura[sequencia] || (sequencia ? 'Estude desenvolvimento, controle do centro e segurança do rei.' : 'Aberturas e padrões táticos aparecerão aqui.');
+        document.getElementById('btnDesfazer').disabled = historicoEstadosQuanticos.length === 0;
+    }
+
+    function formatarTempo(segundos) {
+        const total = Math.ceil(Math.max(0, segundos));
+        const minutos = Math.floor(total / 60);
+        const restantes = total % 60;
+        return `${String(minutos).padStart(2, '0')}:${String(restantes).padStart(2, '0')}`;
+    }
+
+    function atualizarRelogios() {
+        for (const cor of ['w', 'b']) {
+            const id = cor === 'w' ? 'relogioBrancas' : 'relogioPretas';
+            document.querySelector(`#${id} strong`).textContent = formatarTempo(relogioPartida.segundos[cor]);
+        }
+    }
+
+    function configurarRelogio() {
+        const presets = {
+            'sem-relogio': [0, 0], bullet: [60, 0], blitz: [180, 0],
+            'blitz-fischer': [180, 2], rapida: [600, 5], classica: [1800, 10]
+        };
+        const escolha = configuracaoPartida.relogio;
+        const preset = presets[escolha] || [Number(document.getElementById('configMinutos').value) * 60, Number(document.getElementById('configIncremento').value)];
+        relogioPartida = { ativo: false, ultimoInstante: 0, intervalId: null, segundos: { w: preset[0], b: preset[0] }, incremento: preset[1] };
+        document.getElementById('relogios').classList.toggle('oculto', preset[0] === 0);
+        atualizarRelogios();
+    }
+
+    function iniciarRelogioSeNecessario() {
+        if (relogioPartida.ativo || relogioPartida.segundos.w === 0) return;
+        relogioPartida.ativo = true;
+        relogioPartida.ultimoInstante = performance.now();
+        relogioPartida.intervalId = setInterval(atualizarRelogio, 100);
+    }
+
+    function atualizarRelogio() {
+        if (!relogioPartida.ativo) return;
+        const agora = performance.now();
+        const decorrido = (agora - relogioPartida.ultimoInstante) / 1000;
+        relogioPartida.ultimoInstante = agora;
+        const cor = chess.turn();
+        relogioPartida.segundos[cor] -= decorrido;
+        atualizarRelogios();
+        if (relogioPartida.segundos[cor] <= 0) finalizarPartida(cor === 'w' ? 'b' : 'w', 'tempo');
+    }
+
+    function finalizarPartida(vencedor, motivo) {
+        if (partidaEncerrada) return;
+        if (!relogioPartida.ativo && motivo === 'tempo') return;
+        relogioPartida.ativo = false;
+        if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
+        const texto = motivo === 'tempo' ? `Tempo esgotado. ${vencedor === 'w' ? 'Brancas' : 'Pretas'} vencem.` : `Partida encerrada: ${motivo}.`;
+        document.getElementById('status').textContent = texto;
+        registrarResultado(vencedor, motivo);
+    }
+
+    function registrarResultado(vencedor, motivo) {
+        if (partidaEncerrada && motivo !== 'tempo') return;
+        partidaEncerrada = true;
+        relogioPartida.ativo = false;
+        if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
+        if (vencedor) placarTorneio[vencedor]++;
+        else placarTorneio.empates++;
+        const torneio = configuracaoPartida?.formato === 'melhor-de-tres';
+        const terminouTorneio = torneio && (placarTorneio.w >= 2 || placarTorneio.b >= 2);
+        document.getElementById('placar').textContent = torneio ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
+        if (terminouTorneio) {
+            const campeao = placarTorneio.w > placarTorneio.b ? 'Brancas' : 'Pretas';
+            document.getElementById('status').textContent = `${campeao} venceram o torneio.`;
+            alert(`Torneio encerrado: ${campeao} vencem por ${placarTorneio.w} x ${placarTorneio.b}.`);
+        } else if (torneio) {
+            placarTorneio.partida++;
+            alert(`Partida ${placarTorneio.partida - 1} encerrada (${motivo}). Próxima partida iniciada.`);
+            iniciarPartida();
+        }
+    }
+
+    function escolherLanceFacil() {
+        const movimentos = chess.moves({ verbose: true });
+        return movimentos.length ? movimentos[Math.floor(Math.random() * movimentos.length)] : null;
+    }
+
+    function escolherLanceComMinimax(profundidade) {
+        return new Promise(resolve => {
+            const codigo = `
+                importScripts('https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js');
+                const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+                function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); }
+                function buscar(jogo, profundidade, alpha, beta, maximizando) {
+                    if (!profundidade || jogo.game_over()) return avaliar(jogo);
+                    let melhor = maximizando ? -Infinity : Infinity;
+                    for (const movimento of jogo.moves({ verbose: true })) {
+                        jogo.move(movimento);
+                        const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando);
+                        jogo.undo();
+                        melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor);
+                        if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor);
+                        if (beta <= alpha) break;
+                    }
+                    return melhor;
+                }
+                self.onmessage = evento => {
+                    const jogo = new Chess(evento.data.fen);
+                    let melhorLance = null;
+                    let melhorValor = -Infinity;
+                    for (const movimento of jogo.moves({ verbose: true })) {
+                        jogo.move(movimento);
+                        const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false);
+                        jogo.undo();
+                        if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; }
+                    }
+                    self.postMessage(melhorLance);
+                };`;
+            const worker = new Worker(URL.createObjectURL(new Blob([codigo], { type: 'text/javascript' })));
+            worker.onmessage = evento => { worker.terminate(); resolve(evento.data); };
+            worker.postMessage({ fen: chess.fen(), profundidade });
+        });
+    }
+
+    async function fazerLanceDaIA() {
+        if (!configuracaoPartida || configuracaoPartida.oponente !== 'ia' || chess.turn() !== 'b') return;
+        const movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil'
+            ? await escolherLanceComMinimax(configuracaoPartida.nivel === 'dificil' ? 3 : 2)
+            : escolherLanceFacil();
+        if (movimento) executarMovimento(movimento.from, movimento.to, true);
+    }
+
+    function agendarLanceDaIA() {
+        if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b') setTimeout(fazerLanceDaIA, 250);
+    }
+
+    function iniciarPartida() {
+        configuracaoPartida = {
+            modo: document.getElementById('configModo').value,
+            oponente: document.getElementById('configOponente').value,
+            nivel: document.getElementById('configNivel').value,
+            relogio: document.getElementById('configRelogio').value,
+            formato: document.getElementById('configFormato').value,
+            inicio: document.getElementById('configInicio').value
+        };
+        chess.reset();
+        const turnoInicial = configuracaoPartida.inicio === 'pretas' || (configuracaoPartida.inicio === 'sorteio' && Math.random() >= 0.5) ? 'b' : 'w';
+        if (turnoInicial === 'b') chess.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
+        historicoEstadosQuanticos = [];
+        casaSelecionada = null;
+        partidaEncerrada = false;
+        configurarRelogio();
+        inicializarPecasQuanticas();
+        renderizarTabuleiro();
+        document.getElementById('telaInicial').classList.add('oculto');
+        document.getElementById('areaJogo').classList.remove('oculto');
+        document.getElementById('placar').textContent = configuracaoPartida.formato === 'melhor-de-tres' ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
+        agendarLanceDaIA();
+    }
+
+    document.getElementById('configRelogio').addEventListener('change', evento => {
+        const personalizado = evento.target.value === 'personalizada';
+        document.getElementById('tempoPersonalizado').classList.toggle('oculto', !personalizado);
+        document.getElementById('incrementoPersonalizado').classList.toggle('oculto', !personalizado);
+    });
+    document.getElementById('btnComecar').addEventListener('click', iniciarPartida);
+    document.getElementById('btnVoltarConfiguracao').addEventListener('click', () => {
+        relogioPartida.ativo = false;
+        if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
+        document.getElementById('areaJogo').classList.add('oculto');
+        document.getElementById('telaInicial').classList.remove('oculto');
+    });
+</script>
+<script type="text/plain">
+    const chess = new Chess();
+    
+    const svgPecas = {
+        'w': {
+            'p': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+            'n': 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+            'b': 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+            'r': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+            'q': 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+            'k': 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg'
+        },
+                r: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chess_rdt45.svg',
+            'p': 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
+            'n': 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+            'b': 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+            'r': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_rdt45.svg',
+            'q': 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+            'k': 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+        }
+    };
+
+    const nomesPecas = { 'p': 'Peão', 'n': 'Cavalo', 'b': 'Bispo', 'r': 'Torre', 'q': 'Dama', 'k': 'Rei' };
+
+    let pecasQuanticas = {};
+    let casaSelecionada = null;
+    const colunas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    let historicoEstadosQuanticos = [];
+
+    function inicializarPecasQuanticas() {
+        // IDs únicos para gerenciar o emaranhamento de pares idênticos originais
+        const paresEmaranhadosIniciais = [
+            { casas: ['b1', 'c1'], possib: ['n', 'b'] },
+            { casas: ['f1', 'g1'], possib: ['n', 'b'] },
+            { casas: ['a1', 'd1'], possib: ['r', 'q'] },
+            { casas: ['e1'], possib: ['k'] },
+            { casas: ['h1'], possib: ['r', 'q'] },
+            // Pretas
+            { casas: ['b8', 'c8'], possib: ['n', 'b'] },
+            { casas: ['f8', 'g8'], possib: ['n', 'b'] },
+            { casas: ['a8', 'd8'], possib: ['r', 'q'] },
+            { casas: ['e8'], possib: ['k'] },
+            { casas: ['h8'], possib: ['r', 'q'] }
+        ];
+
+        let grupoId = 1;
+        paresEmaranhadosIniciais.forEach(par => {
+            par.casas.forEach(casa => {
+                let linha = parseInt(casa.substring(1));
+                let cor = (linha <= 2) ? 'w' : 'b';
+                pecasQuanticas[casa] = {
+                    possibilidades: [...par.possib],
+                    cor: cor,
+                    colapsada: par.possib.length === 1 ? par.possib[0] : null,
+                    emaranhadaComId: par.casas.length > 1 ? grupoId : null // Vincula as duas peças irmãs
+                };
+            });
+            if(par.casas.length > 1) grupoId++;
+        });
+
+        // Adiciona Peões clássicos sem emaranhamento inicial
+        for(let i = 0; i < 8; i++) {
+            ['2', '7'].forEach(l => {
+                let casa = colunas[i] + l;
+                pecasQuanticas[casa] = {
+                    possibilidades: ['p'], cor: l === '2' ? 'w' : 'b',
+                    colapsada: 'p', emaranhadaComId: null
+                };
+            });
+        }
+    }
+
+    function salvarEstadoQuantico() {
+        const copia = {};
+        for (let casa in pecasQuanticas) {
+            copia[casa] = {
+                possibilidades: [...pecasQuanticas[casa].possibilidades],
+                cor: pecasQuanticas[casa].cor,
+                colapsada: pecasQuanticas[casa].colapsada,
+                emaranhadaComId: pecasQuanticas[casa].emaranhadaComId
+            };
+        }
+        historicoEstadosQuanticos.push(copia);
+    }
+
+    function renderizarTabuleiro() {
+        const divTabuleiro = document.getElementById('tabuleiro');
+        divTabuleiro.innerHTML = '';
+
+        for (let r = 8; r >= 1; r--) {
+            for (let c = 0; c < 8; c++) {
+                const casaStr = colunas[c] + r;
+                const pecaClassica = chess.get(casaStr);
+                const pecaQ = pecasQuanticas[casaStr];
+
+                const casaElemento = document.createElement('div');
+                casaElemento.className = `casa ${(r + c) % 2 !== 0 ? 'clara' : 'escura'}`;
+                casaElemento.dataset.casa = casaStr;
+
+                if (casaSelecionada === casaStr) casaElemento.classList.add('selecionada');
+
+                casaElemento.addEventListener('dragover', (e) => { e.preventDefault(); casaElemento.classList.add('drag-over'); });
+                casaElemento.addEventListener('dragleave', () => casaElemento.classList.remove('drag-over'));
+                casaElemento.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    casaElemento.classList.remove('drag-over');
+executarMovimento(e.dataTransfer.getData('text/plain'), casaStr);});if (pecaQ && pecaClassica) {const pecaContainer = document.createElement('div');pecaContainer.className = 'peca-container';pecaContainer.setAttribute('draggable', pecaQ.cor === chess.turn());// Se a peça ainda está emaranhada com seu par quântico, brilha em Ciano!if (pecaQ.emaranhadaComId && !pecaQ.colapsada) {pecaContainer.classList.add('emaranhada');}pecaContainer.addEventListener('dragstart', (e) => {casaSelecionada = casaStr;e.dataTransfer.setData('text/plain', casaStr);});pecaContainer.addEventListener('dragend', () => { casaSelecionada = null; renderizarTabuleiro(); });if (pecaQ.colapsada) {const img = document.createElement('img');img.src = svgPecas[pecaQ.cor][pecaQ.colapsada];img.className = 'peca-img';pecaContainer.appendChild(img);} else {const splitDiv = document.createElement('div');splitDiv.className = 'quantica-split';pecaQ.possibilidades.forEach(p => {const img = document.createElement('img');img.src = svgPecas[pecaQ.cor][p];img.className = 'peca-img';splitDiv.appendChild(img);});pecaContainer.appendChild(splitDiv);}casaElemento.appendChild(pecaContainer);} else {if (pecasQuanticas[casaStr]) delete pecasQuanticas[casaStr];}casaElemento.onclick = () => clicarCasa(casaStr);divTabuleiro.appendChild(casaElemento);}}atualizarStatusEHistorial();}function clicarCasa(casaStr) {const pecaClassica = chess.get(casaStr);if (casaSelecionada === null) {if (pecaClassica && pecaClassica.color === chess.turn()) {casaSelecionada = casaStr;renderizarTabuleiro();}} else {const origem = casaSelecionada;casaSelecionada = null;if (origem !== casaStr) executarMovimento(origem, casaStr);else renderizarTabuleiro();}}function executarMovimento(origem, destino) {const pecaQ = pecasQuanticas[origem];if (!pecaQ) { renderizarTabuleiro(); return; }let movimentoValido = false;let tipoColapsadoNecessario = null;for (let possibilidade of pecaQ.possibilidades) {chess.put({ type: possibilidade, color: pecaQ.cor }, origem);let move = chess.move({ from: origem, to: destino, promotion: 'q' });if (move !== null) {movimentoValido = true;tipoColapsadoNecessario = possibilidade;chess.undo();break;} else {chess.remove(origem);}}if (movimentoValido) {salvarEstadoQuantico();let mensagemColapso = "";// --- APLICAÇÃO DO EMARANHAMENTO QUÂNTICO ---if (!pecaQ.colapsada && pecaQ.possibilidades.length > 1) {pecaQ.colapsada = tipoColapsadoNecessario;pecaQ.possibilidades = [tipoColapsadoNecessario];mensagemColapso = 🔮 Colapso! A peça movida para ${destino} assumiu ser um: ${nomesPecas[tipoColapsadoNecessario]}.;// Se houver um par emaranhado no tabuleiro, ele sofre o colapso oposto instantaneamente!if (pecaQ.emaranhadaComId) {const idPar = pecaQ.emaranhadaComId;for (let outraCasa in pecasQuanticas) {let parQ = pecasQuanticas[outraCasa];if (outraCasa !== origem && parQ.emaranhadaComId === idPar && !parQ.colapsada) {// Encontra a identidade contrária que sobrou no sistemalet identidadeOposta = parQ.possibilidades.find(p => p !== tipoColapsadoNecessario);if (identidadeOposta) {parQ.colapsada = identidadeOposta;parQ.possibilidades = [identidadeOposta];mensagemColapso += \n⛓️ Emaranhamento! O seu par quântico em ${outraCasa} colapsou instantaneamente para: ${nomesPecas[identidadeOposta]}!;}}}}}chess.put({ type: tipoColapsadoNecessario, color: pecaQ.cor }, origem);chess.move({ from: origem, to: destino, promotion: 'q' });pecasQuanticas[destino] = pecaQ;delete pecasQuanticas[origem];if (mensagemColapso) {setTimeout(() => { alert(mensagemColapso); }, 50);}} else {chess.put({ type: pecaQ.colapsada || pecaQ.possibilidades, color: pecaQ.cor }, origem);setTimeout(() => { alert("❌ Movimento inválido quânticamente!"); }, 50);}renderizarTabuleiro();}function desfazerJogada() {if (historicoEstadosQuanticos.length === 0) return;chess.undo();pecasQuanticas = historicoEstadosQuanticos.pop();for (let casa in pecasQuanticas) {const pq = pecasQuanticas[casa];const identidadeSimulada = pq.colapsada ? pq.colapsada : pq.possibilidades;chess.put({ type: identidadeSimulada, color: pq.cor }, casa);}renderizarTabuleiro();}function atualizarStatusEHistorial() {const statusDiv = document.getElementById('status');if (chess.in_checkmate()) statusDiv.innerText = "Fim de Jogo: Xeque-Mate!";else if (chess.in_draw()) statusDiv.innerText = "Fim de Jogo: Empate!";else statusDiv.innerText = Turno das ${chess.turn() === 'w' ? 'Brancas' : 'Pretas'};const divHistorico = document.getElementById('historico');divHistorico.innerHTML = '';const historicoLances = chess.history();for (let i = 0; i < historicoLances.length; i += 2) {const linha = document.createElement('div');linha.className = 'jogada-linha';linha.innerHTML = <span class="jogada-num">${Math.floor(i / 2) + 1}.</span> <span class="jogada-lance">${historicoLances[i]}</span> <span class="jogada-lance">${historicoLances[i+1] ? historicoLances[i+1] : ''}</span>;divHistorico.appendChild(linha);}divHistorico.scrollTop = divHistorico.scrollHeight;document.getElementById('btnDesfazer').disabled = (historicoEstadosQuanticos.length === 0);}inicializarPecasQuanticas();renderizarTabuleiro();
+
+// ### Como testar o Emaranhamento no jogo:
+// 1. Olhe para os dois cavalos brancos (`b1` e `g1`). Note que eles têm uma **aura brilhante ciano** ao redor deles. Eles estão emaranhados e podem agir como Cavalo (`N`) ou Bispo (`B`).
+// 2. Mova o Cavalo de `b1` para a casa `a3` (um movimento clássico e exclusivo de Cavalo).
+// 3. **O Fenômeno:** No exato momento do clique/soltura, o sistema acionará um alerta. A peça de `a3` colapsará para **Cavalo** e, obedecendo às leis da física quântica do jogo, a peça irmã lá em `g1` colapsará instantaneamente para um **Bispo**, perdendo o brilho azul!
+
+// A aplicação agora engloba validação do motor `chess.js`, arrastar e soltar nativo, renderização gráfica translúcida split-view para superposição, histórico de lances e emaranhamento conectado.
+    </script>
+</body>
+</html>
