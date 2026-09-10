@@ -4,16 +4,16 @@ Guia do usuário e colaboração do jogo de xadrez com superposição, emaranham
 
 ## Estrutura do projeto
 
-- `index.html`: estrutura da aplicação pública;
-- `css/style.css`: estilos separados da interface;
-- `js/app.js`: estado, regras quânticas, renderização e sincronização com Chess.js;
+- `index.html`: estrutura da base modular pública;
+- `css/style.css`: estilos separados da base modular;
+- `js/app.js`: núcleo legível, regras quânticas e sincronização com Chess.js;
 - `docs/PROTOCOLO_BUGS.md`: protocolo de relato e resolução de bugs;
 - `docs/DEPENDENCIAS.md`: dependências públicas e diagnóstico de falhas externas;
 - `CONTRIBUTING.md`: fluxo de contribuição e publicação no GitHub;
 - `Backup/`: versões históricas usadas como referência;
 - `xadrez-quantico.html`: versão distribuível anterior.
 
-Para iniciar o código modular, abra `index.html` em um navegador moderno.
+Para iniciar a base modular, abra `index.html` em um navegador moderno. A versão distribuível completa anterior permanece em `xadrez-quantico.html` durante a migração dos recursos avançados para os módulos.
 
 ## Como jogar
 
