@@ -2,6 +2,12 @@
 
 Guia do usuário e colaboração do jogo de xadrez com superposição, emaranhamento quântico e adversário automatizado.
 
+## Autoria e filosofia
+
+Projeto original de **Pedro Marcos Locatelli**, desenvolvido inicialmente em parceria com o **GitHub Copilot no VS Code**. O trabalho adotou uma abordagem de *vibe coding*: explorar ideias por diálogo, transformar hipóteses em incrementos pequenos e validar o comportamento no navegador.
+
+A implementação prioriza front-end puro, usando HTML, CSS, JavaScript e APIs nativas do navegador, com dependências públicas declaradas. O modelo específico subjacente ao Copilot não foi registrado no histórico do projeto; por isso, este repositório não atribui um nome de modelo sem evidência verificável. A autoria, as decisões de arquitetura e a revisão final permanecem sob responsabilidade dos autores humanos.
+
 ## Estrutura do projeto
 
 - `index.html`: estrutura da base modular pública;
@@ -10,8 +16,11 @@ Guia do usuário e colaboração do jogo de xadrez com superposição, emaranham
 - `docs/PROTOCOLO_BUGS.md`: protocolo de relato e resolução de bugs;
 - `docs/DEPENDENCIAS.md`: dependências públicas e diagnóstico de falhas externas;
 - `CONTRIBUTING.md`: fluxo de contribuição e publicação no GitHub;
-- `Backup/`: versões históricas usadas como referência;
 - `xadrez-quantico.html`: versão distribuível anterior.
+
+A pasta `Backup/` é mantida apenas localmente como arquivo histórico e está ignorada pelo Git para manter o repositório público enxuto.
+
+O layout é responsivo: em telas estreitas o painel lateral fica abaixo do tabuleiro e o tamanho das casas se ajusta à largura disponível, sem rolagem horizontal.
 
 Para iniciar a base modular, abra `index.html` em um navegador moderno. A versão distribuível completa anterior permanece em `xadrez-quantico.html` durante a migração dos recursos avançados para os módulos.
 

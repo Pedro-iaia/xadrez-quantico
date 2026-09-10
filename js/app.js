@@ -1,4 +1,12 @@
 /*
+ * Autoria: Pedro Marcos Locatelli.
+ * Desenvolvimento original em parceria com o GitHub Copilot no VS Code,
+ * usando vibe coding como método de exploração, implementação e validação.
+ * Este módulo segue a filosofia de front-end puro: APIs nativas do navegador,
+ * HTML/CSS/JavaScript e dependências públicas explícitas.
+ * O modelo específico usado pelo Copilot não foi registrado neste repositório;
+ * por isso, nenhuma identificação de modelo é afirmada sem evidência.
+ *
  * Núcleo do jogo.
  *
  * O chess.js valida as regras clássicas. O objeto pecasQuanticas guarda a
