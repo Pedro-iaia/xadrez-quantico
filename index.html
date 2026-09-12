@@ -74,27 +74,39 @@
   <button class="btn-principal" id="btnComecar">Começar partida</button>
 </section>
 <section class="oculto" id="areaJogo">
-  <h1>Xadrez de Schrödinger</h1>
-  <div id="status">Turno das Brancas</div>
-  <div class="placar" id="placar"></div>
-  <div class="relogios oculto" id="relogios">
-    <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
-    <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
+  <div class="jogo-cabecalho">
+    <h1>Xadrez de Schrödinger</h1>
+    <div class="placar" id="placar"></div>
   </div>
   <div class="container">
     <div class="tabuleiro-area" id="tabuleiroArea">
+      <div id="status" class="barra-status">
+        <div id="statusTurno" class="status-turno"><span class="indicador-vez"></span><span id="textoTurno">Vez das Brancas</span></div>
+        <div id="statusAlerta" class="status-alerta"></div>
+      </div>
       <div id="tabuleiro"></div>
       <div class="avisos" id="avisos"></div>
     </div>
-    <div class="painel-lateral">
-      <div class="painel-titulo">Histórico de Lances</div>
-      <div class="historico-lista" id="historico"></div>
-      <div class="painel-subtitulo">Dica de Estudo</div>
-      <div class="historico-lista" id="didatica"></div>
-      <button class="btn-desfazer" disabled id="btnDesfazer" onclick="desfazerJogada()">Desfazer Jogada</button>
+    <div class="coluna-lateral">
+      <div class="relogios oculto" id="relogios">
+        <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
+        <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
+      </div>
+      <div class="painel-lateral">
+        <div class="painel-topo">
+          <span class="painel-titulo">Lances</span>
+          <div class="painel-nav">
+            <button class="btn-nav" disabled id="btnDesfazer" onclick="desfazerJogada()" title="Desfazer lance (↺)" aria-label="Desfazer">↺</button>
+            <button class="btn-nav" disabled id="btnRefazer" onclick="refazerJogada()" title="Refazer lance (↻)" aria-label="Refazer">↻</button>
+          </div>
+        </div>
+        <div class="historico-lista" id="historico"></div>
+        <div class="painel-subtitulo">Dica de Estudo</div>
+        <div class="historico-lista" id="didatica"></div>
+      </div>
+      <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à configuração</button>
     </div>
   </div>
-  <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à configuração</button>
 </section>
 <script src="script.js"></script>
 </body>
