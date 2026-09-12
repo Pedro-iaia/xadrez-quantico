@@ -13,7 +13,7 @@
 <body>
 <section class="tela-inicial" id="telaInicial">
   <h2>Nova partida</h2>
-  <p class="subtitulo">Configuração padrão: partida rápida contra a IA, sem relógio.</p>
+  <p class="subtitulo">Configuração padrão: partida rápida contra a IA.</p>
   <div class="config-grid">
     <label>
       Modo
@@ -32,16 +32,16 @@
     <label>
       Nível da IA
       <select id="configNivel">
-        <option value="facil" selected>Fácil</option>
+        <option value="facil">Fácil</option>
         <option value="medio">Médio</option>
-        <option value="dificil">Difícil</option>
+        <option value="dificil" selected>Difícil</option>
       </select>
     </label>
     <label>
       Modalidade
       <select id="configRelogio">
-        <option value="sem-relogio" selected>Sem relógio</option>
-        <option value="bullet">Bullet · 1+0</option>
+        <option value="sem-relogio">Sem relógio</option>
+        <option value="bullet" selected>Bullet · 1+0</option>
         <option value="blitz">Blitz · 3+0</option>
         <option value="blitz-fischer">Blitz Fischer · 3+2</option>
         <option value="rapida">Rápida · 10+5</option>
@@ -67,8 +67,8 @@
     <label>
       Quem começa
       <select id="configInicio">
-        <option value="brancas" selected>Você joga com as Brancas</option>
-        <option value="sorteio">Sorteio</option>
+        <option value="brancas">Você joga com as Brancas</option>
+        <option value="sorteio" selected>Sorteio</option>
         <option value="pretas">Você joga com as Pretas</option>
       </select>
     </label>
@@ -110,6 +110,6 @@
     </div>
   </div>
 </section>
-<script src="script.js"></script>
+<script src="script.js?v=20260912"></script>
 </body>
 </html>

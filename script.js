@@ -377,7 +377,9 @@ function renderizarTabuleiro() {
       const colIdx = colunasIndices[j];
       const casa = `${colunas[colIdx]}${linha}`;
       const elemento = document.createElement('div');
-      elemento.className = `casa ${(linha + colIdx) % 2 !== 0 ? 'clara' : 'escura'}`;
+      // Convenção oficial: casa clara no canto inferior direito (branco na direita) e dama na sua cor
+      const casaClara = (linha + colIdx) % 2 === 0;
+      elemento.className = `casa ${casaClara ? 'clara' : 'escura'}`;
       elemento.dataset.casa = casa;
       if (casaSelecionada === casa) elemento.classList.add('selecionada');
       elemento.addEventListener('click', () => clicarCasa(casa));
@@ -773,9 +775,11 @@ function registrarResultado(vencedor, motivo) {
     emitirAlertaStatus(`🏆 Campeão: ${campeao}!`, 'mate', 10000);
     mostrarAviso(`🏆 Torneio encerrado: ${campeao} vencem por ${placarTorneio.w} x ${placarTorneio.b}.`, 'sucesso', 8000);
   } else if (torneio) {
-    placarTorneio.partida++;
-    mostrarAviso(`Partida ${placarTorneio.partida - 1} encerrada (${motivo}). Iniciando a próxima...`, 'info', 5000);
-    iniciarPartida();
+    if (motivo !== 'desistência') {
+      placarTorneio.partida++;
+      mostrarAviso(`Partida ${placarTorneio.partida - 1} encerrada (${motivo}). Iniciando a próxima...`, 'info', 5000);
+      iniciarPartida();
+    }
   }
 }
 
@@ -867,11 +871,37 @@ document.getElementById('configRelogio').addEventListener('change', evento => {
   document.getElementById('tempoPersonalizado').classList.toggle('oculto', !personalizado);
   document.getElementById('incrementoPersonalizado').classList.toggle('oculto', !personalizado);
 });
-document.getElementById('btnComecar').addEventListener('click', iniciarPartida);
+document.getElementById('btnComecar').addEventListener('click', () => {
+  placarTorneio = {
+    w: 0,
+    b: 0,
+    empates: 0,
+    partida: 1
+  };
+  iniciarPartida();
+});
 document.getElementById('btnVoltarConfiguracao').addEventListener('click', () => {
-  if (!partidaEncerrada && chess.history().length > 0) {
-    if (!confirm('Você quer desistir da partida?')) return;
+  if (!partidaEncerrada) {
+    const querDesistir = confirm('Você quer desistir da partida? (A desistência será computada como derrota)');
+    if (!querDesistir) return;
+
+    // Computa a derrota imediatamente para o jogador humano
+    const vencedor = corJogador === 'w' ? 'b' : 'w';
+    finalizarPartida(vencedor, 'desistência');
+
+    // Se estiver em torneio melhor de 3 e o torneio ainda não tiver terminado
+    const torneio = configuracaoPartida?.formato === 'melhor-de-tres';
+    const terminouTorneio = torneio && (placarTorneio.w >= 2 || placarTorneio.b >= 2);
+    if (torneio && !terminouTorneio) {
+      const continuar = confirm(`Derrota registrada por desistência!\nPlacar atual do torneio: ${placarTorneio.w} x ${placarTorneio.b}.\n\nDeseja disputar a próxima partida do torneio?\n(Clique em Cancelar para sair e voltar à página de configuração)`);
+      if (continuar) {
+        placarTorneio.partida++;
+        iniciarPartida();
+        return;
+      }
+    }
   }
+
   relogioPartida.ativo = false;
   if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
   document.getElementById('areaJogo').classList.add('oculto');
