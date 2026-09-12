@@ -1,4 +1,4 @@
-# ♟️ Xadrez de Schrödinger Quântico
+# ♟️ Xadrez de Schrödinger
 
 Um tabuleiro de xadrez onde as peças da primeira e da última fileira começam **em superposição** — cada uma pode ser um de dois tipos possíveis (ex.: Cavalo *ou* Bispo) — e só **colapsam** para um tipo definido no momento em que são movidas. Peças **emaranhadas** colapsam em pares complementares: revelar uma revela automaticamente o destino da outra.
 
