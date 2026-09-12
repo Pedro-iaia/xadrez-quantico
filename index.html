@@ -1,53 +1,101 @@
+<!-- XQ-AUTH: Projeto Xadrez Quântico | SHA-256: 60fa99a80ea1e66c8989bb44611c97aa7bbf616daa37198d064d0c6098c807c2 -->
 <!DOCTYPE html>
-<!--
-    Projeto original: Pedro Marcos Locatelli.
-    Desenvolvido originalmente em parceria com o GitHub Copilot no VS Code,
-    em um processo de vibe coding orientado por experimentação, diálogo e
-    validação incremental. A interface segue uma filosofia de front-end puro:
-    HTML, CSS e JavaScript no navegador, sem framework obrigatório ou backend.
-    As decisões de autoria, arquitetura e revisão permanecem sob responsabilidade
-    dos autores humanos do projeto.
--->
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xadrez Quântico</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xadrez de Schrödinger Quântico v4 - Emaranhamento</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <main>
-        <section id="telaInicial" class="painel configuracao">
-            <h1>Xadrez Quântico</h1>
-            <h2>Nova partida</h2>
-            <label>Modo
-                <select id="configModo"><option value="quantico">Quântico</option><option value="classico">Clássico</option></select>
-            </label>
-            <label>Oponente
-                <select id="configOponente"><option value="humano">Dois jogadores</option><option value="ia">Adversário automatizado</option></select>
-            </label>
-            <label>Relógio
-                <select id="configRelogio"><option value="sem-relogio">Sem relógio</option><option value="bullet">Bullet · 1+0</option><option value="blitz">Blitz · 3+0</option><option value="rapida">Rápida · 10+5</option></select>
-            </label>
-            <button id="btnComecar">Começar partida</button>
-        </section>
-
-        <section id="areaJogo" class="oculto">
-            <h1>Xadrez Quântico</h1>
-            <p id="status">Turno das Brancas</p>
-            <div id="relogios" class="relogios oculto"><strong id="relogioBrancas">--:--</strong><strong id="relogioPretas">--:--</strong></div>
-            <div class="layout">
-                <div id="tabuleiro" aria-label="Tabuleiro de xadrez"></div>
-                <aside class="painel">
-                    <h2>Histórico</h2>
-                    <div id="historico"></div>
-                    <button id="btnDesfazer" disabled>Desfazer</button>
-                    <button id="btnVoltar" class="secundario">Voltar</button>
-                </aside>
-            </div>
-        </section>
-    </main>
-    <script src="js/app.js"></script>
+<section class="tela-inicial" id="telaInicial">
+  <h2>Nova partida</h2>
+  <p class="subtitulo">Configuração padrão: partida rápida contra a IA, sem relógio.</p>
+  <div class="config-grid">
+    <label>
+      Modo
+      <select id="configModo">
+        <option value="quantico" selected>Quântico</option>
+        <option value="classico">Clássico</option>
+      </select>
+    </label>
+    <label>
+      Oponente
+      <select id="configOponente">
+        <option value="ia" selected>Adversário automatizado</option>
+        <option value="humano">Dois jogadores</option>
+      </select>
+    </label>
+    <label>
+      Nível da IA
+      <select id="configNivel">
+        <option value="facil" selected>Fácil</option>
+        <option value="medio">Médio</option>
+        <option value="dificil">Difícil</option>
+      </select>
+    </label>
+    <label>
+      Modalidade
+      <select id="configRelogio">
+        <option value="sem-relogio" selected>Sem relógio</option>
+        <option value="bullet">Bullet · 1+0</option>
+        <option value="blitz">Blitz · 3+0</option>
+        <option value="blitz-fischer">Blitz Fischer · 3+2</option>
+        <option value="rapida">Rápida · 10+5</option>
+        <option value="classica">Clássica · 30+10</option>
+        <option value="personalizada">Personalizada</option>
+      </select>
+    </label>
+    <label class="oculto" id="tempoPersonalizado">
+      Minutos iniciais
+      <input id="configMinutos" max="180" min="1" type="number" value="10"/>
+    </label>
+    <label class="oculto" id="incrementoPersonalizado">
+      Incremento por lance (segundos)
+      <input id="configIncremento" max="60" min="0" type="number" value="5"/>
+    </label>
+    <label>
+      Formato
+      <select id="configFormato">
+        <option value="partida" selected>Partida única</option>
+        <option value="melhor-de-tres">Melhor de três</option>
+      </select>
+    </label>
+    <label>
+      Quem começa
+      <select id="configInicio">
+        <option value="brancas" selected>Você joga com as Brancas</option>
+        <option value="sorteio">Sorteio</option>
+        <option value="pretas">Você joga com as Pretas</option>
+      </select>
+    </label>
+  </div>
+  <button class="btn-principal" id="btnComecar">Começar partida</button>
+</section>
+<section class="oculto" id="areaJogo">
+  <h1>Xadrez de Schrödinger Quântico</h1>
+  <div id="status">Turno das Brancas</div>
+  <div class="placar" id="placar"></div>
+  <div class="relogios oculto" id="relogios">
+    <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
+    <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
+  </div>
+  <div class="container">
+    <div class="tabuleiro-area" id="tabuleiroArea">
+      <div id="tabuleiro"></div>
+      <div class="avisos" id="avisos"></div>
+    </div>
+    <div class="painel-lateral">
+      <div class="painel-titulo">Histórico de Lances</div>
+      <div class="historico-lista" id="historico"></div>
+      <div class="painel-subtitulo">Dica de Estudo</div>
+      <div class="historico-lista" id="didatica"></div>
+      <button class="btn-desfazer" disabled id="btnDesfazer" onclick="desfazerJogada()">Desfazer Jogada</button>
+    </div>
+  </div>
+  <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à configuração</button>
+</section>
+<script src="script.js"></script>
 </body>
 </html>

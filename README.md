@@ -1,169 +1,108 @@
-# Xadrez de Schrödinger Quântico
+# ♟️ Xadrez de Schrödinger Quântico
 
-Guia do usuário e colaboração do jogo de xadrez com superposição, emaranhamento quântico e adversário automatizado.
+Um tabuleiro de xadrez onde as peças da primeira e da última fileira começam **em superposição** — cada uma pode ser um de dois tipos possíveis (ex.: Cavalo *ou* Bispo) — e só **colapsam** para um tipo definido no momento em que são movidas. Peças **emaranhadas** colapsam em pares complementares: revelar uma revela automaticamente o destino da outra.
 
-## Autoria e filosofia
+O projeto nasceu com fins **didáticos**: ensinar noções de superposição e emaranhamento quântico através de uma metáfora lúdica e familiar (o xadrez), ao mesmo tempo em que oferece um ambiente de estudo de xadrez clássico, com reconhecimento de aberturas e dicas orientadas à fase da partida.
 
-Projeto original de **Pedro Marcos Locatelli**, desenvolvido inicialmente em parceria com o **GitHub Copilot no VS Code**. O trabalho adotou uma abordagem de *vibe coding*: explorar ideias por diálogo, transformar hipóteses em incrementos pequenos e validar o comportamento no navegador.
+É um projeto **100% front-end**, sem build step, escrito em HTML, CSS e JavaScript puro (vanilla), pensado para ser fácil de ler, modificar e usar em sala de aula.
 
-A implementação prioriza front-end puro, usando HTML, CSS, JavaScript e APIs nativas do navegador, com dependências públicas declaradas. O modelo específico subjacente ao Copilot não foi registrado no histórico do projeto; por isso, este repositório não atribui um nome de modelo sem evidência verificável. A autoria, as decisões de arquitetura e a revisão final permanecem sob responsabilidade dos autores humanos.
+---
 
-## Estrutura do projeto
+## ✨ Funcionalidades
 
-- `index.html`: estrutura da base modular pública;
-- `css/style.css`: estilos separados da base modular;
-- `js/app.js`: núcleo legível, regras quânticas e sincronização com Chess.js;
-- `docs/PROTOCOLO_BUGS.md`: protocolo de relato e resolução de bugs;
-- `docs/DEPENDENCIAS.md`: dependências públicas e diagnóstico de falhas externas;
-- `CONTRIBUTING.md`: fluxo de contribuição e publicação no GitHub;
-- `xadrez-quantico.html`: versão distribuível anterior.
+- **Modo Quântico**: peças menores (cavalos/bispos) e maiores (torres/damas) da fileira de trás começam em superposição; peças de reis e peões são sempre clássicas.
+- **Modo Clássico**: xadrez tradicional, útil para comparar com o modo quântico ou para quem está aprendendo as regras do jogo.
+- **Emaranhamento**: pares de peças (ex.: `b1`↔`c1`) colapsam de forma complementar — se uma vira Cavalo, a outra automaticamente vira Bispo.
+- **Adversário automatizado (IA)**: com três níveis; nos níveis médio/difícil no modo clássico, usa busca *minimax* com poda alfa-beta rodando em *Web Worker* (não trava a interface).
+- **Modo dois jogadores** (mesmo dispositivo).
+- **Relógios de partida** com predefinições (bullet, blitz, blitz Fischer, rápida, clássica) e opção personalizada.
+- **Formato "Melhor de três"** com placar de torneio.
+- **Painel de estudo** com:
+  - Reconhecimento de **aberturas clássicas** (Siciliana, Francesa, Caro-Kann, Espanhola, Italiana, Gambito da Dama, Índia do Rei, etc.), identificadas por casas de origem/destino (robusto ao modo quântico) e apontando o próximo lance da teoria.
+  - **Dicas contextuais** por fase da partida (abertura, meio-jogo, final) quando a posição sai do livro de aberturas.
+  - Aviso específico quando há peças ainda emaranhadas no tabuleiro.
+- **Avisos discretos** (toasts) ao lado do tabuleiro para movimentos inválidos, colapsos e resultados — sem bloquear a interface com `alert()`.
+- **Totalmente responsivo**: tabuleiro fluido (`aspect-ratio`), painel lateral que se reorganiza abaixo do tabuleiro em telas estreitas, e alvos de toque confortáveis para celular/tablet.
+- Rótulos discretos de coordenadas (`a`–`h`, `1`–`8`) no próprio tabuleiro.
 
-A pasta `Backup/` é mantida apenas localmente como arquivo histórico e está ignorada pelo Git para manter o repositório público enxuto.
+---
 
-O layout é responsivo: em telas estreitas o painel lateral fica abaixo do tabuleiro e o tamanho das casas se ajusta à largura disponível, sem rolagem horizontal.
-
-Para iniciar a base modular, abra `index.html` em um navegador moderno. A versão distribuível completa anterior permanece em `xadrez-quantico.html` durante a migração dos recursos avançados para os módulos.
-
-## Como jogar
-
-1. Abra `xadrez-quantico.html` em um navegador moderno.
-2. Na tela **Nova partida**, escolha:
-   - **Modo:** Clássico ou Quântico.
-   - **Oponente:** adversário automatizado ou dois jogadores.
-   - **Nível da IA:** fácil, médio ou difícil.
-   - **Modalidade:** sem relógio, bullet, blitz, Fischer, rápida, clássica ou personalizada.
-   - **Formato:** partida única ou melhor de três.
-   - **Quem começa:** sorteio, Brancas ou Pretas.
-3. Clique em **Começar partida**.
-
-Não é necessário instalar o jogo. É preciso ter conexão com a internet para carregar o `chess.js` e as imagens das peças usadas pelo navegador.
-
-## Modos de jogo
-
-### Modo clássico
-
-Segue as regras tradicionais do xadrez. As peças começam em suas posições normais e aparecem como peças individuais.
-
-A IA possui três níveis:
-
-- **Fácil:** escolhe um movimento válido aleatório.
-- **Médio:** usa Minimax com poda alfa-beta em profundidade menor.
-- **Difícil:** usa Minimax com uma profundidade maior.
-
-Nos níveis médio e difícil clássicos, o cálculo é executado em um `Web Worker` para evitar o congelamento da interface.
-
-### Modo quântico
-
-Algumas peças começam em superposição. Por exemplo, uma peça pode aparecer como Cavalo/Bispo ou Torre/Dama.
-
-Peças emaranhadas recebem uma aura azul. Quando uma delas se move e colapsa para uma possibilidade, a peça parceira também colapsa para a possibilidade complementar.
-
-Exemplo:
-
-- mova `b1` para `a3`;
-- a peça movida pode colapsar para Cavalo;
-- a peça emaranhada correspondente colapsa para Bispo.
-
-O relógio é compartilhado normalmente por jogador. A superposição não cria tempos separados.
-
-## Controles
-
-- **Clique:** selecione a peça e depois a casa de destino.
-- **Arrastar e soltar:** arraste uma peça até a casa desejada.
-- **Desfazer jogada:** restaura a posição anterior, incluindo o estado quântico.
-- **Voltar à configuração:** encerra a partida atual e retorna à tela inicial.
-
-## Relógios
-
-As modalidades disponíveis são:
-
-| Modalidade | Tempo inicial | Incremento |
-| --- | ---: | ---: |
-| Sem relógio | ilimitado | 0 s |
-| Bullet | 1 min | 0 s |
-| Blitz | 3 min | 0 s |
-| Blitz Fischer | 3 min | 2 s |
-| Rápida | 10 min | 5 s |
-| Clássica | 30 min | 10 s |
-| Personalizada | definido pelo usuário | definido pelo usuário |
-
-O relógio começa no primeiro lance, alterna automaticamente entre os jogadores e encerra a partida quando o tempo chega a zero.
-
-## Melhor de três
-
-No formato **Melhor de três**:
-
-- o placar registra as vitórias de cada lado;
-- a partida seguinte começa automaticamente quando necessário;
-- o torneio termina quando um lado alcança duas vitórias;
-- empates são registrados separadamente;
-- a opção escolhida para o sorteio de quem começa é reaplicada nas novas partidas.
-
-## Recursos didáticos
-
-O painel de histórico apresenta os lances da partida e uma explicação curta sobre algumas sequências iniciais, como:
-
-- Jogo Italiano;
-- Defesa Siciliana;
-- Defesa Francesa;
-- Jogo de Dama;
-- Defesas Índias.
-
-A aplicação também indica situações de finalização, como xeque-mate, empate e derrota por tempo.
-
-A biblioteca de aberturas é uma ferramenta de estudo, não uma garantia de que uma sequência seja a melhor em todos os estados quânticos. No modo quântico, os colapsos e emaranhamentos alteram a análise tradicional.
-
-## Arquivos principais
-
-- `xadrez-quantico.html`: versão pronta para distribuição e uso.
-- `xadrez-quantico-distribuicao - Copia.html`: cópia da versão distribuível.
-- `xadrez_quantico.html`: versão clássica anterior do projeto.
-- `gerar-distribuicao.mjs`: gerador da cópia minificada com assinatura.
-- `verificar-assinatura.mjs`: verificador da assinatura SHA-256.
-- `Backup/`: arquivos de segurança do projeto.
-
-## Assinatura de autoria
-
-A versão distribuível contém uma marca no primeiro comentário HTML:
+## 🗂️ Estrutura dos arquivos
 
 ```text
-XQ-AUTH: Projeto Xadrez Quântico | SHA-256: ...
+xadrez-quantico/
+├── .github/          # Templates de issues e pull request
+├── docs/             # Documentação técnica, roadmap e guias de colaboração
+├── index.html        # Estrutura (HTML) — telas de configuração e de jogo
+├── style.css         # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos
+├── script.js         # Lógica (JS) — regras quânticas, IA, relógio, dicas de estudo
+└── LICENSE           # Licença MIT
 ```
 
-Essa marca não é um segredo criptográfico. Ela serve para identificar a autoria e conferir se o arquivo permaneceu igual ao original distribuído.
+Não há dependências instaladas via `npm`; o projeto usa duas bibliotecas externas carregadas por CDN/URL direta:
 
-Para conferir a integridade, execute no PowerShell dentro da pasta do projeto:
+- [`chess.js` 0.10.3](https://github.com/jhlywa/chess.js) — validação de regras e notação SAN do xadrez clássico subjacente (licença BSD-2-Clause).
+- Ícones de peças em SVG de **Cburnett**, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) — multi-licenciados (BSD / GFDL / GPL / CC BY-SA 3.0); atribuição mantida ao autor. Veja [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md) para detalhes de licenciamento de todas as dependências.
 
-```powershell
-node verificar-assinatura.mjs xadrez-quantico.html
+## ▶️ Como executar
+
+Basta abrir o `index.html` diretamente no navegador, ou servir a pasta com qualquer servidor estático (recomendado para evitar restrições de `file://` em alguns navegadores):
+
+```bash
+# Python
+python3 -m http.server 8000
+
+# Node
+npx serve .
 ```
 
-O resultado esperado contém:
+Depois acesse `http://localhost:8000`.
 
-```json
-"valid": true
-```
+## 🧠 Como funciona o núcleo quântico (para quem for contribuir)
 
-Se o arquivo tiver sido alterado, o hash declarado e o hash calculado serão diferentes.
+- `chess.js` continua sendo a única fonte de verdade sobre **regras de movimento e validação** — ele nunca sabe que existe superposição.
+- O estado quântico "por cima" das regras vive no objeto `pecasQuanticas`, indexado por casa (`"b1"`, `"e8"` etc.), com o formato:
+  ```js
+  {
+    possibilidades: ['n', 'b'],   // tipos possíveis enquanto não colapsada
+    cor: 'w',
+    colapsada: null,              // tipo definitivo após o colapso, ou null
+    emaranhadaComId: 1            // id do par emaranhado, ou null
+  }
+  ```
+- Ao tentar mover uma peça quântica, `executarMovimento` testa cada possibilidade contra o `chess.js` (colocando temporariamente a peça daquele tipo no tabuleiro) até achar uma que gere um lance legal. É esse teste que causa o colapso.
+- Se a peça pertence a um par emaranhado, o par restante colapsa automaticamente para o tipo **complementar**.
+- O livro de aberturas (`aberturasClassicas`) identifica a abertura por **casas de origem/destino** (não pelo tipo da peça), justamente para continuar funcionando mesmo quando o modo quântico altera qual peça ocupa cada casa.
 
-## Gerar uma nova distribuição
+## 📚 Documentação do projeto
 
-O gerador usa como fonte o nome `xadrez_quant-emaranhado.html`. Se a fonte de desenvolvimento tiver outro nome, ajuste `sourcePath` em `gerar-distribuicao.mjs` antes de executar:
+| Documento | Conteúdo |
+|---|---|
+| [`docs/PLANO_DE_EXPANSAO.md`](docs/PLANO_DE_EXPANSAO.md) | O quê construir: roadmap do motor de IA e do módulo didático. |
+| [`docs/PROTOCOLO_DE_COLABORACAO.md`](docs/PROTOCOLO_DE_COLABORACAO.md) | Como colaborar: relato de bugs, estresse-teste, fluxo de PR, sugestões de usuários. |
+| [`docs/COLABORACAO_NA_PRATICA_ROQUE.md`](docs/COLABORACAO_NA_PRATICA_ROQUE.md) | Estudo de caso real: passo a passo de como o bug do roque foi diagnosticado, corrigido e testado. |
+| [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md) | O que vem de fora: `chess.js`, ícones de peças, futuras engines — licenças e como contribuir de volta para elas. |
+| [`docs/GUIA_DE_ESTUDOS_IA.md`](docs/GUIA_DE_ESTUDOS_IA.md) | Trilha de estudo para quem quer aprender IA de jogos construindo dentro deste projeto. |
 
-```powershell
-node gerar-distribuicao.mjs
-node verificar-assinatura.mjs xadrez-quantico-distribuicao.html
-```
+## 🤝 Como contribuir
 
-A geração remove o bloco antigo inerte, comprime HTML/CSS/JavaScript de forma conservadora, calcula o SHA-256 e cria uma nova versão distribuível.
+Contribuições são muito bem-vindas — de professores de xadrez, educadores de física/computação quântica, desenvolvedores e entusiastas em geral. Antes de abrir uma issue ou Pull Request, veja o [`docs/PROTOCOLO_DE_COLABORACAO.md`](docs/PROTOCOLO_DE_COLABORACAO.md) (como relatar bugs, testar mudanças e enviar sugestões) e o [`docs/PLANO_DE_EXPANSAO.md`](docs/PLANO_DE_EXPANSAO.md) (prioridades e ideias concretas).
 
-## Limitações e boas práticas
+Algumas ideias rápidas de próximos passos:
 
-- Um arquivo HTML executado localmente pode ser inspecionado por quem o recebe. Minificação dificulta a leitura casual, mas não impede engenharia reversa.
-- Não coloque chaves privadas, senhas ou segredos dentro do HTML.
-- Para uma prova de autoria mais forte, mantenha uma cópia original datada e use assinatura digital assimétrica fora do arquivo distribuído.
-- A aplicação depende de recursos externos do CDN e do Wikimedia. Para uma versão totalmente offline, seria necessário incluir localmente o `chess.js` e as imagens SVG.
+- Ampliar o livro de aberturas e as dicas de estudo (meio-jogo, finais específicos).
+- Suporte a inversão do tabuleiro (jogar de pretas) e a notação PGN exportável.
+- Melhorar a IA (ex.: avaliação posicional além de material, poda mais eficiente).
+- Acessibilidade: navegação por teclado, leitor de tela, alto contraste.
+- Internacionalização (i18n) da interface.
+- Testes automatizados da lógica de colapso/emaranhamento.
 
-## Licença e distribuição
+Ao abrir um PR, descreva brevemente a motivação e, se possível, inclua capturas de tela para mudanças visuais.
 
-Este projeto é distribuído entre os autores e amigos do grupo. Preserve a identificação `XQ-AUTH` ao compartilhar a versão distribuível e não remova a atribuição de autoria.
+## 📜 Licença
+
+Este projeto é distribuído sob a licença **MIT** — veja o arquivo [`LICENSE`](LICENSE). Em resumo: qualquer pessoa pode usar, copiar, modificar e redistribuir o código, inclusive para fins comerciais, desde que mantenha o aviso de copyright e a licença original.
+
+---
+
+*Um projeto para aprender xadrez e mecânica quântica se divertindo — e para servir de ponto de partida para quem quiser construir algo parecido.*
