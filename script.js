@@ -28,6 +28,7 @@ const svgPecas = {
 };
 let pecasQuanticas = {};
 let casaSelecionada = null;
+let corJogador = 'w';
 let historicoDesfazer = [];
 let historicoRefazer = [];
 let ultimaPromocaoCasa = null;
@@ -365,11 +366,18 @@ function criarImagem(cor, tipo, classeExtra = '') {
 function renderizarTabuleiro() {
   const tabuleiro = document.getElementById('tabuleiro');
   tabuleiro.innerHTML = '';
-  for (let linha = 8; linha >= 1; linha--) {
-    for (let coluna = 0; coluna < 8; coluna++) {
-      const casa = `${colunas[coluna]}${linha}`;
+
+  const invertido = corJogador === 'b';
+  const linhasIndices = invertido ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
+  const colunasIndices = invertido ? [7, 6, 5, 4, 3, 2, 1, 0] : [0, 1, 2, 3, 4, 5, 6, 7];
+
+  for (let i = 0; i < 8; i++) {
+    const linha = linhasIndices[i];
+    for (let j = 0; j < 8; j++) {
+      const colIdx = colunasIndices[j];
+      const casa = `${colunas[colIdx]}${linha}`;
       const elemento = document.createElement('div');
-      elemento.className = `casa ${(linha + coluna) % 2 !== 0 ? 'clara' : 'escura'}`;
+      elemento.className = `casa ${(linha + colIdx) % 2 !== 0 ? 'clara' : 'escura'}`;
       elemento.dataset.casa = casa;
       if (casaSelecionada === casa) elemento.classList.add('selecionada');
       elemento.addEventListener('click', () => clicarCasa(casa));
@@ -383,18 +391,22 @@ function renderizarTabuleiro() {
         elemento.classList.remove('drag-over');
         executarMovimento(evento.dataTransfer.getData('text/plain'), casa);
       });
-      if (linha === 1) {
+
+      // Rótulo da coluna: fica na última fileira visual (i === 7)
+      if (i === 7) {
         const rotuloColuna = document.createElement('span');
         rotuloColuna.className = 'rotulo rotulo-coluna';
-        rotuloColuna.textContent = colunas[coluna];
+        rotuloColuna.textContent = colunas[colIdx];
         elemento.appendChild(rotuloColuna);
       }
-      if (coluna === 0) {
+      // Rótulo da linha: fica na primeira coluna visual (j === 0)
+      if (j === 0) {
         const rotuloLinha = document.createElement('span');
         rotuloLinha.className = 'rotulo rotulo-linha';
         rotuloLinha.textContent = String(linha);
         elemento.appendChild(rotuloLinha);
       }
+
       const pecaQ = pecasQuanticas[casa];
       if (pecaQ && chess.get(casa)) {
         // Realce de rei em xeque
@@ -402,11 +414,19 @@ function renderizarTabuleiro() {
           elemento.classList.add('casa-xeque');
         }
 
+        const podeMover = configuracaoPartida?.oponente === 'ia'
+          ? (pecaQ.cor === corJogador && pecaQ.cor === chess.turn())
+          : (pecaQ.cor === chess.turn());
+
         const recipiente = document.createElement('div');
         recipiente.className = 'peca-container';
-        recipiente.draggable = pecaQ.cor === chess.turn();
+        recipiente.draggable = podeMover;
         if (pecaQ.emaranhadaComId && !pecaQ.colapsada) recipiente.classList.add('emaranhada');
         recipiente.addEventListener('dragstart', evento => {
+          if (!podeMover) {
+            evento.preventDefault();
+            return;
+          }
           casaSelecionada = casa;
           evento.dataTransfer.setData('text/plain', casa);
         });
@@ -438,7 +458,7 @@ function renderizarTabuleiro() {
 }
 
 function clicarCasa(casa) {
-  if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b') return;
+  if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador) return;
   const peca = chess.get(casa);
   if (casaSelecionada === null) {
     if (peca && peca.color === chess.turn()) {
@@ -582,7 +602,7 @@ function desfazerJogada() {
 
   // Se estiver jogando contra a IA e o lance desfeito for da máquina,
   // desfaz também o lance do jogador para voltar ao turno humano
-  if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b' && historicoDesfazer.length > 0) {
+  if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador && historicoDesfazer.length > 0) {
     historicoRefazer.push({
       fen: chess.fen(),
       pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas))
@@ -608,7 +628,7 @@ function refazerJogada() {
   casaSelecionada = null;
 
   // Se estiver jogando contra a IA e a vez for da IA, refaz também o lance subsequente dela se disponível
-  if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b' && historicoRefazer.length > 0) {
+  if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador && historicoRefazer.length > 0) {
     historicoDesfazer.push({
       fen: chess.fen(),
       pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas))
@@ -783,13 +803,17 @@ function escolherLanceComMinimax(profundidade) {
   });
 }
 async function fazerLanceDaIA() {
-  if (!configuracaoPartida || configuracaoPartida.oponente !== 'ia' || chess.turn() !== 'b') return;
-  const movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil' ? await escolherLanceComMinimax(configuracaoPartida.nivel === 'dificil' ? 3 : 2) : escolherLanceFacil();
+  if (!configuracaoPartida || configuracaoPartida.oponente !== 'ia' || chess.turn() === corJogador) return;
+  const movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil'
+    ? await escolherLanceComMinimax(configuracaoPartida.nivel === 'dificil' ? 3 : 2)
+    : escolherLanceFacil();
   if (movimento) executarMovimento(movimento.from, movimento.to, true);
 }
 
 function agendarLanceDaIA() {
-  if (configuracaoPartida?.oponente === 'ia' && chess.turn() === 'b') setTimeout(fazerLanceDaIA, 250);
+  if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador) {
+    setTimeout(fazerLanceDaIA, 350);
+  }
 }
 
 function iniciarPartida() {
@@ -801,9 +825,20 @@ function iniciarPartida() {
     formato: document.getElementById('configFormato').value,
     inicio: document.getElementById('configInicio').value
   };
+
+  // Determina a cor com que o jogador humano vai jogar:
+  corJogador = 'w';
+  if (configuracaoPartida.inicio === 'pretas') {
+    corJogador = 'b';
+  } else if (configuracaoPartida.inicio === 'sorteio') {
+    corJogador = Math.random() >= 0.5 ? 'b' : 'w';
+  } else {
+    corJogador = 'w';
+  }
+
+  // No xadrez, as Brancas SEMPRE iniciam o jogo! (chess.turn() === 'w')
   chess.reset();
-  const turnoInicial = configuracaoPartida.inicio === 'pretas' || (configuracaoPartida.inicio === 'sorteio' && Math.random() >= 0.5) ? 'b' : 'w';
-  if (turnoInicial === 'b') chess.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1');
+
   historicoDesfazer = [];
   historicoRefazer = [];
   ultimaPromocaoCasa = null;
@@ -822,6 +857,9 @@ function iniciarPartida() {
   document.getElementById('telaInicial').classList.add('oculto');
   document.getElementById('areaJogo').classList.remove('oculto');
   document.getElementById('placar').textContent = configuracaoPartida.formato === 'melhor-de-tres' ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
+
+  // Se o jogador estiver jogando com as Pretas contra a IA,
+  // a IA joga de Brancas e deve realizar o lance inicial!
   agendarLanceDaIA();
 }
 document.getElementById('configRelogio').addEventListener('change', evento => {
@@ -831,6 +869,9 @@ document.getElementById('configRelogio').addEventListener('change', evento => {
 });
 document.getElementById('btnComecar').addEventListener('click', iniciarPartida);
 document.getElementById('btnVoltarConfiguracao').addEventListener('click', () => {
+  if (!partidaEncerrada && chess.history().length > 0) {
+    if (!confirm('Você quer desistir da partida?')) return;
+  }
   relogioPartida.ativo = false;
   if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
   document.getElementById('areaJogo').classList.add('oculto');

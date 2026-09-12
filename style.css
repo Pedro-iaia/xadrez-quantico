@@ -382,22 +382,28 @@ h1 {
 .historico-lista {
   padding: 6px 8px;
   overflow-y: auto;
-  flex: 1 1 180px;
-  min-height: 140px;
-  max-height: 220px;
+  flex: 1 1 auto;
   font-family: 'SFMono-Regular', Consolas, monospace;
   font-size: 0.8rem;
   line-height: 1.4;
   color: #dcdce0;
 }
 
+#historico {
+  min-height: 120px;
+  max-height: 190px;
+}
+
 #didatica {
   font-family: inherit;
-  color: #c9c9d2;
-  font-size: 0.75rem;
+  color: #dedee8;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  padding: 8px 10px;
   flex: 0 0 auto;
-  max-height: 90px;
-  min-height: 60px;
+  min-height: 85px;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .jogada-linha {
