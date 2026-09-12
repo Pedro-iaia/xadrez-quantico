@@ -149,21 +149,9 @@ h1 {
   cursor: grabbing;
 }
 
-/* Peça emaranhada: contorno discreto e esmaecido, sem transbordar o quadrado */
+/* Peça emaranhada: sem halos visuais; as figuras sobrepostas já identificam o estado quântico */
 .emaranhada {
-  outline: 2px dashed rgba(55, 201, 225, 0.65);
-  outline-offset: -3px;
-  background: radial-gradient(circle, rgba(55, 201, 225, 0.16), transparent 72%);
-  animation: pulsar-suave 2.4s ease-in-out infinite;
-}
-
-@keyframes pulsar-suave {
-  0%, 100% {
-    outline-color: rgba(55, 201, 225, 0.35);
-  }
-  50% {
-    outline-color: rgba(55, 201, 225, 0.75);
-  }
+  /* halos removidos para manter visual limpo e uniforme em todas as casas */
 }
 
 .peca-img {
