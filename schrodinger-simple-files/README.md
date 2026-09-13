@@ -20,34 +20,31 @@ Esta é a variante **simplificada** do modelo quântico do jogo — fundamentada
 - **Adversário automatizado (IA)**: com três níveis; nos níveis médio/difícil no modo clássico, usa busca *minimax* com poda alfa-beta rodando em *Web Worker* (não trava a interface).
 - **Modo dois jogadores** (mesmo dispositivo).
 - **Relógios de partida** com predefinições (bullet, blitz, blitz Fischer, rápida, clássica) e opção personalizada.
-- **Formato "Melhor de três"** com placar de torneio e cômputo correto de desistências.
+- **Formato "Melhor de três"** com placar de torneio.
 - **Painel de estudo** com:
   - Reconhecimento de **aberturas clássicas** (Siciliana, Francesa, Caro-Kann, Espanhola, Italiana, Gambito da Dama, Índia do Rei, etc.), identificadas por casas de origem/destino (robusto ao modo quântico) e apontando o próximo lance da teoria.
   - **Dicas contextuais** por fase da partida (abertura, meio-jogo, final) quando a posição sai do livro de aberturas.
   - Aviso específico quando há peças ainda emaranhadas no tabuleiro.
 - **Avisos discretos** (toasts) ao lado do tabuleiro para movimentos inválidos, colapsos e resultados — sem bloquear a interface com `alert()`.
 - **Totalmente responsivo**: tabuleiro fluido (`aspect-ratio`), painel lateral que se reorganiza abaixo do tabuleiro em telas estreitas, e alvos de toque confortáveis para celular/tablet.
-- Rótulos discretos de coordenadas (`a`–`h`, `1`–`8`) no próprio tabuleiro, seguindo a convenção FIDE (branco na direita, dama na sua cor).
+- Rótulos discretos de coordenadas (`a`–`h`, `1`–`8`) no próprio tabuleiro.
 - **Página de boas-vindas** com um artigo introdutório sobre mecânica quântica (superposição, colapso, emaranhamento) para quem chega sem nenhuma base no assunto, com opção de não mostrar novamente.
 
 ---
 
 ## 🗂️ Estrutura dos arquivos
 
-```text
+```
 xadrez-quantico/
-├── .github/          # Templates de issues e pull request
-├── docs/             # Documentação técnica, roadmap e guias de colaboração
-├── index.html        # Estrutura (HTML) — telas de boas-vindas, configuração e jogo
-├── style.css         # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos
-├── script.js         # Lógica (JS) — regras quânticas, IA, relógio, dicas de estudo
-└── LICENSE           # Licença MIT
+├── index.html   # Estrutura (HTML) — telas de configuração e de jogo
+├── style.css    # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos
+└── script.js    # Lógica (JS) — regras quânticas, IA, relógio, dicas de estudo
 ```
 
 Não há dependências instaladas via `npm`; o projeto usa duas bibliotecas externas carregadas por CDN/URL direta:
 
 - [`chess.js` 0.10.3](https://github.com/jhlywa/chess.js) — validação de regras e notação SAN do xadrez clássico subjacente (licença BSD-2-Clause).
-- Ícones de peças em SVG de **Cburnett**, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) — multi-licenciados (BSD / GFDL / GPL / CC BY-SA 3.0); atribuição mantida ao autor. Veja [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md) para detalhes de licenciamento de todas as dependências.
+- Ícones de peças em SVG de **Cburnett**, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces) — multi-licenciados (BSD / GFDL / GPL / CC BY-SA 3.0); atribuição mantida ao autor. Veja [`DEPENDENCIAS.md`](./DEPENDENCIAS.md) para detalhes de licenciamento de todas as dependências.
 
 ## ▶️ Como executar
 
@@ -85,19 +82,30 @@ Depois acesse `http://localhost:8000`.
 | Documento | Conteúdo |
 |---|---|
 | [`PARECER_TECNICO_COERENCIA_FISICA.md`](./PARECER_TECNICO_COERENCIA_FISICA.md) | Fundamentação física do modelo quântico: por que as regras são o que são, com a matemática por trás. |
-| [`PLANO_DE_EXPANSAO.md`](./docs/PLANO_DE_EXPANSAO.md) | O quê construir: roadmap do motor de IA e do módulo didático. |
-| [`PROTOCOLO_DE_COLABORACAO.md`](./docs/PROTOCOLO_DE_COLABORACAO.md) | Como colaborar: relato de bugs, estresse-teste, fluxo de PR, sugestões de usuários. |
-| [`DEPENDENCIAS.md`](./docs/DEPENDENCIAS.md) | O que vem de fora: `chess.js`, ícones de peças, futuras engines — licenças e como contribuir de volta para elas. |
-| [`GUIA_DE_ESTUDOS_IA.md`](./docs/GUIA_DE_ESTUDOS_IA.md) | Trilha de estudo para quem quer aprender IA de jogos construindo dentro deste projeto. |
-| [`COLABORACAO_NA_PRATICA_ROQUE.md`](./docs/COLABORACAO_NA_PRATICA_ROQUE.md) | Exemplo real, passo a passo, de todo o ciclo: relatar → corrigir → commitar → PR. |
+| [`PLANO_DE_EXPANSAO.md`](./PLANO_DE_EXPANSAO.md) | O quê construir: roadmap do motor de IA e do módulo didático. |
+| [`PROTOCOLO_DE_COLABORACAO.md`](./PROTOCOLO_DE_COLABORACAO.md) | Como colaborar: relato de bugs, estresse-teste, fluxo de PR, sugestões de usuários. |
+| [`DEPENDENCIAS.md`](./DEPENDENCIAS.md) | O que vem de fora: `chess.js`, ícones de peças, futuras engines — licenças e como contribuir de volta para elas. |
+| [`GUIA_DE_ESTUDOS_IA.md`](./GUIA_DE_ESTUDOS_IA.md) | Trilha de estudo para quem quer aprender IA de jogos construindo dentro deste projeto. |
+| [`COLABORACAO_NA_PRATICA_ROQUE.md`](./COLABORACAO_NA_PRATICA_ROQUE.md) | Exemplo real, passo a passo, de todo o ciclo: relatar → corrigir → commitar → PR. |
 
 ## 🤝 Como contribuir
 
-Contribuições são muito bem-vindas — de professores de xadrez, educadores de física/computação quântica, desenvolvedores e entusiastas em geral. Antes de abrir uma issue ou Pull Request, veja o [`docs/PROTOCOLO_DE_COLABORACAO.md`](docs/PROTOCOLO_DE_COLABORACAO.md) e o [`docs/PLANO_DE_EXPANSAO.md`](docs/PLANO_DE_EXPANSAO.md).
+Contribuições são muito bem-vindas — de professores de xadrez, educadores de física/computação quântica, desenvolvedores e entusiastas em geral. Antes de abrir uma issue ou Pull Request, veja o [`PROTOCOLO_DE_COLABORACAO.md`](./PROTOCOLO_DE_COLABORACAO.md) (como relatar bugs, testar mudanças e enviar sugestões) e o [`PLANO_DE_EXPANSAO.md`](./PLANO_DE_EXPANSAO.md) (prioridades e ideias concretas).
+
+Algumas ideias rápidas de próximos passos:
+
+- Ampliar o livro de aberturas e as dicas de estudo (meio-jogo, finais específicos).
+- Suporte a inversão do tabuleiro (jogar de pretas) e a notação PGN exportável.
+- Melhorar a IA (ex.: avaliação posicional além de material, poda mais eficiente).
+- Acessibilidade: navegação por teclado, leitor de tela, alto contraste.
+- Internacionalização (i18n) da interface.
+- Testes automatizados da lógica de colapso/emaranhamento.
+
+Ao abrir um PR, descreva brevemente a motivação e, se possível, inclua capturas de tela para mudanças visuais.
 
 ## 📜 Licença
 
-Este projeto é distribuído sob a licença **MIT** — veja o arquivo [`LICENSE`](./LICENSE).
+Este projeto é distribuído sob a licença **MIT** — veja o arquivo [`LICENSE`](./LICENSE). Em resumo: qualquer pessoa pode usar, copiar, modificar e redistribuir o código, inclusive para fins comerciais, desde que mantenha o aviso de copyright e a licença original.
 
 ---
 

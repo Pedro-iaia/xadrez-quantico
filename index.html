@@ -1,115 +1,182 @@
 <!-- XQ-AUTH: Projeto Xadrez Quântico | SHA-256: 60fa99a80ea1e66c8989bb44611c97aa7bbf616daa37198d064d0c6098c807c2 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xadrez Quântico · Xadrez de Schrödinger</title>
-  <meta name="description" content="Xadrez de Schrödinger: jogo de xadrez quântico com superposição, emaranhamento, IA Minimax e fins didáticos rodando 100% no navegador.">
-  <meta name="keywords" content="chess, quantum-computing, education, javascript, minimax, schrodinger-chess, xadrez-quantico, game-ai">
+  <meta name="description"
+    content="Xadrez de Schrödinger: jogo de xadrez quântico com superposição, emaranhamento, IA Minimax e fins didáticos rodando 100% no navegador.">
+  <meta name="keywords"
+    content="chess, quantum-computing, education, javascript, minimax, schrodinger-chess, xadrez-quantico, game-ai">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<section class="tela-inicial" id="telaInicial">
-  <h2>Nova partida</h2>
-  <p class="subtitulo">Configuração padrão: partida rápida contra a IA.</p>
-  <div class="config-grid">
-    <label>
-      Modo
-      <select id="configModo">
-        <option value="quantico" selected>Quântico</option>
-        <option value="classico">Clássico</option>
-      </select>
+  <section class="tela-inicial tela-boas-vindas oculto" id="telaBoasVindas">
+    <h2>♟️🔬 Bem-vindo(a) ao Xadrez de Schrödinger</h2>
+    <article class="artigo-quantico">
+      <p>Você está prestes a jogar xadrez com peças que não "decidem" o que são até o momento em que se movem. Isso não
+        é só uma regra de jogo excêntrica — é inspirado em fenômenos reais da <strong>mecânica quântica</strong>, a
+        parte da física que descreve o comportamento de partículas extremamente pequenas, como elétrons e fótons. Nessa
+        escala, a natureza segue regras bem diferentes das que vemos no dia a dia.</p>
+
+      <h3>Mecânica quântica, em poucas palavras</h3>
+      <p>No mundo macroscópico — onde observamos uma bola de futebol ou um carro — um objeto está sempre num lugar
+        definido, com uma velocidade definida, existindo de um jeito só. No mundo quântico — o de elétrons dentro de um
+        átomo, por exemplo — isso deixa de ser verdade. Antes de serem observadas, partículas quânticas não têm um único
+        estado definido: elas existem, de certa forma, em vários estados possíveis ao mesmo tempo. Essa ideia soa
+        estranha porque nossa intuição foi construída observando objetos grandes, não átomos.</p>
+
+      <h3>Estados de superposição</h3>
+      <p>Chamamos de <strong>superposição</strong> justamente essa situação: uma partícula quântica pode estar, ao mesmo
+        tempo, numa combinação de dois (ou mais) estados possíveis, até que alguém a meça (observe). A física descreve
+        essa combinação através da <strong>função de onda</strong>: uma espécie de "lista de probabilidades" de cada
+        resultado possível, caso a partícula seja observada.</p>
+      <p>No jogo, isso vira a peça com ícones sobrepostos: ela pode ser Torre, Cavalo ou Bispo até que você a mova ou
+        tente uma captura.</p>
+
+      <h3>Colapso da função de onda</h3>
+      <p>Aqui está a parte mais intrigante: no instante em que uma medição é feita — quando alguém observa a partícula
+        —, todas as outras possibilidades desaparecem e um único resultado definitivo se manifesta. Esse processo se
+        chama <strong>colapso da função de onda</strong>. Antes da medição existiam várias possibilidades reais; depois,
+        resta apenas uma. E o mais curioso: a física não consegue prever com certeza qual resultado vai sair — só a
+        probabilidade de cada um.</p>
+      <p>No jogo, o colapso acontece no instante em que você tenta mover uma peça em superposição ou capturá-la: ela só
+        se revela como Torre, Cavalo ou Bispo quando esse movimento é testado — e, a partir daí, passa a se comportar
+        apenas como aquele tipo pelo resto da partida.</p>
+
+      <h3>Emaranhamento quântico</h3>
+      <p>Por fim, o <strong>emaranhamento</strong> acontece quando duas partículas ficam ligadas de um jeito tão íntimo
+        que o resultado da medição de uma delas determina instantaneamente o resultado da outra — mesmo estando
+        separadas por uma grande distância. Einstein, incomodado com essa previsão da teoria, chamou o efeito de "ação
+        fantasmagórica à distância". Décadas de experimentos depois, o emaranhamento se mostrou real, e hoje é a base de
+        tecnologias emergentes como a computação e a criptografia quânticas.</p>
+      <p>No jogo, as peças de Torre, Cavalo e Bispo de cada lado do tabuleiro formam um único sistema emaranhado. Há até
+        uma curiosidade extra: os dois Bispos de um mesmo jogador nunca podem colapsar para a mesma cor de casa —
+        exatamente como dois elétrons não podem ocupar o mesmo estado quântico (o <strong>Princípio de Exclusão de
+          Pauli</strong>). Por isso, revelar o Bispo de um lado do tabuleiro também estreita as possibilidades do outro
+        lado, mesmo estando longe dali.</p>
+
+      <h3>Por que um jogo de xadrez?</h3>
+      <p>Xadrez já é, há séculos, uma ferramenta para treinar raciocínio estratégico. Ao somar superposição, colapso e
+        emaranhamento às regras clássicas, este projeto tenta usar essa mesma familiaridade para tornar conceitos
+        abstratos da física mais concretos e jogáveis — sem trocadilhos com felinos hipotéticos, prometemos. 😉</p>
+      <p>Boa partida — e bons estudos, tanto de xadrez quanto de física quântica!</p>
+    </article>
+    <label class="checkbox-linha">
+      <input id="checkboxNaoMostrar" type="checkbox">
+      Não mostrar esta página novamente
     </label>
-    <label>
-      Oponente
-      <select id="configOponente">
-        <option value="ia" selected>Adversário automatizado</option>
-        <option value="humano">Dois jogadores</option>
-      </select>
-    </label>
-    <label>
-      Nível da IA
-      <select id="configNivel">
-        <option value="facil">Fácil</option>
-        <option value="medio">Médio</option>
-        <option value="dificil" selected>Difícil</option>
-      </select>
-    </label>
-    <label>
-      Modalidade
-      <select id="configRelogio">
-        <option value="sem-relogio">Sem relógio</option>
-        <option value="bullet" selected>Bullet · 1+0</option>
-        <option value="blitz">Blitz · 3+0</option>
-        <option value="blitz-fischer">Blitz Fischer · 3+2</option>
-        <option value="rapida">Rápida · 10+5</option>
-        <option value="classica">Clássica · 30+10</option>
-        <option value="personalizada">Personalizada</option>
-      </select>
-    </label>
-    <label class="oculto" id="tempoPersonalizado">
-      Minutos iniciais
-      <input id="configMinutos" max="180" min="1" type="number" value="10"/>
-    </label>
-    <label class="oculto" id="incrementoPersonalizado">
-      Incremento por lance (segundos)
-      <input id="configIncremento" max="60" min="0" type="number" value="5"/>
-    </label>
-    <label>
-      Formato
-      <select id="configFormato">
-        <option value="partida" selected>Partida única</option>
-        <option value="melhor-de-tres">Melhor de três</option>
-      </select>
-    </label>
-    <label>
-      Quem começa
-      <select id="configInicio">
-        <option value="brancas">Você joga com as Brancas</option>
-        <option value="sorteio" selected>Sorteio</option>
-        <option value="pretas">Você joga com as Pretas</option>
-      </select>
-    </label>
-  </div>
-  <button class="btn-principal" id="btnComecar">Começar partida</button>
-</section>
-<section class="oculto" id="areaJogo">
-  <div class="jogo-cabecalho">
-    <h1>Xadrez de Schrödinger</h1>
-    <div class="placar" id="placar"></div>
-  </div>
-  <div class="container">
-    <div class="tabuleiro-area" id="tabuleiroArea">
-      <div id="status" class="barra-status">
-        <div id="statusTurno" class="status-turno"><span class="indicador-vez"></span><span id="textoTurno">Vez das Brancas</span></div>
-        <div id="statusAlerta" class="status-alerta"></div>
-      </div>
-      <div id="tabuleiro"></div>
-      <div class="avisos" id="avisos"></div>
+    <button class="btn-principal" id="btnComecarLeitura">Entendi, vamos jogar!</button>
+  </section>
+  <section class="tela-inicial" id="telaInicial">
+    <h2>Nova partida</h2>
+    <p class="subtitulo">Configuração padrão: partida rápida contra a IA.</p>
+    <div class="config-grid">
+      <label>
+        Modo
+        <select id="configModo">
+          <option value="quantico" selected>Quântico</option>
+          <option value="classico">Clássico</option>
+        </select>
+      </label>
+      <label>
+        Oponente
+        <select id="configOponente">
+          <option value="ia" selected>Adversário automatizado</option>
+          <option value="humano">Dois jogadores</option>
+        </select>
+      </label>
+      <label>
+        Nível da IA
+        <select id="configNivel">
+          <option value="facil">Fácil</option>
+          <option value="medio">Médio</option>
+          <option value="dificil" selected>Difícil</option>
+        </select>
+      </label>
+      <label>
+        Modalidade
+        <select id="configRelogio">
+          <option value="sem-relogio">Sem relógio</option>
+          <option value="bullet" selected>Bullet · 1+0</option>
+          <option value="blitz">Blitz · 3+0</option>
+          <option value="blitz-fischer">Blitz Fischer · 3+2</option>
+          <option value="rapida">Rápida · 10+5</option>
+          <option value="classica">Clássica · 30+10</option>
+          <option value="personalizada">Personalizada</option>
+        </select>
+      </label>
+      <label class="oculto" id="tempoPersonalizado">
+        Minutos iniciais
+        <input id="configMinutos" max="180" min="1" type="number" value="10" />
+      </label>
+      <label class="oculto" id="incrementoPersonalizado">
+        Incremento por lance (segundos)
+        <input id="configIncremento" max="60" min="0" type="number" value="5" />
+      </label>
+      <label>
+        Formato
+        <select id="configFormato">
+          <option value="partida" selected>Partida única</option>
+          <option value="melhor-de-tres">Melhor de três</option>
+        </select>
+      </label>
+      <label>
+        Quem começa
+        <select id="configInicio">
+          <option value="brancas">Você joga com as Brancas</option>
+          <option value="sorteio" selected>Sorteio</option>
+          <option value="pretas">Você joga com as Pretas</option>
+        </select>
+      </label>
     </div>
-    <div class="coluna-lateral">
-      <div class="relogios oculto" id="relogios">
-        <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
-        <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
-      </div>
-      <div class="painel-lateral">
-        <div class="painel-topo">
-          <span class="painel-titulo">Lances</span>
-          <div class="painel-nav">
-            <button class="btn-nav" disabled id="btnDesfazer" onclick="desfazerJogada()" title="Desfazer lance (↺)" aria-label="Desfazer">↺</button>
-            <button class="btn-nav" disabled id="btnRefazer" onclick="refazerJogada()" title="Refazer lance (↻)" aria-label="Refazer">↻</button>
-          </div>
+    <button class="btn-principal" id="btnComecar">Começar partida</button>
+    <button class="link-discreto" id="btnReabrirArtigo" type="button">O que são superposição e emaranhamento? (reabrir
+      explicação)</button>
+  </section>
+  <section class="oculto" id="areaJogo">
+    <div class="jogo-cabecalho">
+      <h1>Xadrez de Schrödinger</h1>
+      <div class="placar" id="placar"></div>
+    </div>
+    <div class="container">
+      <div class="tabuleiro-area" id="tabuleiroArea">
+        <div id="status" class="barra-status">
+          <div id="statusTurno" class="status-turno"><span class="indicador-vez"></span><span id="textoTurno">Vez das
+              Brancas</span></div>
+          <div id="statusAlerta" class="status-alerta"></div>
         </div>
-        <div class="historico-lista" id="historico"></div>
-        <div class="painel-subtitulo">Dica de Estudo</div>
-        <div class="historico-lista" id="didatica"></div>
+        <div id="tabuleiro"></div>
+        <div class="avisos" id="avisos"></div>
       </div>
-      <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à página de configuração</button>
+      <div class="coluna-lateral">
+        <div class="relogios oculto" id="relogios">
+          <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
+          <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
+        </div>
+        <div class="painel-lateral">
+          <div class="painel-topo">
+            <span class="painel-titulo">Lances</span>
+            <div class="painel-nav">
+              <button class="btn-nav" disabled id="btnDesfazer" onclick="desfazerJogada()" title="Desfazer lance (↺)"
+                aria-label="Desfazer">↺</button>
+              <button class="btn-nav" disabled id="btnRefazer" onclick="refazerJogada()" title="Refazer lance (↻)"
+                aria-label="Refazer">↻</button>
+            </div>
+          </div>
+          <div class="historico-lista" id="historico"></div>
+          <div class="painel-subtitulo">Dica de Estudo</div>
+          <div class="historico-lista" id="didatica"></div>
+        </div>
+        <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à página de configuração</button>
+      </div>
     </div>
-  </div>
-</section>
-<script src="script.js?v=20260912"></script>
+  </section>
+  <script src="script.js?v=20260913"></script>
 </body>
+
 </html>
