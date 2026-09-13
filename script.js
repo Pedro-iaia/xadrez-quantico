@@ -53,6 +53,7 @@ let placarTorneio = {
   partida: 1
 };
 let partidaEncerrada = false;
+let logPartida = null;
 
 /* =========================================================
  * Alertas centrais piscantes na barra de status
@@ -396,11 +397,77 @@ function inicializarPecasQuanticas() {
   }
 }
 
+function localizarRei(cor) {
+  for (const [casa, peca] of Object.entries(pecasQuanticas)) {
+    if (peca && peca.cor === cor && (peca.colapsada === 'k' || peca.possibilidades.includes('k'))) {
+      return casa;
+    }
+  }
+  return null;
+}
+
+function casaEstaAmeacada(casaAlvo, corDefensora, casaOrigemRei = null) {
+  const corAtacante = corDefensora === 'w' ? 'b' : 'w';
+  const cAlvoIdx = colunas.indexOf(casaAlvo[0]);
+  const lAlvo = parseInt(casaAlvo[1], 10);
+
+  for (const [casaAtacante, pecaAtacante] of Object.entries(pecasQuanticas)) {
+    if (!pecaAtacante || pecaAtacante.cor !== corAtacante) continue;
+    if (casaAtacante === casaAlvo) continue;
+
+    const cAtacIdx = colunas.indexOf(casaAtacante[0]);
+    const lAtac = parseInt(casaAtacante[1], 10);
+    const dCol = cAlvoIdx - cAtacIdx;
+    const dLin = lAlvo - lAtac;
+    const absDCol = Math.abs(dCol);
+    const absDLin = Math.abs(dLin);
+
+    for (const tipo of pecaAtacante.possibilidades) {
+      if (tipo === 'p') {
+        const sentido = corAtacante === 'w' ? 1 : -1;
+        if (dLin === sentido && absDCol === 1) return true;
+      } else if (tipo === 'n') {
+        if ((absDCol === 1 && absDLin === 2) || (absDCol === 2 && absDLin === 1)) return true;
+      } else if (tipo === 'k') {
+        if (absDCol <= 1 && absDLin <= 1) return true;
+      } else if (tipo === 'r' || tipo === 'b' || tipo === 'q') {
+        const ehOrtogonal = (dCol === 0 && dLin !== 0) || (dLin === 0 && dCol !== 0);
+        const ehDiagonal = absDCol === absDLin && absDCol > 0;
+
+        if ((tipo === 'r' && ehOrtogonal) || (tipo === 'b' && ehDiagonal) || (tipo === 'q' && (ehOrtogonal || ehDiagonal))) {
+          const stepCol = dCol === 0 ? 0 : (dCol > 0 ? 1 : -1);
+          const stepLin = dLin === 0 ? 0 : (dLin > 0 ? 1 : -1);
+          let currC = cAtacIdx + stepCol;
+          let currL = lAtac + stepLin;
+          let livre = true;
+
+          while (currC !== cAlvoIdx || currL !== lAlvo) {
+            const casaIntermediaria = `${colunas[currC]}${currL}`;
+            if (casaIntermediaria !== casaOrigemRei && pecasQuanticas[casaIntermediaria]) {
+              livre = false;
+              break;
+            }
+            currC += stepCol;
+            currL += stepLin;
+          }
+
+          if (livre) return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 function salvarEstadoQuantico() {
   historicoDesfazer.push({
     fen: chess.fen(),
     pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
-    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+    relogio: {
+      w: relogioPartida.segundos.w,
+      b: relogioPartida.segundos.b
+    }
   });
   historicoRefazer = [];
 }
@@ -478,6 +545,7 @@ function renderizarTabuleiro() {
       elemento.addEventListener('drop', evento => {
         evento.preventDefault();
         elemento.classList.remove('drag-over');
+        if (partidaEncerrada) return;
         executarMovimento(evento.dataTransfer.getData('text/plain'), casa);
       });
 
@@ -498,14 +566,15 @@ function renderizarTabuleiro() {
 
       const pecaQ = pecasQuanticas[casa];
       if (pecaQ && chess.get(casa)) {
-        // Realce de rei em xeque
-        if (chess.in_check() && pecaQ.colapsada === 'k' && pecaQ.cor === chess.turn()) {
+        // Realce de rei em xeque clássico ou quântico (sob ameaça de qualquer hipótese oponente)
+        const ehReiDaVez = (pecaQ.colapsada === 'k' || pecaQ.possibilidades.includes('k')) && pecaQ.cor === chess.turn();
+        if (ehReiDaVez && (chess.in_check() || casaEstaAmeacada(casa, pecaQ.cor))) {
           elemento.classList.add('casa-xeque');
         }
 
-        const podeMover = configuracaoPartida?.oponente === 'ia'
+        const podeMover = !partidaEncerrada && (configuracaoPartida?.oponente === 'ia'
           ? (pecaQ.cor === corJogador && pecaQ.cor === chess.turn())
-          : (pecaQ.cor === chess.turn());
+          : (pecaQ.cor === chess.turn()));
 
         const recipiente = document.createElement('div');
         recipiente.className = 'peca-container';
@@ -544,6 +613,7 @@ function renderizarTabuleiro() {
 }
 
 function clicarCasa(casa) {
+  if (partidaEncerrada) return;
   if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador) return;
   const peca = chess.get(casa);
   if (casaSelecionada === null) {
@@ -564,11 +634,29 @@ function distanciaColunas(casaA, casaB) {
 }
 
 function executarMovimento(origem, destino, lanceDaIA = false) {
+  if (partidaEncerrada) return;
   const pecaQ = pecasQuanticas[origem];
   if (!pecaQ) return renderizarTabuleiro();
 
-  // Pré-checagem de roque (Regra 5 do parecer): se a casa de canto já
-  // colapsou para Cavalo ou Bispo, o roque para esse lado é bloqueado.
+  // 1. O Rei NUNCA pode ser capturado (regra de xadrez clássica e quântica absoluta)
+  const pecaDestino = pecasQuanticas[destino];
+  if (pecaDestino && (pecaDestino.colapsada === 'k' || pecaDestino.possibilidades.includes('k'))) {
+    mostrarAviso('Jogada proibida: o Rei não pode ser capturado!', 'erro', 4500);
+    emitirAlertaStatus('Jogada proibida: Rei não pode ser capturado!', 'erro', 3500);
+    return renderizarTabuleiro();
+  }
+
+  // 2. O Rei não pode se mover para uma casa sob ameaça quântica (xeque potencial)
+  const ehRei = pecaQ.colapsada === 'k' || pecaQ.possibilidades.includes('k');
+  if (ehRei) {
+    if (casaEstaAmeacada(destino, pecaQ.cor, origem)) {
+      mostrarAviso('Jogada proibida: o Rei não pode se mover para uma casa sob ameaça!', 'erro', 4500);
+      emitirAlertaStatus('Jogada proibida: casa sob ameaça!', 'erro', 3500);
+      return renderizarTabuleiro();
+    }
+  }
+
+  // 3. Pré-checagem de roque (Regra 5 do parecer)
   if (pecaQ.colapsada === 'k' && distanciaColunas(origem, destino) === 2) {
     const linha = origem[1];
     const ladoRei = colunas.indexOf(destino[0]) > colunas.indexOf(origem[0]);
@@ -578,7 +666,17 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
       emitirAlertaStatus('Roque indisponível: canto não é torre', 'erro', 3500);
       return renderizarTabuleiro();
     }
+    // Casas de passagem do roque não podem estar sob ameaça
+    const casaPassagem = ladoRei ? `f${linha}` : `d${linha}`;
+    if (casaEstaAmeacada(casaPassagem, pecaQ.cor, origem)) {
+      mostrarAviso('Roque indisponível: casa de passagem sob ameaça!', 'erro', 4400);
+      emitirAlertaStatus('Roque indisponível: casa sob xeque', 'erro', 3500);
+      return renderizarTabuleiro();
+    }
   }
+
+  // 4. Salva a peça original no chess.js antes de testar
+  const pecaOriginalChess = chess.get(origem);
 
   // Testa cada possibilidade viva; guarda todas as que resultam em lance
   // legal (Regra 5: sorteio com peso uniforme entre elas, eliminando viés determinístico).
@@ -589,16 +687,44 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
       candidatos.push(possibilidade);
       chess.undo();
     }
+  }
+
+  // Restaura imediatamente a peça original no chess.js
+  if (pecaOriginalChess) {
+    chess.put(pecaOriginalChess, origem);
+  } else {
     chess.remove(origem);
   }
+
   if (!candidatos.length) {
-    chess.put({ type: pecaQ.colapsada || pecaQ.possibilidades[0], color: pecaQ.cor }, origem);
     mostrarAviso('Movimento inválido quânticamente.', 'erro', 3800);
     emitirAlertaStatus('Movimento inválido', 'erro', 3000);
     return renderizarTabuleiro();
   }
+
+  // 5. Se não é o Rei movendo, verifica se o lance expõe o próprio Rei a xeque
+  if (!ehRei) {
+    const casaRei = localizarRei(pecaQ.cor);
+    if (casaRei) {
+      const pecaDestinoBackup = pecasQuanticas[destino];
+      pecasQuanticas[destino] = pecaQ;
+      delete pecasQuanticas[origem];
+      const reiFicaAmeacado = casaEstaAmeacada(casaRei, pecaQ.cor);
+      pecasQuanticas[origem] = pecaQ;
+      if (pecaDestinoBackup) pecasQuanticas[destino] = pecaDestinoBackup;
+      else delete pecasQuanticas[destino];
+
+      if (reiFicaAmeacado) {
+        mostrarAviso('Jogada proibida: seu Rei ficaria sob ameaça!', 'erro', 4500);
+        emitirAlertaStatus('Jogada proibida: Rei exposto a xeque!', 'erro', 3500);
+        return renderizarTabuleiro();
+      }
+    }
+  }
+
   const tipoEscolhido = candidatos[Math.floor(Math.random() * candidatos.length)];
 
+  // Snapshot fiel do estado (com a peça em sua casa de origem íntegra)
   salvarEstadoQuantico();
   let mensagem = '';
 
@@ -667,37 +793,66 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
   atualizarRelogios();
   renderizarTabuleiro();
   if (mensagem) mostrarAviso(mensagem, 'quantico', 6600);
+
+  // Registra no log da partida
+  registrarEstadoNoLog({
+    from: origem,
+    to: destino,
+    san: resultadoLance ? resultadoLance.san : `${origem}-${destino}`,
+    piece: tipoEscolhido,
+    captured: pecaCapturada ? (pecaCapturada.colapsada || pecaCapturada.possibilidades.join('/')) : null
+  }, mensagem || `Lance: ${resultadoLance ? resultadoLance.san : `${origem}-${destino}`}`);
+
   if (chess.game_over()) {
     const vencedor = chess.in_checkmate() ? (chess.turn() === 'w' ? 'b' : 'w') : null;
-    registrarResultado(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate');
-  } else agendarLanceDaIA();
+    finalizarPartida(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate');
+  } else {
+    agendarLanceDaIA();
+  }
 }
 
 function desfazerJogada() {
-  if (!historicoDesfazer.length) return;
+  if (!historicoDesfazer.length || partidaEncerrada) return;
+
+  function aplicarSnapshot(snapshot) {
+    chess.load(snapshot.fen);
+    pecasQuanticas = snapshot.pecasQuanticas;
+    gruposFlanco = snapshot.gruposFlanco || {};
+    if (snapshot.relogio) {
+      relogioPartida.segundos.w = snapshot.relogio.w;
+      relogioPartida.segundos.b = snapshot.relogio.b;
+      atualizarRelogios();
+    }
+  }
+
   historicoRefazer.push({
     fen: chess.fen(),
     pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
-    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+    relogio: {
+      w: relogioPartida.segundos.w,
+      b: relogioPartida.segundos.b
+    }
   });
+
   const snapshot = historicoDesfazer.pop();
-  chess.load(snapshot.fen);
-  pecasQuanticas = snapshot.pecasQuanticas;
-  gruposFlanco = snapshot.gruposFlanco || {};
+  aplicarSnapshot(snapshot);
   casaSelecionada = null;
 
-  // Se estiver jogando contra a IA e o lance desfeito for da máquina,
-  // desfaz também o lance do jogador para voltar ao turno humano
+  // Se estiver jogando contra a IA e agora for a vez da IA (ou seja, desfez apenas o lance do humano),
+  // desfaz também o lance anterior para voltar ao turno do jogador humano
   if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador && historicoDesfazer.length > 0) {
     historicoRefazer.push({
       fen: chess.fen(),
       pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
-      gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+      gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+      relogio: {
+        w: relogioPartida.segundos.w,
+        b: relogioPartida.segundos.b
+      }
     });
     const snapshotHumano = historicoDesfazer.pop();
-    chess.load(snapshotHumano.fen);
-    pecasQuanticas = snapshotHumano.pecasQuanticas;
-    gruposFlanco = snapshotHumano.gruposFlanco || {};
+    aplicarSnapshot(snapshotHumano);
   }
 
   renderizarTabuleiro();
@@ -705,16 +860,31 @@ function desfazerJogada() {
 }
 
 function refazerJogada() {
-  if (!historicoRefazer.length) return;
+  if (!historicoRefazer.length || partidaEncerrada) return;
+
+  function aplicarSnapshot(snapshot) {
+    chess.load(snapshot.fen);
+    pecasQuanticas = snapshot.pecasQuanticas;
+    gruposFlanco = snapshot.gruposFlanco || {};
+    if (snapshot.relogio) {
+      relogioPartida.segundos.w = snapshot.relogio.w;
+      relogioPartida.segundos.b = snapshot.relogio.b;
+      atualizarRelogios();
+    }
+  }
+
   historicoDesfazer.push({
     fen: chess.fen(),
     pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
-    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+    relogio: {
+      w: relogioPartida.segundos.w,
+      b: relogioPartida.segundos.b
+    }
   });
+
   const snapshot = historicoRefazer.pop();
-  chess.load(snapshot.fen);
-  pecasQuanticas = snapshot.pecasQuanticas;
-  gruposFlanco = snapshot.gruposFlanco || {};
+  aplicarSnapshot(snapshot);
   casaSelecionada = null;
 
   // Se estiver jogando contra a IA e a vez for da IA, refaz também o lance subsequente dela se disponível
@@ -722,12 +892,14 @@ function refazerJogada() {
     historicoDesfazer.push({
       fen: chess.fen(),
       pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
-      gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+      gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+      relogio: {
+        w: relogioPartida.segundos.w,
+        b: relogioPartida.segundos.b
+      }
     });
     const snapshotIA = historicoRefazer.pop();
-    chess.load(snapshotIA.fen);
-    pecasQuanticas = snapshotIA.pecasQuanticas;
-    gruposFlanco = snapshotIA.gruposFlanco || {};
+    aplicarSnapshot(snapshotIA);
   }
 
   renderizarTabuleiro();
@@ -735,6 +907,8 @@ function refazerJogada() {
 }
 
 function atualizarStatusEHistorial() {
+  if (partidaEncerrada) return;
+
   const textoTurno = document.getElementById('textoTurno');
   const indicadorVez = document.querySelector('.indicador-vez');
   const turno = chess.turn();
@@ -753,8 +927,11 @@ function atualizarStatusEHistorial() {
     indicadorVez.style.borderColor = turno === 'w' ? '#8e8e9c' : '#555562';
   }
 
+  const casaReiTurno = localizarRei(turno);
+  const sobAmeacaQuantica = casaReiTurno ? casaEstaAmeacada(casaReiTurno, turno) : false;
+
   if (chess.in_checkmate()) emitirAlertaStatus('⚠️ XEQUE-MATE!', 'mate', 10000);
-  else if (chess.in_check()) emitirAlertaStatus('⚠️ XEQUE!', 'xeque', 4000);
+  else if (chess.in_check() || sobAmeacaQuantica) emitirAlertaStatus('⚠️ XEQUE!', 'xeque', 4000);
 
   const historico = document.getElementById('historico');
   historico.innerHTML = '';
@@ -820,33 +997,57 @@ function iniciarRelogioSeNecessario() {
 }
 
 function atualizarRelogio() {
-  if (!relogioPartida.ativo) return;
+  if (!relogioPartida.ativo || partidaEncerrada) return;
   const agora = performance.now();
   const decorrido = (agora - relogioPartida.ultimoInstante) / 1000;
   relogioPartida.ultimoInstante = agora;
   const cor = chess.turn();
-  relogioPartida.segundos[cor] -= decorrido;
+  relogioPartida.segundos[cor] = Math.max(0, relogioPartida.segundos[cor] - decorrido);
   atualizarRelogios();
-  if (relogioPartida.segundos[cor] <= 0) finalizarPartida(cor === 'w' ? 'b' : 'w', 'tempo');
+  if (relogioPartida.segundos[cor] <= 0) {
+    finalizarPartida(cor === 'w' ? 'b' : 'w', 'tempo');
+  }
 }
 
 function finalizarPartida(vencedor, motivo) {
   if (partidaEncerrada) return;
-  if (!relogioPartida.ativo && motivo === 'tempo') return;
+  partidaEncerrada = true;
   relogioPartida.ativo = false;
-  if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
-  const texto = motivo === 'tempo' ? `Tempo esgotado. ${vencedor === 'w' ? 'Brancas' : 'Pretas'} vencem.` : `Partida encerrada: ${motivo}.`;
+  if (relogioPartida.intervalId) {
+    clearInterval(relogioPartida.intervalId);
+    relogioPartida.intervalId = null;
+  }
+  const nomeVencedor = vencedor === 'w' ? 'Brancas' : (vencedor === 'b' ? 'Pretas' : 'Ninguém');
+  let texto = '';
+  if (motivo === 'tempo') {
+    const derrotado = vencedor === 'w' ? 'Pretas' : 'Brancas';
+    texto = `Tempo esgotado! Derrota das ${derrotado}. ${nomeVencedor} vencem!`;
+  } else if (motivo === 'xeque-mate') {
+    texto = `Xeque-mate! ${nomeVencedor} vencem!`;
+  } else if (motivo === 'desistência') {
+    texto = `Partida encerrada por desistência. ${nomeVencedor} vencem.`;
+  } else {
+    texto = `Partida encerrada: ${motivo}.`;
+  }
   const textoTurno = document.getElementById('textoTurno');
   if (textoTurno) textoTurno.textContent = texto;
-  emitirAlertaStatus(texto, motivo === 'tempo' ? 'tempo' : 'mate', 9000);
+  emitirAlertaStatus(texto, motivo === 'tempo' ? 'tempo' : 'mate', 12000);
+  mostrarAviso(texto, motivo === 'tempo' ? 'tempo' : 'sucesso', 10000);
+
+  if (logPartida) {
+    logPartida.resultado = {
+      vencedor,
+      motivo,
+      texto,
+      finalizadoEm: new Date().toISOString()
+    };
+  }
+
   registrarResultado(vencedor, motivo);
+  renderizarTabuleiro();
 }
 
 function registrarResultado(vencedor, motivo) {
-  if (partidaEncerrada && motivo !== 'tempo') return;
-  partidaEncerrada = true;
-  relogioPartida.ativo = false;
-  if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
   if (vencedor) placarTorneio[vencedor]++;
   else placarTorneio.empates++;
   const torneio = configuracaoPartida?.formato === 'melhor-de-tres';
@@ -941,6 +1142,7 @@ function iniciarPartida() {
   partidaEncerrada = false;
   configurarRelogio();
   inicializarPecasQuanticas();
+  inicializarLogPartida();
   renderizarTabuleiro();
   document.getElementById('telaInicial').classList.add('oculto');
   document.getElementById('telaBoasVindas').classList.add('oculto');
@@ -1036,3 +1238,72 @@ document.getElementById('btnComecarLeitura').addEventListener('click', () => {
 });
 
 document.getElementById('btnReabrirArtigo').addEventListener('click', mostrarBoasVindas);
+
+/* =========================================================
+ * Sistema de Log e Download da Matriz de Configuração Momentânea
+ * ========================================================= */
+function inicializarLogPartida() {
+  logPartida = {
+    versao: '2.0.0-fisica-coerente',
+    modelo: 'Parecer Técnico de Coerência Física (Permutações / GHZ / Exclusão de Pauli)',
+    iniciadoEm: new Date().toISOString(),
+    configuracao: { ...configuracaoPartida },
+    corJogadorHumano: corJogador,
+    historicoLances: []
+  };
+  registrarEstadoNoLog(null, 'Posição inicial do tabuleiro');
+}
+
+function registrarEstadoNoLog(lanceObj = null, descricao = '') {
+  if (!logPartida) return;
+  const snapshotMatriz = {};
+  for (const [casa, info] of Object.entries(pecasQuanticas)) {
+    if (!info) continue;
+    snapshotMatriz[casa] = {
+      cor: info.cor,
+      colapsada: info.colapsada,
+      possibilidades: [...info.possibilidades],
+      emaranhadaComId: info.emaranhadaComId
+    };
+  }
+
+  const entrada = {
+    lanceIndex: logPartida.historicoLances.length,
+    timestamp: new Date().toISOString(),
+    turno: chess.turn(),
+    lance: lanceObj ? (lanceObj.san || `${lanceObj.from}-${lanceObj.to}`) : null,
+    detalhes: lanceObj,
+    descricao: descricao || (lanceObj ? `Lance executado: ${lanceObj.san || `${lanceObj.from}-${lanceObj.to}`}` : 'Início da partida'),
+    fen: chess.fen(),
+    relogio: {
+      w: relogioPartida.segundos.w,
+      b: relogioPartida.segundos.b
+    },
+    matrizQuanticaMomentanea: snapshotMatriz,
+    gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco))
+  };
+
+  logPartida.historicoLances.push(entrada);
+}
+
+function baixarLogPartida() {
+  if (!logPartida) {
+    mostrarAviso('Nenhum log disponível para download no momento.', 'info', 3500);
+    return;
+  }
+  const dadosStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logPartida, null, 2));
+  const linkDownload = document.createElement('a');
+  const dataFormatada = new Date().toISOString().replace(/[:.]/g, '-');
+  linkDownload.setAttribute('href', dadosStr);
+  linkDownload.setAttribute('download', `xadrez_schrodinger_log_${dataFormatada}.json`);
+  document.body.appendChild(linkDownload);
+  linkDownload.click();
+  linkDownload.remove();
+  mostrarAviso('📥 Log da partida baixado com sucesso!', 'sucesso', 4500);
+  emitirAlertaStatus('📥 Log baixado!', 'info', 3000);
+}
+
+const btnBaixarLog = document.getElementById('btnBaixarLog');
+if (btnBaixarLog) {
+  btnBaixarLog.addEventListener('click', baixarLogPartida);
+}

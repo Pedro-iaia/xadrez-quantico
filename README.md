@@ -4,31 +4,44 @@ Um tabuleiro de xadrez onde as peças de Torre, Cavalo e Bispo da primeira e da 
 
 O projeto nasceu com fins **didáticos**: ensinar noções de superposição, colapso e emaranhamento quântico através de uma metáfora lúdica e familiar (o xadrez), ao mesmo tempo em que oferece um ambiente de estudo de xadrez clássico, com reconhecimento de aberturas e dicas orientadas à fase da partida.
 
-Esta é a variante **simplificada** do modelo quântico do jogo — fundamentada em [`PARECER_TECNICO_COERENCIA_FISICA.md`](./PARECER_TECNICO_COERENCIA_FISICA.md). Uma variante mais completa e matematicamente mais rica, **"Xadrez de Schrödinger GHZ"**, está planejada como um modo à parte.
+Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA_FISICA.md`](./PARECER_TECNICO_COERENCIA_FISICA.md), arquivado formalmente na seção de documentação técnica (`docs/`).
 
 É um projeto **100% front-end**, sem build step, escrito em HTML, CSS e JavaScript puro (vanilla), pensado para ser fácil de ler, modificar e usar em sala de aula.
 
 ---
 
+## 🔬 Nota de Versionamento Oficial: Coerência Física e Ineditismo
+
+> **Versão Oficial 2.0 (Fisicamente Coerente)**  
+> Esta versão do **Xadrez de Schrödinger** está integralmente estruturada com base nas diretrizes do parecer técnico de física quântica e passa a constituir a formulação oficial (e possivelmente inédita na literatura e em jogos de tabuleiro) do jogo com **coerência física estrita**:
+> 
+> 1. **Regras de Superseleção e Conservação de Inventário**: Superposições não são geradas como variáveis binárias independentes por casa, mas sim como permutações do conjunto $\{\text{Torre}, \text{Cavalo}, \text{Bispo}\}$ para cada flanco (tripla superposição inicial $\{r, n, b\}$). Isso garante matematicamente a conservação estrita dos setores superseletivos de tipos de peças.
+> 2. **Princípio de Exclusão de Pauli para Bispos**: Restrição do espaço de Hilbert inicial a exatamente 10 hipóteses conjuntas globais por jogador (eliminando autoestados que gerariam dois bispos na mesma cor de casa).
+> 3. **Emaranhamento com Estados Tipo GHZ e Redução a Pares de Bell**: A medição por lance ou captura em uma peça sob tripla superposição projeta o estado em cascata pelo grupo, reduzindo as peças remanescentes do flanco a superposições residuais de 2 estados emaranhados.
+> 4. **Amostragem Ponderada de Born**: Eliminação de determinismo heurístico na escolha de peças em lances válidos, aplicando amostragem probabilística uniforme sobre os autovetores legais.
+> 5. **Preservação Canônica do Rei e Ameaça Quântica**: O Rei é inviolável (não pode ser capturado) e é estritamente impedido de mover-se para qualquer casa interceptada por autovetores de ataque de peças em superposição, emitindo alertas de jogada proibida.
+> 6. **Log Estruturado e Download da Matriz Momentânea**: Rastreamento auditável de cada lance com FEN clássico, tempos de relógio e a matriz completa das configurações quânticas para inspeção acadêmica e científica.
+
+---
+
 ## ✨ Funcionalidades
 
-- **Modo Quântico**: Rei, Dama e Peões são sempre clássicos; as Torres, Cavalos e Bispos de cada flanco (lado da Dama e lado do Rei) formam, juntos, um único sistema quântico de 10 configurações possíveis — nunca duas peças do mesmo tipo, e os dois Bispos sempre em cores de casa diferentes.
+- **Modo Quântico Fisicamente Coerente**: Rei, Dama e Peões são sempre clássicos; as Torres, Cavalos e Bispos de cada flanco formam um único sistema quântico com tripla superposição inicial $\{r, n, b\}$ e 10 configurações possíveis — com os dois Bispos sempre em cores de casa complementares.
 - **Modo Clássico**: xadrez tradicional, útil para comparar com o modo quântico ou para quem está aprendendo as regras do jogo.
-- **Emaranhamento com efeito cascata**: revelar uma peça de um flanco pode, de uma só vez, determinar o tipo de outras peças do mesmo flanco — e até do flanco oposto, por causa da restrição de cor entre os Bispos.
+- **Emaranhamento com efeito cascata**: revelar uma peça de um flanco pode, de uma só vez, determinar o tipo de outras peças do mesmo flanco — e até do flanco oposto, pela restrição de cor entre os Bispos.
 - **Capturas como medição**: capturar uma peça adversária ainda em superposição também revela o tipo dela (e propaga a revelação), não apenas movê-la.
-- **Roque fisicamente consistente**: só é possível enquanto a peça do canto ainda pode ser uma Torre; se ela já revelou ser Cavalo ou Bispo, o roque para aquele lado fica indisponível.
+- **Proteção do Rei contra Xeque Quântico**: detecção de raio de ameaça por qualquer possibilidade quântica adversária, impedindo que o Rei entre em casas ameaçadas e proibindo terminantemente a captura do Rei.
+- **Roque fisicamente consistente**: só é possível enquanto a peça do canto ainda pode ser uma Torre e as casas de passagem não estiverem sob ameaça quântica.
+- **Histórico e Navegação Fiel**: botões para desfazer (↺) e refazer (↻) lances com restauração precisa do estado quântico e preservação de todas as peças (inclusive após roques).
+- **Relógio de Partida e Fim de Jogo**: cronômetros com cravamento em 00:00 e encerramento com bloqueio imediato do tabuleiro contra lances pós-jogo.
+- **Log da Partida e Matriz Momentânea (Download JSON)**: botão dedicado para exportar o histórico completo com a matriz de probabilidades e estados quânticos a cada lance.
 - **Adversário automatizado (IA)**: com três níveis; nos níveis médio/difícil no modo clássico, usa busca *minimax* com poda alfa-beta rodando em *Web Worker* (não trava a interface).
 - **Modo dois jogadores** (mesmo dispositivo).
-- **Relógios de partida** com predefinições (bullet, blitz, blitz Fischer, rápida, clássica) e opção personalizada.
 - **Formato "Melhor de três"** com placar de torneio e cômputo correto de desistências.
-- **Painel de estudo** com:
-  - Reconhecimento de **aberturas clássicas** (Siciliana, Francesa, Caro-Kann, Espanhola, Italiana, Gambito da Dama, Índia do Rei, etc.), identificadas por casas de origem/destino (robusto ao modo quântico) e apontando o próximo lance da teoria.
-  - **Dicas contextuais** por fase da partida (abertura, meio-jogo, final) quando a posição sai do livro de aberturas.
-  - Aviso específico quando há peças ainda emaranhadas no tabuleiro.
-- **Avisos discretos** (toasts) ao lado do tabuleiro para movimentos inválidos, colapsos e resultados — sem bloquear a interface com `alert()`.
-- **Totalmente responsivo**: tabuleiro fluido (`aspect-ratio`), painel lateral que se reorganiza abaixo do tabuleiro em telas estreitas, e alvos de toque confortáveis para celular/tablet.
-- Rótulos discretos de coordenadas (`a`–`h`, `1`–`8`) no próprio tabuleiro, seguindo a convenção FIDE (branco na direita, dama na sua cor).
-- **Página de boas-vindas** com um artigo introdutório sobre mecânica quântica (superposição, colapso, emaranhamento) para quem chega sem nenhuma base no assunto, com opção de não mostrar novamente.
+- **Painel de estudo** com reconhecimento de aberturas clássicas e dicas contextuais.
+- **Avisos discretos e alertas piscantes** centrais para xeque, colapsos e movimentos proibidos.
+- **Totalmente responsivo**: tabuleiro fluido (`aspect-ratio`) seguindo a convenção oficial FIDE.
+- **Página de boas-vindas** com artigo introdutório sobre mecânica quântica (superposição, colapso, emaranhamento) para quem chega sem nenhuma base no assunto, com opção de não mostrar novamente.
 
 ---
 
@@ -84,7 +97,7 @@ Depois acesse `http://localhost:8000`.
 
 | Documento | Conteúdo |
 |---|---|
-| [`PARECER_TECNICO_COERENCIA_FISICA.md`](./PARECER_TECNICO_COERENCIA_FISICA.md) | Fundamentação física do modelo quântico: por que as regras são o que são, com a matemática por trás. |
+| [`PARECER_TECNICO_COERENCIA_FISICA.md`](./docs/PARECER_TECNICO_COERENCIA_FISICA.md) | Fundamentação física do modelo quântico: por que as regras são o que são, com a matemática por trás. |
 | [`PLANO_DE_EXPANSAO.md`](./docs/PLANO_DE_EXPANSAO.md) | O quê construir: roadmap do motor de IA e do módulo didático. |
 | [`PROTOCOLO_DE_COLABORACAO.md`](./docs/PROTOCOLO_DE_COLABORACAO.md) | Como colaborar: relato de bugs, estresse-teste, fluxo de PR, sugestões de usuários. |
 | [`DEPENDENCIAS.md`](./docs/DEPENDENCIAS.md) | O que vem de fora: `chess.js`, ícones de peças, futuras engines — licenças e como contribuir de volta para elas. |
