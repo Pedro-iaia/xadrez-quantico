@@ -20,6 +20,8 @@ Hoje o `script.js` já tem duas camadas:
 
 Ou seja: a "opção 1" do brainstorming já existe como esqueleto, mas **só entende xadrez clássico** — no Modo Quântico ela trata as peças pelo tipo que `chess.js` enxerga no momento, sem saber que aquilo é uma superposição. Esse é o ponto de partida de tudo o que vem a seguir.
 
+> ⚠️ **Lacuna que ficou mais evidente após a implementação da variante GHZ.** Com duas variantes quânticas agora disponíveis — Simplificada (10 hipóteses conjuntas por jogador) e GHZ (20 hipóteses) — essa mesma IA joga de forma idêntica nas duas, porque não enxerga hipótese nenhuma: opera apenas sobre a posição clássica momentânea do `chess.js`. Isso significa que o espaço de incerteza dobrou (de 10 para 20 hipóteses por jogador) sem que o adversário automatizado ganhasse qualquer capacidade adicional de lidar com ele. Esta é, no estado atual do projeto, a lacuna de maior prioridade prática: qualquer um dos itens 1.2 ou 1.3 abaixo passaria a ter um efeito **mensuravelmente maior** na variante GHZ do que na Simplificada, justamente por haver mais incerteza para explorar — o que também torna a GHZ um ambiente de teste melhor para demonstrar, empiricamente, o valor de um motor probabilisticamente consciente (ver a atualização correspondente em `GUIA_DE_ESTUDOS_IA.md`).
+
 ### 1.1 Comentários sobre as 4 opções propostas
 
 | # | Opção | Comentário |
@@ -78,10 +80,14 @@ Se, mesmo assim, o MCTS "puro" do brainstorming for implementado, sugiro não us
 ### 1.8 Ordem de prioridade sugerida
 
 1. Melhorar a função de avaliação do minimax existente (item 1.4) — ganho rápido, sem mudar arquitetura.
-2. Implementar PIMC/determinização (item 1.3) reaproveitando o minimax atual — dá ao Modo Quântico um adversário de verdade pela primeira vez.
+2. Implementar PIMC/determinização (item 1.3) reaproveitando o minimax atual — dá ao Modo Quântico um adversário de verdade pela primeira vez, e deve ser validado nas **duas variantes** (Simplificada e GHZ), não só na atual. A GHZ, com o dobro de hipóteses por jogador, é o ambiente onde o ganho de um motor probabilístico deve ser mais fácil de medir — ver item 1.9.
 3. (Opcional) Expectiminimax (item 1.2) como alternativa mais "exata" ao PIMC quando há poucos grupos emaranhados ativos — bom projeto de comparação/benchmark entre as duas abordagens.
 4. (Opcional) Trocar o avaliador interno do PIMC pelo Stockfish via WASM (item 1.5).
 5. (Moonshot) MCTS guiado, RL por auto-jogo, variante customizada no Fairy-Stockfish (itens 1.6/1.7).
+
+### 1.9 Benchmark sugerido: Simplificada vs. GHZ como experimento controlado
+
+Antes de declarar qualquer motor novo "melhor", vale rodar o mesmo experimento nas duas variantes e comparar o *tamanho do ganho*, não só o ganho em si: jogar N partidas do motor probabilístico contra o minimax clássico na variante Simplificada, repetir na GHZ, e comparar as taxas de vitória. A expectativa, se a hipótese central deste plano estiver correta, é que a vantagem do motor probabilístico seja **maior na GHZ** — mais hipóteses vivas por mais tempo é exatamente a condição em que ignorar a incerteza (como o minimax atual faz) deveria custar mais caro. Se essa diferença não aparecer na prática, é um sinal de que a implementação do PIMC/expectiminimax tem algum problema, não apenas um resultado nulo a ser descartado.
 
 ---
 
@@ -165,6 +171,49 @@ Esse esquema reaproveita literalmente a mesma estrutura de `pecasQuanticas` que 
 ### 2.7 Conexão com o painel de estudo já existente
 
 Quando o livro de aberturas (`aberturasClassicas`) já implementado identificar uma abertura, oferecer um link "Praticar esse tema" apontando para um desafio relacionado na coleção correspondente, se existir — conectando o que já temos hoje com o novo módulo, em vez de tratá-los como dois sistemas paralelos e desconectados.
+
+---
+
+## Parte 3 — Formalização de Estado, Log e Perspectivas Futuras
+
+### 3.1 Instantâneos do tabuleiro como matrizes de estado — e uma nota de cautela sobre a analogia com o Princípio da Incerteza
+
+Uma ideia recorrente em discussões sobre este projeto é tratar cada instantâneo do tabuleiro — a configuração completa após cada lance — como uma **matriz de estado**, e a sequência de instantâneos ao longo de uma partida como a trajetória de um **sistema dinâmico discreto**. Vale registrar essa possibilidade formalmente, junto com uma ressalva necessária sobre até onde a analogia com o Princípio da Incerteza de Heisenberg se sustenta — porque a resposta correta aqui é "só parcialmente", e vale a pena entender por quê antes de qualquer implementação.
+
+**O que é diretamente aproveitável.** Cada instantâneo do flanco pode ser representado como um vetor de estado num espaço de dimensão finita, cuja base é o conjunto de hipóteses ainda vivas (10 ou 20, a depender da variante — ver `PARECER_TECNICO_COERENCIA_FISICA.md`). A sequência desses vetores, um por lance, forma uma **cadeia de Markov absorvente**: cada medição (lance ou captura) aplica uma operação de projeção e renormalização sobre o vetor de probabilidades, e o número de hipóteses vivas é não-crescente ao longo do tempo até a absorção total (todas as casas do flanco colapsadas). Essa é uma estrutura matemática precisa, bem estabelecida, e diretamente implementável — não é necessário invocar mecânica quântica para justificá-la, ela já é correta como um sistema dinâmico estocástico discreto clássico.
+
+Se o objetivo é quantificar "quanta incerteza resta no tabuleiro" a cada lance — o que parece ser a motivação por trás da analogia com um princípio de incerteza —, a grandeza matematicamente correta para essa finalidade é a **entropia de Shannon** da distribuição de probabilidade sobre as hipóteses vivas de cada grupo de flanco, ou, numa formulação mais próxima do formalismo quântico completo, a **entropia de von Neumann** de uma matriz densidade construída a partir dessas mesmas hipóteses. Essa entropia decresce monotonicamente (ou permanece constante) a cada medição, nunca aumenta — uma propriedade que reflete corretamente a ideia de "informação sendo extraída do sistema", sem depender de nenhuma analogia adicional.
+
+**Onde a analogia com Heisenberg não se aplica diretamente — e por que isso importa.** O Princípio da Incerteza de Heisenberg é um resultado matemático específico sobre pares de observáveis representados por operadores que não comutam (posição e momento sendo o exemplo canônico): não é uma afirmação genérica sobre "existir incerteza", mas sobre a impossibilidade de conhecer simultaneamente, com precisão arbitrária, duas grandezas conjugadas — e essa impossibilidade só surge quando os operadores associados às duas medições não comutam. No modelo atual, cada "medição" de uma peça é uma projeção sobre uma única base fixa (o tipo da peça: Torre, Cavalo ou Bispo) — não existem, no sistema atual, duas bases de medição incompatíveis competindo entre si. Não há, portanto, uma relação de incerteza de Heisenberg genuína a implementar hoje — apenas incerteza epistêmica clássica (não sabemos qual hipótese é a verdadeira) combinada com colapso probabilístico ao estilo do postulado de projeção, o que já é fisicamente interessante por si só, sem precisar do rótulo "Heisenberg" para justificá-lo.
+
+Essa ressalva não fecha a porta para o futuro: uma extensão genuinamente especulativa e interessante para uma variante ainda mais avançada seria definir uma **segunda base de medição, incompatível com a base de tipo**, para o mesmo objeto quântico — por exemplo, uma "pergunta" sobre a relação de emaranhamento de uma peça com sua parceira de flanco, formulada de um jeito que não comute algebricamente com a pergunta "qual é o seu tipo". Se essa segunda base puder ser definida de forma que os operadores associados não comutem, uma relação de incerteza genuína emergiria naturalmente da álgebra, e não por analogia forçada. Isso permanece, por ora, uma direção de pesquisa aberta e não uma funcionalidade a implementar — mas vale registrá-la aqui para quem quiser explorar esse caminho.
+
+**Recomendação prática:** implementar o rastreamento de entropia de Shannon por grupo de flanco (um número por lance, fácil de calcular a partir das hipóteses vivas já mantidas em `gruposFlanco`) como uma métrica visualizável — por exemplo, um gráfico de "incerteza restante" ao longo da partida no painel de estudo. Isso é matematicamente honesto, computacionalmente trivial de adicionar, e entrega a mesma experiência pedagógica que motivou a ideia original (ver a incerteza "diminuir" visivelmente conforme a partida avança), sem apoiar-se num princípio físico que não se aplica ao sistema como está construído hoje.
+
+### 3.2 Expansão do sistema de log: matrizes 8x8 com formalismo de peça e status
+
+O log atual (`registrarEstadoNoLog`, exportado como JSON) já guarda o FEN clássico e o dicionário `pecasQuanticas` a cada lance. Uma extensão natural — e diretamente conectada à ideia da Seção 3.1 de tratar cada instantâneo como uma matriz de estado — é acrescentar, a cada entrada do log, uma representação explícita em **matriz 8×8**, mais um **vetor de status** separado, em vez de depender apenas do dicionário indexado por casa.
+
+**Proposta de esquema para a matriz 8×8.** Cada célula guarda um valor inteiro codificando peça, cor e situação quântica, por exemplo:
+
+- `0`: casa vazia.
+- Inteiros de `±1` a `±6`: peça clássica definida (sinal = cor; magnitude = tipo, na ordem Peão/Cavalo/Bispo/Torre/Dama/Rei) — o mesmo tipo de codificação numérica já comum em motores de xadrez para representação compacta de tabuleiro.
+- Um valor especial (por exemplo, `±7`, `±8`, `±9`, mapeando para "ainda pode ser N/B", "ainda pode ser R/N/B" etc., ou, de forma mais explícita, um segundo array paralelo de mesma dimensão contendo o array `possibilidades` de cada casa não-colapsada) para casas em superposição — a escolha entre um código numérico compacto e um array paralelo mais verboso é uma decisão de engenharia a se tomar na implementação, não antecipada aqui.
+
+**Proposta de esquema para o vetor de status**, complementar à matriz, e não embutido nela (mantendo a matriz posicional "limpa", só sobre o que ocupa cada casa):
+
+```js
+{
+  turno: 'w' | 'b',              // de quem é a vez
+  situacao: 'normal' | 'xeque' | 'xeque-mate' | 'afogamento' | 'empate',
+  ladoEmXeque: 'w' | 'b' | null,
+  fimDePartida: boolean,
+  numeroLance: number,
+  relogio: { w: number, b: number },  // segundos restantes, se houver
+}
+```
+
+Esse par (matriz 8×8 + vetor de status) a cada lance é exatamente a trajetória discreta do sistema dinâmico descrito na Seção 3.1 — cada entrada do log passa a ser um par (estado, metadado), o que viabiliza, sem trabalho adicional de modelagem, tanto o cálculo de entropia por lance sugerido ali quanto qualquer uso futuro de aprendizado de máquina sobre o histórico de partidas (item 1.7 da Parte 1), já que o formato de matriz posicional fixa é o formato de entrada padrão para redes neurais convolucionais aplicadas a jogos de tabuleiro.
 
 ---
 

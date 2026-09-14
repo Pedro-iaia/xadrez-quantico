@@ -28,7 +28,7 @@ Objetivo: entender por que o xadrez quântico deste projeto não é só "minimax
 
 - **Artigo de referência**: Browne et al., *"A Survey of Monte Carlo Tree Search Methods"* (2012) — o levantamento mais citado sobre MCTS, explica bem por que ele lida naturalmente com incerteza.
 - **Conceito-chave para estudar**: *determinização* / *Perfect Information Monte Carlo* — a técnica usada em jogos de cartas e no item 1.3 do plano de expansão. Procure por esses termos junto com "imperfect information games" para achar material.
-- **Prática neste projeto**: implemente o PIMC do item 1.3 — é o exercício mais direto para sair da teoria e sentir na prática o que "informação oculta" significa para um algoritmo de busca.
+- **Prática neste projeto**: implemente o PIMC do item 1.3 — é o exercício mais direto para sair da teoria e sentir na prática o que "informação oculta" significa para um algoritmo de busca. Desde que a variante **GHZ** foi implementada (20 hipóteses conjuntas por jogador, contra 10 da variante Simplificada), este projeto ganhou um ambiente de teste ainda melhor para esse exercício especificamente: como a IA atual não enxerga hipótese alguma, o espaço de incerteza maior da GHZ deveria tornar o ganho de um motor probabilístico mais fácil de medir, não mais difícil — se você implementar o PIMC e o ganho contra o minimax clássico não for visivelmente maior na GHZ do que na Simplificada, isso é, em si, um sinal de que algo na implementação precisa de revisão (ver item 1.9 do `PLANO_DE_EXPANSAO.md`).
 
 ### 3. Aprendizado por reforço e redes neurais em jogos
 
@@ -48,7 +48,7 @@ Ler é necessário, mas a trilha só "cola" se você comparar versões na práti
 
 1. Escolha um item pequeno do `PLANO_DE_EXPANSAO.md` (comece pela seção 1.4, avaliação de posição).
 2. Implemente uma versão simples.
-3. **Meça, não assuma**: rode várias partidas do seu motor novo contra o antigo (automatize isso — os dois são só funções JavaScript, dá para rodar centenas de partidas em segundos sem interface gráfica) e compare a taxa de vitórias.
+3. **Meça, não assuma**: rode várias partidas do seu motor novo contra o antigo (automatize isso — os dois são só funções JavaScript, dá para rodar centenas de partidas em segundos sem interface gráfica) e compare a taxa de vitórias. Se a mudança tiver relação com incerteza quântica, repita a mesma medição nas duas variantes (Simplificada e GHZ) e compare o *tamanho da diferença* entre elas, não só o resultado isolado de cada uma — é um jeito simples de verificar se sua implementação está de fato explorando a informação que deveria estar explorando.
 4. Documente o que mudou e por quê, e abra um PR seguindo o [`PROTOCOLO_DE_COLABORACAO.md`](./PROTOCOLO_DE_COLABORACAO.md).
 
 Esse ciclo — hipótese, implementação pequena, medição, comparação — **é** a prática de pesquisa em IA de jogos, só que em escala de fim de semana em vez de escala de tese.
