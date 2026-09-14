@@ -803,3 +803,27 @@ h1 {
     padding: 4px 6px;
   }
 }
+
+.legenda-campo {
+  display: block;
+  font-size: 0.73rem;
+  color: var(--texto-fraco);
+  margin-top: 4px;
+  line-height: 1.25;
+}
+
+.rodape-creditos {
+  text-align: center;
+  padding: 24px 12px 16px;
+  font-size: 0.75rem;
+  color: var(--texto-fraco);
+}
+
+.rodape-creditos a {
+  color: var(--cyan);
+  text-decoration: underline;
+}
+
+.rodape-creditos a:hover {
+  color: var(--cyan-forte);
+}

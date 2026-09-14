@@ -10,20 +10,20 @@ const nomesPecas = {
 const colunas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const svgPecas = {
   w: {
-    p: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
-    n: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
-    b: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
-    r: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
-    q: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
-    k: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg'
+    p: 'assets/pieces/w_p.svg',
+    n: 'assets/pieces/w_n.svg',
+    b: 'assets/pieces/w_b.svg',
+    r: 'assets/pieces/w_r.svg',
+    q: 'assets/pieces/w_q.svg',
+    k: 'assets/pieces/w_k.svg'
   },
   b: {
-    p: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
-    n: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
-    b: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
-    r: 'https://commons.wikimedia.org/wiki/Special:FilePath/Chess_rdt45.svg',
-    q: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
-    k: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg'
+    p: 'assets/pieces/b_p.svg',
+    n: 'assets/pieces/b_n.svg',
+    b: 'assets/pieces/b_b.svg',
+    r: 'assets/pieces/b_r.svg',
+    q: 'assets/pieces/b_q.svg',
+    k: 'assets/pieces/b_k.svg'
   }
 };
 let pecasQuanticas = {};
@@ -227,15 +227,20 @@ function atualizarDidatica() {
 }
 
 /* =========================================================
- * Xadrez de Schrödinger — núcleo quântico (variante simplificada)
+ * Xadrez de Schrödinger — núcleo quântico
  *
  * Rei, Dama e Peões são sempre clássicos (Regra 1 do parecer técnico).
  * Cada flanco (Torre/Cavalo/Bispo de um lado) é um único sistema quântico
- * com 4 permutações possíveis — a identidade clássica mais as 3 trocas de
- * um par — em vez de peças independentes. Os dois flancos de um mesmo
- * jogador são conjuntamente restritos: os bispos de flancos opostos nunca
- * podem colapsar para a mesma cor de casa (o análogo, neste jogo, do
- * Princípio de Exclusão de Pauli). Ver PARECER_TECNICO_COERENCIA_FISICA.md.
+ * cujo espaço de permutações depende da variante escolhida:
+ *   - "simplificada": identidade + as 3 trocas de um par (4 permutações
+ *     por flanco, 10 hipóteses conjuntas válidas de 16).
+ *   - "ghz": o grupo simétrico S3 completo (6 permutações por flanco,
+ *     incluindo os dois ciclos de 3), 20 hipóteses conjuntas válidas de 36
+ *     — a formulação física integral do parecer.
+ * Em ambas, os dois flancos de um mesmo jogador são conjuntamente
+ * restritos: os bispos de flancos opostos nunca podem colapsar para a
+ * mesma cor de casa (o análogo, neste jogo, do Princípio de Exclusão de
+ * Pauli). Ver PARECER_TECNICO_COERENCIA_FISICA.md.
  * ========================================================= */
 
 function corDaCasa(casa) {
@@ -244,24 +249,37 @@ function corDaCasa(casa) {
   return (coluna + linha) % 2 === 0 ? 'escura' : 'clara';
 }
 
-// As 4 permutações "identidade + uma troca" de um flanco de 3 casas.
-function gerarPermutacoesFlanco(casaEsq, casaMeio, casaDir, tipoEsq, tipoMeio, tipoDir) {
-  return [
+// As permutações possíveis de um flanco de 3 casas. Na variante
+// "simplificada", apenas a identidade clássica + as 3 trocas de um par (4
+// no total). Na variante "ghz", o grupo simétrico S3 completo — inclui
+// também os dois ciclos de 3 — totalizando as 6 permutações possíveis,
+// conforme a formulação integral do PARECER_TECNICO_COERENCIA_FISICA.md.
+function gerarPermutacoesFlanco(casaEsq, casaMeio, casaDir, tipoEsq, tipoMeio, tipoDir, variante = 'simplificada') {
+  const base = [
     { [casaEsq]: tipoEsq, [casaMeio]: tipoMeio, [casaDir]: tipoDir },   // identidade
     { [casaEsq]: tipoMeio, [casaMeio]: tipoEsq, [casaDir]: tipoDir },   // troca esq↔meio
     { [casaEsq]: tipoDir, [casaMeio]: tipoMeio, [casaDir]: tipoEsq },   // troca esq↔dir
     { [casaEsq]: tipoEsq, [casaMeio]: tipoDir, [casaDir]: tipoMeio }    // troca meio↔dir
   ];
+  if (variante !== 'ghz') return base;
+  return [
+    ...base,
+    { [casaEsq]: tipoMeio, [casaMeio]: tipoDir, [casaDir]: tipoEsq },   // ciclo (esq→meio→dir→esq)
+    { [casaEsq]: tipoDir, [casaMeio]: tipoEsq, [casaDir]: tipoMeio }    // ciclo inverso
+  ];
 }
 
-// Gera o grupo quântico de um jogador: as 10 hipóteses conjuntas (de 16
-// possíveis) em que os bispos dos dois flancos caem em cores diferentes.
-function gerarGrupoFlancos(cor) {
+// Gera o grupo quântico de um jogador: as hipóteses conjuntas em que os
+// bispos dos dois flancos caem em cores diferentes (Regra 4 do parecer).
+// Variante "simplificada": 4 permutações por flanco → 10 hipóteses válidas
+// (de 16). Variante "ghz": 6 permutações por flanco (S3 completo) → 20
+// hipóteses válidas (de 36) — o modelo físico integral.
+function gerarGrupoFlancos(cor, variante = 'simplificada') {
   const linha = cor === 'w' ? '1' : '8';
   const casasDama = [`a${linha}`, `b${linha}`, `c${linha}`];
   const casasRei = [`f${linha}`, `g${linha}`, `h${linha}`];
-  const permsDama = gerarPermutacoesFlanco(...casasDama, 'r', 'n', 'b');
-  const permsRei = gerarPermutacoesFlanco(...casasRei, 'b', 'n', 'r');
+  const permsDama = gerarPermutacoesFlanco(...casasDama, 'r', 'n', 'b', variante);
+  const permsRei = gerarPermutacoesFlanco(...casasRei, 'b', 'n', 'r', variante);
 
   const corDoBispo = (perm, casas) => corDaCasa(casas.find(c => perm[c] === 'b'));
 
@@ -273,7 +291,7 @@ function gerarGrupoFlancos(cor) {
       }
     }
   }
-  return { cor, casas: [...casasDama, ...casasRei], hipoteses };
+  return { cor, casas: [...casasDama, ...casasRei], hipoteses, variante };
 }
 
 // Deriva o estado exibível de uma casa a partir das hipóteses ainda vivas do grupo.
@@ -390,8 +408,10 @@ function inicializarPecasQuanticas() {
       colapsada: 'q',
       emaranhadaComId: null
     };
-    // Flancos: sistema quântico conjunto de 10 hipóteses (Regras 2-4).
-    const grupo = gerarGrupoFlancos(cor);
+    // Flancos: sistema quântico conjunto (Regras 2-4). A variante
+    // ("simplificada" ou "ghz") define quantas permutações cada flanco
+    // permite — ver gerarGrupoFlancos.
+    const grupo = gerarGrupoFlancos(cor, configuracaoPartida?.variante || 'simplificada');
     gruposFlanco[cor] = grupo;
     atualizarPecasDoGrupo(grupo);
   }
@@ -958,7 +978,22 @@ function atualizarStatusEHistorial() {
     if (indice % 2 === 0) {
       const linha = document.createElement('div');
       linha.className = 'jogada-linha';
-      linha.innerHTML = `<span class="jogada-num">${Math.floor(indice / 2) + 1}.</span><span class="jogada-lance">${lance}</span><span class="jogada-lance">${chess.history()[indice + 1] || ''}</span>`;
+
+      const spanNum = document.createElement('span');
+      spanNum.className = 'jogada-num';
+      spanNum.textContent = `${Math.floor(indice / 2) + 1}.`;
+
+      const spanBrancas = document.createElement('span');
+      spanBrancas.className = 'jogada-lance';
+      spanBrancas.textContent = lance;
+
+      const spanPretas = document.createElement('span');
+      spanPretas.className = 'jogada-lance';
+      spanPretas.textContent = chess.history()[indice + 1] || '';
+
+      linha.appendChild(spanNum);
+      linha.appendChild(spanBrancas);
+      linha.appendChild(spanPretas);
       historico.appendChild(linha);
     }
   });
@@ -1096,7 +1131,8 @@ function escolherLanceFacil() {
 
 function escolherLanceComMinimax(profundidade) {
   return new Promise(resolve => {
-    const codigo = ` importScripts('https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js'); const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); } function buscar(jogo, profundidade, alpha, beta, maximizando) { if (!profundidade || jogo.game_over()) return avaliar(jogo); let melhor = maximizando ? -Infinity : Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando); jogo.undo(); melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor); if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor); if (beta <= alpha) break; } return melhor; } self.onmessage = evento => { const jogo = new Chess(evento.data.fen); let melhorLance = null; let melhorValor = -Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false); jogo.undo(); if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; } } self.postMessage(melhorLance); };`;
+    const chessScriptUrl = new URL('vendor/chess.min.js', location.href).href;
+    const codigo = ` importScripts('${chessScriptUrl}'); const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); } function buscar(jogo, profundidade, alpha, beta, maximizando) { if (!profundidade || jogo.game_over()) return avaliar(jogo); let melhor = maximizando ? -Infinity : Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando); jogo.undo(); melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor); if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor); if (beta <= alpha) break; } return melhor; } self.onmessage = evento => { const jogo = new Chess(evento.data.fen); let melhorLance = null; let melhorValor = -Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false); jogo.undo(); if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; } } self.postMessage(melhorLance); };`;
     const worker = new Worker(URL.createObjectURL(new Blob([codigo], {
       type: 'text/javascript'
     })));
@@ -1127,6 +1163,7 @@ function agendarLanceDaIA() {
 function iniciarPartida() {
   configuracaoPartida = {
     modo: document.getElementById('configModo').value,
+    variante: document.getElementById('configVariante')?.value || 'simplificada',
     oponente: document.getElementById('configOponente').value,
     nivel: document.getElementById('configNivel').value,
     relogio: document.getElementById('configRelogio').value,
@@ -1177,6 +1214,14 @@ document.getElementById('configRelogio').addEventListener('change', evento => {
   const personalizado = evento.target.value === 'personalizada';
   document.getElementById('tempoPersonalizado').classList.toggle('oculto', !personalizado);
   document.getElementById('incrementoPersonalizado').classList.toggle('oculto', !personalizado);
+});
+
+document.getElementById('configModo').addEventListener('change', evento => {
+  const modoQuantico = evento.target.value === 'quantico';
+  const campoVariante = document.getElementById('campoVariante');
+  if (campoVariante) campoVariante.classList.toggle('oculto', !modoQuantico);
+  const notaNivelIA = document.getElementById('notaNivelIA');
+  if (notaNivelIA) notaNivelIA.classList.toggle('oculto', !modoQuantico);
 });
 
 document.getElementById('btnComecar').addEventListener('click', () => {
@@ -1263,8 +1308,11 @@ document.getElementById('btnReabrirArtigo').addEventListener('click', mostrarBoa
  * ========================================================= */
 function inicializarLogPartida() {
   logPartida = {
-    versao: '2.0.0-fisica-coerente',
-    modelo: 'Parecer Técnico de Coerência Física (Permutações / GHZ / Exclusão de Pauli)',
+    versao: '2.1.0-fisica-coerente',
+    modelo: configuracaoPartida?.variante === 'ghz'
+      ? 'Parecer Técnico de Coerência Física — Variante GHZ (S3 completo, 20 hipóteses)'
+      : 'Parecer Técnico de Coerência Física — Variante Simplificada (10 hipóteses)',
+    variante: configuracaoPartida?.modo === 'quantico' ? (configuracaoPartida?.variante || 'simplificada') : null,
     iniciadoEm: new Date().toISOString(),
     configuracao: { ...configuracaoPartida },
     corJogadorHumano: corJogador,

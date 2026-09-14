@@ -9,7 +9,7 @@
     content="Xadrez de Schrödinger: jogo de xadrez quântico com superposição, emaranhamento, IA Minimax e fins didáticos rodando 100% no navegador.">
   <meta name="keywords"
     content="chess, quantum-computing, education, javascript, minimax, schrodinger-chess, xadrez-quantico, game-ai">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="vendor/chess.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -63,6 +63,9 @@
       <p>Xadrez já é, há séculos, uma ferramenta para treinar raciocínio estratégico. Ao somar superposição, colapso e
         emaranhamento às regras clássicas, este projeto tenta usar essa mesma familiaridade para tornar conceitos
         abstratos da física mais concretos e jogáveis — sem trocadilhos com felinos hipotéticos, prometemos. 😉</p>
+      <p><strong>Duas variantes</strong> estão disponíveis na tela de configuração: a <strong>Simplificada</strong>,
+        recomendada para o primeiro contato, e a <strong>GHZ</strong>, o modelo físico completo — com um espaço de
+        incerteza inicial maior e cascatas de colapso mais ricas entre as peças de cada flanco.</p>
       <p>Boa partida — e bons estudos, tanto de xadrez quanto de física quântica!</p>
     </article>
     <label class="checkbox-linha">
@@ -82,6 +85,13 @@
           <option value="classico">Clássico</option>
         </select>
       </label>
+      <label id="campoVariante">
+        Variante quântica
+        <select id="configVariante">
+          <option value="simplificada" selected>Simplificada (4 permutações por flanco)</option>
+          <option value="ghz">GHZ — modelo físico completo (6 permutações por flanco)</option>
+        </select>
+      </label>
       <label>
         Oponente
         <select id="configOponente">
@@ -89,13 +99,14 @@
           <option value="humano">Dois jogadores</option>
         </select>
       </label>
-      <label>
+      <label id="campoNivelIA">
         Nível da IA
         <select id="configNivel">
           <option value="facil">Fácil</option>
           <option value="medio">Médio</option>
           <option value="dificil" selected>Difícil</option>
         </select>
+        <small id="notaNivelIA" class="legenda-campo">Minimax no modo clássico · No quântico: lances válidos</small>
       </label>
       <label>
         Modalidade
@@ -176,7 +187,10 @@
       </div>
     </div>
   </section>
-  <script src="script.js?v=20260913"></script>
+  <footer class="rodape-creditos">
+    <p>Peças em SVG por <a href="https://commons.wikimedia.org/wiki/User:Cburnett" target="_blank" rel="noopener">Cburnett</a> (CC BY-SA 3.0 / BSD) · Regras clássicas por <a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener">chess.js</a> (BSD-2-Clause) · Projeto sob licença MIT.</p>
+  </footer>
+  <script src="script.js?v=20260914"></script>
 </body>
 
 </html>

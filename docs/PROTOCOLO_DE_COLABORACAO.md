@@ -127,6 +127,7 @@ Quem revisar (mantenedor ou outro colaborador) deve confirmar:
 - [ ] A funcionalidade foi testada seguindo a seção 5 (o autor do PR deve descrever o que testou, não só dizer "funciona").
 - [ ] Não quebra nenhum dos três modos (Quântico solo, Clássico solo, dois jogadores).
 - [ ] Não introduz dependências novas sem discutir antes (ver [`DEPENDENCIAS.md`](./DEPENDENCIAS.md)).
+- [ ] **Segurança e Privacidade**: Nenhuma dependência externa adicionada via CDN remota; nenhum cookie ou requisição de rastreamento de terceiros; código 100% funcional offline; sem uso de interpolação `innerHTML` com variáveis ou dados não sanitizados; validação estrita de formatos de entrada (ex.: coordenadas `/^[a-h][1-8]$/`).
 - [ ] Mantém atribuições de licença de bibliotecas/assets de terceiros.
 - [ ] Atualiza a documentação relevante (`README.md`, `PLANO_DE_EXPANSAO.md`) se o comportamento do usuário muda.
 - [ ] Segue o estilo de nomenclatura já usado no projeto (nomes de função e variável em português, consistente com o restante do código).

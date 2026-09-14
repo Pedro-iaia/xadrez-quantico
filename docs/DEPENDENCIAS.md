@@ -6,12 +6,13 @@ Além de explicar cada dependência, a proposta aqui é mostrar que **usar uma b
 
 ---
 
-## 1. `chess.js` (versão 0.10.3, via cdnjs)
+## 1. `chess.js` (versão 0.10.3, auto-hospedada em `vendor/chess.min.js`)
 
 **O que faz**: é a única fonte de verdade sobre as regras do xadrez clássico — geração e validação de lances, detecção de xeque/xeque-mate/empate, notação FEN e SAN/PGN. Toda a camada quântica do projeto (`pecasQuanticas`) é construída **por cima** dele; o `chess.js` nunca "sabe" que existe superposição.
 
 - **Repositório**: [github.com/jhlywa/chess.js](https://github.com/jhlywa/chess.js)
 - **Licença**: BSD-2-Clause (permissiva, compatível com o MIT deste projeto).
+- **Hospedagem local**: o arquivo `chess.min.js` é servido diretamente da pasta local `vendor/`. Isso garante funcionamento 100% autônomo e offline, elimina falhas por bloqueio de CDNs em redes escolares restritivas e previne riscos de integridade (SRI).
 - **Por que uma versão tão antiga (0.10.3)?** É a última versão da API "clássica" (funções como `game_over()`, `in_checkmate()`, `moves({ verbose: true })`). O projeto foi escrito em torno dessa API.
 
 ### ⚠️ Nota importante para quem for atualizar essa dependência
@@ -24,6 +25,9 @@ O `chess.js` foi **reescrito em TypeScript** e mudou de API nas versões mais re
 | `chess.in_checkmate()` | `chess.isCheckmate()` |
 | `chess.in_draw()` | `chess.isDraw()` |
 | `new Chess()` (variável global) | `import { Chess } from 'chess.js'` (módulo) |
+
+> ⚠️ **Aviso crítico sobre `chess.put()` na versão 1.x**:  
+> A migração não se resume a renomear funções. Nas versões modernas do `chess.js`, o método `put()` alterou sua semântica interna de mutação do tabuleiro. Em particular, usar `put()` para posicionar ou alternar peças de forma ad-hoc (como é feito no teste de legalidade quântica) pode resetar silenciosamente os direitos de roque e a casa-alvo de en passant mantidos no FEN interno. Qualquer proposta de migração futura para o `chess.js` 1.x **deve auditar e testar exaustivamente** a integridade dos direitos de roque e dos lances en passant durante as fases de superposição.
 
 Migrar para a versão moderna é uma boa **issue técnica de porte médio** para quem quiser contribuir: exigiria trocar todas as chamadas acima em `script.js` e decidir se o projeto continua sem *bundler* (usando a build ESM do chess.js direto por `<script type="module">`) ou passa a ter um passo de build simples. Vale abrir uma *issue* de discussão antes de um PR grande assim.
 
@@ -38,12 +42,13 @@ O projeto aceita issues e Pull Requests normalmente pelo GitHub:
 
 ---
 
-## 2. Ícones das peças (Wikimedia Commons)
+## 2. Ícones das peças (Cburnett / Wikimedia Commons, auto-hospedadas em `assets/pieces/`)
 
 **O que é**: o conjunto de peças de xadrez em SVG desenhado por **Cburnett** (usuário do Wikimedia Commons), o mesmo conjunto usado por incontáveis sites e livros de xadrez ao redor do mundo.
 
 - **Autor**: [Cburnett](https://commons.wikimedia.org/wiki/User:Cburnett)
-- **Licença**: as imagens são **multi-licenciadas** — o autor permite escolher entre BSD (3 cláusulas), GFDL, GPL **ou** Creative Commons BY-SA 3.0. Ao reutilizar, a opção mais simples de citar é: *"Peças de xadrez por Cburnett, CC BY-SA 3.0"*, com link para a licença. (Correção em relação a uma versão anterior deste README, que descrevia as imagens de forma imprecisa como "domínio público" — não é o caso; são multi-licenciadas, e a atribuição ao autor deve ser mantida.)
+- **Licença**: as imagens são **multi-licenciadas** — o autor permite escolher entre BSD (3 cláusulas), GFDL, GPL **ou** Creative Commons BY-SA 3.0. Ao reutilizar, a opção mais simples de citar é: *"Peças de xadrez por Cburnett, CC BY-SA 3.0"*, com link para a licença. O crédito in-app está presente no rodapé do jogo.
+- **Hospedagem local e privacidade**: os 12 arquivos SVG foram baixados e são servidos diretamente de `assets/pieces/`. Além de viabilizar a execução offline, isso elimina o cookie de rastreamento de terceiros (`WMF-Uniq`) injetado pela infraestrutura da Wikimedia em visitantes, assegurando total conformidade com ambientes didáticos e proteção à privacidade de estudantes e menores.
 
 ### Como contribuir para o Wikimedia Commons
 
