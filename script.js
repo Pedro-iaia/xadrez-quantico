@@ -756,6 +756,18 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
   chess.put({ type: tipoEscolhido, color: pecaQ.cor }, origem);
   const ehPromocao = pecaQ.colapsada === 'p' && (destino.endsWith('8') || destino.endsWith('1'));
   const resultadoLance = chess.move({ from: origem, to: destino, promotion: 'q' });
+
+  // En passant: o peão capturado não está em "destino", e sim na casa com a
+  // coluna do destino e a linha de origem — o chess.js já o removeu do seu
+  // próprio tabuleiro, então limpamos aqui o registro quântico correspondente.
+  // Sem isso, ele vira uma peça "fantasma" que nunca sai de pecasQuanticas e
+  // continua sendo contada como ameaça (casaEstaAmeacada) pelo resto da
+  // partida, mesmo já capturada.
+  if (resultadoLance && resultadoLance.flags.includes('e')) {
+    const casaPeaoCapturado = destino[0] + origem[1];
+    delete pecasQuanticas[casaPeaoCapturado];
+  }
+
   pecasQuanticas[destino] = pecasQuanticas[origem];
   delete pecasQuanticas[origem];
   if (pecaQ.emaranhadaComId) aposentarDoGrupo(origem, pecaQ.emaranhadaComId);
