@@ -635,6 +635,13 @@ function distanciaColunas(casaA, casaB) {
 
 function executarMovimento(origem, destino, lanceDaIA = false) {
   if (partidaEncerrada) return;
+  // Valida o formato das casas antes de usá-las como chave de pecasQuanticas.
+  // origem/destino podem vir de uma string arbitrária arrastada (drag-and-drop,
+  // via dataTransfer) ou de um lance sugerido pelo Web Worker do minimax —
+  // nenhuma das duas fontes é garantidamente uma casa real do tabuleiro.
+  if (!/^[a-h][1-8]$/.test(origem) || !/^[a-h][1-8]$/.test(destino)) {
+    return renderizarTabuleiro();
+  }
   const pecaQ = pecasQuanticas[origem];
   if (!pecaQ) return renderizarTabuleiro();
 
