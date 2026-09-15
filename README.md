@@ -116,6 +116,7 @@ Depois acesse `http://localhost:8000`.
 | [`DEPENDENCIAS.md`](./docs/DEPENDENCIAS.md) | O que vem de fora: `chess.js`, ícones de peças, futuras engines — licenças e como contribuir de volta para elas. |
 | [`GUIA_DE_ESTUDOS_IA.md`](./docs/GUIA_DE_ESTUDOS_IA.md) | Trilha de estudo para quem quer aprender IA de jogos construindo dentro deste projeto. |
 | [`COLABORACAO_NA_PRATICA_ROQUE.md`](./docs/COLABORACAO_NA_PRATICA_ROQUE.md) | Exemplo real, passo a passo, de todo o ciclo: relatar → corrigir → commitar → PR. |
+| [`SOBRE_O_DESENVOLVIMENTO_ASSISTIDO_POR_IA.md`](./docs/SOBRE_O_DESENVOLVIMENTO_ASSISTIDO_POR_IA.md) | Transparência e epistemologia: a tríade de colaboração (Humano–Claude–Antigravity), a Zona de Desenvolvimento Proximal (Vygotsky) e a negação do *vibe coding*. |
 
 ## 🤝 Como contribuir
 
