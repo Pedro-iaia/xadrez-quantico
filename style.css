@@ -747,6 +747,7 @@ h1 {
 @media (max-width: 760px) {
   body {
     padding: 10px;
+    overflow-x: hidden;
   }
 
   .container {
@@ -754,6 +755,10 @@ h1 {
   }
 
   .tabuleiro-area {
+    width: min(480px, 92vw);
+  }
+
+  .coluna-lateral {
     width: min(480px, 92vw);
   }
 
@@ -766,7 +771,7 @@ h1 {
   }
 
   .painel-lateral {
-    width: min(480px, 92vw);
+    width: 100%;
   }
 
   .historico-lista {
