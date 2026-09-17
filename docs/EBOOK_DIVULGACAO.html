@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Xadrez de Schrödinger: O Tabuleiro Quântico — E-book</title>
+<style>
+  @page {
+    size: A4;
+    margin: 14mm 14mm 16mm 14mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #0b0f19;
+    color: #e2e8f0;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cover-page {
+    page-break-after: always;
+    min-height: 250mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 25mm 15mm;
+    background: radial-gradient(circle at center top, #1e293b 0%, #0b0f19 75%);
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+  }
+
+  .badge-capa {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid #38bdf8;
+    color: #38bdf8;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .titulo-capa {
+    font-size: 26pt;
+    font-weight: 800;
+    color: #f8fafc;
+    margin: 0 0 12px 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitulo-capa {
+    font-size: 13.5pt;
+    color: #94a3b8;
+    max-width: 520px;
+    margin: 0 0 35px 0;
+    line-height: 1.45;
+  }
+
+  .epigrafe {
+    background: rgba(30, 41, 59, 0.6);
+    border-left: 3px solid #facc15;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    text-align: left;
+    max-width: 480px;
+    font-style: italic;
+    font-size: 9pt;
+    color: #cbd5e1;
+    margin-bottom: 40px;
+  }
+
+  .meta-capa {
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.6;
+  }
+
+  .meta-capa strong {
+    color: #cbd5e1;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  h1, h2, h3 {
+    color: #f8fafc;
+    font-weight: 700;
+    page-break-after: avoid;
+  }
+
+  h1 {
+    font-size: 16pt;
+    border-bottom: 1.5px solid #334155;
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: #38bdf8;
+  }
+
+  h2 {
+    font-size: 12.5pt;
+    color: #facc15;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 11pt;
+    color: #e2e8f0;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 5px;
+  }
+
+  .card {
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    page-break-inside: avoid;
+  }
+
+  .card-destaque {
+    border-left: 3px solid #38bdf8;
+    background: rgba(15, 23, 42, 0.9);
+  }
+
+  .card-alerta {
+    border-left: 3px solid #facc15;
+    background: rgba(30, 27, 18, 0.6);
+  }
+
+  .card-sucesso {
+    border-left: 3px solid #34d399;
+    background: rgba(16, 36, 28, 0.6);
+  }
+
+  .diagram-container {
+    text-align: center;
+    margin: 16px 0;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    page-break-inside: avoid;
+  }
+
+  .diagram-container svg {
+    max-width: 100%;
+    height: auto;
+    max-height: 95mm;
+  }
+
+  .diagram-caption {
+    font-size: 8.5pt;
+    color: #94a3b8;
+    font-style: italic;
+    margin-top: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 7px 10px;
+    border: 1px solid #334155;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: #1e293b;
+    color: #38bdf8;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background-color: #0f172a;
+  }
+
+  tr:nth-child(odd) {
+    background-color: #131d2e;
+  }
+
+  code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+    padding: 1.5pt 4pt;
+    border-radius: 3pt;
+    font-size: 8.8pt;
+  }
+
+  pre {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 8.5pt;
+    line-height: 1.35;
+    overflow-x: auto;
+    page-break-inside: avoid;
+    color: #e2e8f0;
+  }
+
+  .footer-bar {
+    margin-top: 25px;
+    padding-top: 10px;
+    border-top: 1px solid #1e293b;
+    font-size: 8pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <!-- CAPA DO E-BOOK -->
+  <div class="cover-page">
+    <div class="badge-capa">Guia Pedagógico &bull; Divulgação Científica &bull; Open Source</div>
+    <div class="titulo-capa">♟️🔬 Xadrez de Schrödinger</div>
+    <div class="subtitulo-capa">O Tabuleiro Quântico: Da Mecânica Ondulatória à Ação Fantasmagórica à Distância</div>
+    
+    <div class="epigrafe">
+      "Deus não joga aos dados com o universo." — Albert Einstein<br>
+      "Einstein, pare de dizer a Deus o que fazer." — Niels Bohr<br>
+      "No Xadrez de Schrödinger, até que você observe a casa, o Cavalo é também um Bispo e uma Torre."
+    </div>
+
+    <div class="meta-capa">
+      <strong>Aplicação Web:</strong> pedro-iaia.github.io/xadrez-quantico<br>
+      <strong>Código Aberto:</strong> github.com/Pedro-iaia/xadrez-quantico<br>
+      <strong>Licença:</strong> MIT (Livre para Uso Educacional e Acadêmico)<br>
+      <strong>Edição Especial:</strong> v2.1 — Modelo Físico GHZ & Sincronização em Tempo Real
+    </div>
+  </div>
+
+  <!-- SEÇÃO 1: APRESENTAÇÃO -->
+  <h1>1. Apresentação do Projeto</h1>
+  <p>
+    Por mais de 1.500 anos, o xadrez clássico consolidou-se como o monumento definitivo do determinismo e da informação perfeita: todas as peças são visíveis, seus papéis são fixos e cada lance decorre de uma causalidade estrita. A <strong>Mecânica Quântica</strong>, em contrapartida, rege o mundo subatômico por meio de probabilidades intrínsecas, estados sobrepostos e correlações não-locais que desafiam o senso comum.
+  </p>
+  <p>
+    O <strong>Xadrez de Schrödinger</strong> conecta esses dois domínios ao converter a grade de 64 casas em um <em>toy model</em> (modelo físico conceitual discreto com amostragem clássica). Ele permite que estudantes, enxadristas e entusiastas manipulem as leis fundamentais da mecânica quântica por meio de mecânicas de jogo tangíveis, rodando <strong>100% no navegador</strong>, sem necessidade de servidores complexos, compilação ou instalação.
+  </p>
+
+  <div class="diagram-container">
+    <svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 866.375px; background-color: transparent;" viewBox="0 0 866.375 350" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePaths .path{stroke:#333333;stroke-width:1px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg .node .collapsed-indicator{fill:#aaaa33;stroke:none;opacity:0.6;}#my-svg .node .collapsed-separator{stroke:#aaaa33;stroke-width:0.75px;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#9370DB;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#my-svg [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .boxStyle&gt;*{fill:rgb(30, 41, 59)!important;stroke:rgb(56, 189, 248)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:8px!important;ry:8px!important;}#my-svg .boxStyle span{fill:rgb(30, 41, 59)!important;stroke:rgb(56, 189, 248)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:8px!important;ry:8px!important;}#my-svg .boxStyle tspan{fill:rgb(248, 250, 252)!important;}#my-svg .centerStyle&gt;*{fill:rgb(15, 23, 42)!important;stroke:rgb(250, 204, 21)!important;stroke-width:3px!important;color:rgb(248, 250, 252)!important;rx:10px!important;ry:10px!important;}#my-svg .centerStyle span{fill:rgb(15, 23, 42)!important;stroke:rgb(250, 204, 21)!important;stroke-width:3px!important;color:rgb(248, 250, 252)!important;rx:10px!important;ry:10px!important;}#my-svg .centerStyle tspan{fill:rgb(248, 250, 252)!important;}#my-svg .subStyle&gt;*{fill:rgb(30, 30, 40)!important;stroke:rgb(129, 140, 248)!important;stroke-width:1.5px!important;color:rgb(203, 213, 225)!important;rx:6px!important;ry:6px!important;}#my-svg .subStyle span{fill:rgb(30, 30, 40)!important;stroke:rgb(129, 140, 248)!important;stroke-width:1.5px!important;color:rgb(203, 213, 225)!important;rx:6px!important;ry:6px!important;}#my-svg .subStyle tspan{fill:rgb(203, 213, 225)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M268,93L272.167,93C276.333,93,284.667,93,300.51,99.83C316.353,106.66,339.707,120.32,351.384,127.15L363.06,133.98" id="my-svg-L_A_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_C_0" data-points="W3sieCI6MjY4LCJ5Ijo5M30seyJ4IjoyOTMsInkiOjkzfSx7IngiOjM2Ni41MTI5NTczMTcwNzMyLCJ5IjoxMzZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M268,257L272.167,257C276.333,257,284.667,257,300.51,250.17C316.353,243.34,339.707,229.68,351.384,222.85L363.06,216.02" id="my-svg-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6MjY4LCJ5IjoyNTd9LHsieCI6MjkzLCJ5IjoyNTd9LHsieCI6MzY2LjUxMjk1NzMxNzA3MzIsInkiOjIxNH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M475.901,136L492.147,121.167C508.392,106.333,540.884,76.667,560.629,61.833C580.375,47,587.375,47,590.875,47L594.375,47" id="my-svg-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6NDc1LjkwMDg3ODkwNjI1LCJ5IjoxMzZ9LHsieCI6NTczLjM3NSwieSI6NDd9LHsieCI6NTk4LjM3NSwieSI6NDd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M548.375,175L552.542,175C556.708,175,565.042,175,572.708,175C580.375,175,587.375,175,590.875,175L594.375,175" id="my-svg-L_C_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_E_0" data-points="W3sieCI6NTQ4LjM3NSwieSI6MTc1fSx7IngiOjU3My4zNzUsInkiOjE3NX0seyJ4Ijo1OTguMzc1LCJ5IjoxNzV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M475.901,214L492.147,228.833C508.392,243.667,540.884,273.333,560.629,288.167C580.375,303,587.375,303,590.875,303L594.375,303" id="my-svg-L_C_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_F_0" data-points="W3sieCI6NDc1LjkwMDg3ODkwNjI1LCJ5IjoyMTR9LHsieCI6NTczLjM3NSwieSI6MzAzfSx7IngiOjU5OC4zNzUsInkiOjMwM31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_C_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_B_C_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_C_D_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_C_E_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_C_F_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default boxStyle" id="my-svg-flowchart-A-0" data-look="classic" transform="translate(138, 93)"><rect class="basic label-container" style="fill:#1e293b !important;stroke:#38bdf8 !important;stroke-width:2px !important;rx:8px !important;ry:8px !important" x="-130" y="-51" width="260" height="102"/><g class="label" style="color:#f8fafc !important" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div style="color: rgb(248, 250, 252) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Xadrez Clássico<br /><b>(Informação Perfeita e Determinismo)</b></p></span></div></foreignObject></g></g><g class="node default centerStyle" id="my-svg-flowchart-C-1" data-look="classic" transform="translate(433.1875, 175)"><rect class="basic label-container" style="fill:#0f172a !important;stroke:#facc15 !important;stroke-width:3px !important;rx:10px !important;ry:10px !important" x="-115.1875" y="-39" width="230.375" height="78"/><g class="label" style="color:#f8fafc !important" transform="translate(-85.1875, -24)"><rect/><foreignObject width="170.375" height="48"><div style="color: rgb(248, 250, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Xadrez de Schrödinger<br /><b>(Toy Model Conceitual)</b></p></span></div></foreignObject></g></g><g class="node default boxStyle" id="my-svg-flowchart-B-2" data-look="classic" transform="translate(138, 257)"><rect class="basic label-container" style="fill:#1e293b !important;stroke:#38bdf8 !important;stroke-width:2px !important;rx:8px !important;ry:8px !important" x="-130" y="-63" width="260" height="126"/><g class="label" style="color:#f8fafc !important" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div style="color: rgb(248, 250, 252) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Mecânica Quântica<br /><b>(Superposição, Emaranhamento e Incerteza)</b></p></span></div></foreignObject></g></g><g class="node default subStyle" id="my-svg-flowchart-D-5" data-look="classic" transform="translate(728.375, 47)"><rect class="basic label-container" style="fill:#1e1e28 !important;stroke:#818cf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#cbd5e1 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(203, 213, 225) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#cbd5e1 !important" class="nodeLabel"><p>Colapso Projetivo por Lance</p></span></div></foreignObject></g></g><g class="node default subStyle" id="my-svg-flowchart-E-7" data-look="classic" transform="translate(728.375, 175)"><rect class="basic label-container" style="fill:#1e1e28 !important;stroke:#818cf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#cbd5e1 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(203, 213, 225) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#cbd5e1 !important" class="nodeLabel"><p>Emaranhamento de Flancos GHZ</p></span></div></foreignObject></g></g><g class="node default subStyle" id="my-svg-flowchart-F-9" data-look="classic" transform="translate(728.375, 303)"><rect class="basic label-container" style="fill:#1e1e28 !important;stroke:#818cf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#cbd5e1 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(203, 213, 225) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#cbd5e1 !important" class="nodeLabel"><p>Ação Fantasmagórica Online</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs></svg>
+    <div class="diagram-caption">Figura 1: Arquitetura conceitual do Xadrez de Schrödinger unindo xadrez clássico e mecânica quântica.</div>
+  </div>
+
+  <div class="card card-destaque">
+    <strong>Pilares de Desenvolvimento:</strong>
+    <ul>
+      <li><strong>Rigor Físico Formal:</strong> Estruturado com base em parecer técnico de física quântica, rejeitando regras <em>ad hoc</em> e aplicando simetria de permutações do grupo <code>S₃</code>, regras de superseleção e exclusão fermiônica.</li>
+      <li><strong>Transparência Pedagógica:</strong> A partida comporta-se como uma <em>Cadeia de Markov Absorvente</em>: a incerteza probabilística vai decaindo suavemente (decoerência) até convergir para o xadrez clássico.</li>
+      <li><strong>Soberania e Acesso Livre:</strong> Desenvolvido em JavaScript <em>vanilla</em> (offline-first), com telemetria e exportação de logs em JSON contendo a matriz momentânea de probabilidades.</li>
+    </ul>
+  </div>
+
+  <!-- SEÇÃO 2: LÉXICO QUÂNTICO -->
+  <div class="page-break"></div>
+  <h1>2. Léxico dos Conceitos Quânticos no Tabuleiro</h1>
+  <p>
+    O jogo traduz os postulados mais abstratos da física em comportamentos visuais e dinâmicas de raciocínio estratégico imediatos:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 22%;">Conceito Físico</th>
+        <th style="width: 38%;">Definição na Mecânica Quântica</th>
+        <th style="width: 40%;">Manifestação no Tabuleiro</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Superposição de Estados</strong></td>
+        <td>Capacidade de um sistema existir em uma combinação linear de múltiplos estados antes da medição (função de onda |ψ⟩).</td>
+        <td>Peças menores da primeira fileira iniciam com glifos múltiplos sobrepostos. A peça tem o potencial de ser Torre, Cavalo ou Bispo simultaneamente.</td>
+      </tr>
+      <tr>
+        <td><strong>Medição Projetiva (Colapso)</strong></td>
+        <td>Perturbação do sistema pelo instrumento de medição, forçando a função de onda a colapsar irreversivelmente em um único autovalor.</td>
+        <td>Ao tentar mover ou capturar uma peça sob superposição, o sistema testa os lances válidos e sorteia sua identidade final, fixando-a permanentemente.</td>
+      </tr>
+      <tr>
+        <td><strong>Superseleção & Conservação</strong></td>
+        <td>Postulado que impede superposições entre estados com números quânticos de carga/massa distintos, conservando o inventário total.</td>
+        <td>Garante rigorosamente que cada flanco contenha <strong>exatamente uma Torre, um Cavalo e um Bispo</strong>. Uma peça não pode colapsar para uma classe já revelada no flanco.</td>
+      </tr>
+      <tr>
+        <td><strong>Exclusão de Pauli</strong></td>
+        <td>Férmions idênticos (como elétrons) não podem ocupar o mesmo estado quântico simultaneamente.</td>
+        <td><strong>Paridade dos Bispos:</strong> Os dois bispos de um jogador jamais podem ocupar casas da mesma cor. Revelar o Bispo de casas claras no flanco da Dama restringe o Bispo do flanco do Rei.</td>
+      </tr>
+      <tr>
+        <td><strong>Emaranhamento (GHZ / Bell)</strong></td>
+        <td>Correlação não-local inseparável entre partículas; a medição de uma define instantaneamente o estado das demais.</td>
+        <td>As 3 peças de cada flanco formam um sistema tripartido emaranhado tipo GHZ. Revelar uma peça reduz instantaneamente as duas restantes a um <strong>Par de Bell residual</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Ação Fantasmagórica à Distância</strong></td>
+        <td>Expressão de Einstein para a sincronização imediata e simultânea entre sistemas emaranhados espacialmente separados.</td>
+        <td><strong>Modo Online:</strong> Dois observadores em computadores distintos compartilham a mesma chave; o colapso realizado por um atualiza instantaneamente a tela do outro.</td>
+      </tr>
+      <tr>
+        <td><strong>Observador Passivo</strong></td>
+        <td>Observador que monitora o sistema quântico sem interagir, preservando a evolução da função de onda sem perturbá-la.</td>
+        <td><strong>Modo Telespectador:</strong> Permite que alunos ou curiosos assistam à partida em tempo real, vendo os colapsos sem terem permissão para alterar o tabuleiro.</td>
+      </tr>
+      <tr>
+        <td><strong>Decoerência & Transição Clássica</strong></td>
+        <td>Perda de coerência quântica decorrente de interações sucessivas com o ambiente, restaurando a física clássica.</td>
+        <td>À medida que os lances e capturas se sucedem, a incerteza zera e a partida conclui-se sob regras puramente determinísticas (Xeque-mate clássico FIDE).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SEÇÃO 3: REGRAS E DIFERENÇAS -->
+  <div class="page-break"></div>
+  <h1>3. Regras do Jogo e Diferenças para o Xadrez Clássico</h1>
+  <p>
+    O jogo utiliza o motor oficial <code>chess.js</code> para a geometria de movimentos clássica, operando sob uma nova camada física de identidades dinâmicas:
+  </p>
+
+  <pre>
+TABULEIRO INICIAL (Perspectiva das Brancas):
+8 [ r/n/b ] [ r/n/b ] [ r/n/b ] [   q   ] [   k   ] [ r/n/b ] [ r/n/b ] [ r/n/b ] (Pretas)
+7 [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ]
+  ...
+2 [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ] [   p   ]
+1 [ r/n/b ] [ r/n/b ] [ r/n/b ] [   q   ] [   k   ] [ r/n/b ] [ r/n/b ] [ r/n/b ] (Brancas)
+     a         b         c         d         e         f         g         h</pre>
+
+  <h2>3.1. Peças Clássicas vs. Peças Quânticas</h2>
+  <ul>
+    <li><strong>Peões (p):</strong> 100% clássicos. Movem-se à frente, capturam em diagonal, realizam <em>en passant</em> e promovem na 8ª fileira.</li>
+    <li><strong>Rei (k):</strong> 100% clássico e inviolável. <strong>O Rei NUNCA pode ser capturado</strong> e nunca entra em superposição.</li>
+    <li><strong>Dama (q):</strong> 100% clássica, posicionada na casa de sua cor (d1/d8).</li>
+    <li><strong>Peças de Flanco (a, b, c e f, g, h):</strong> Iniciam em tripla superposição {Torre (r), Cavalo (n), Bispo (b)}.</li>
+  </ul>
+
+  <h2>3.2. Mecânica de Medição e Colapso</h2>
+  <ol>
+    <li>Ao selecionar e tentar mover uma peça em superposição, o motor filtra todos os autovetores capazes de realizar aquele movimento geometricamente.</li>
+    <li>Se houver múltiplos tipos válidos (ex.: avançar para uma casa acessível tanto por Cavalo quanto por Bispo), é feita uma <strong>amostragem de Born</strong> (sorteio com pesos idênticos).</li>
+    <li>A peça colapsa para a identidade sorteada e gera um <strong>colapso em cascata</strong> no seu flanco, eliminando aquela possibilidade das casas irmãs.</li>
+  </ol>
+
+  <div class="card card-alerta">
+    <strong>Regras Críticas Especiais:</strong>
+    <ul>
+      <li><strong>Captura como Medição:</strong> Capturar uma peça adversária em superposição obriga-a a colapsar antes de ser removida, propagando o colapso pelo flanco defensor.</li>
+      <li><strong>Xeque Quântico e Proteção do Rei:</strong> O Rei é estritamente impedido de entrar em qualquer casa sob raio de ameaça de <em>qualquer uma das hipóteses quânticas ativas</em> do adversário.</li>
+      <li><strong>Roque Fisicamente Coerente:</strong> Só é permitido se a peça do canto (a1/h1) ainda possuir a Torre viva em seu espaço de estados e as casas de passagem estiverem livres de ameaça. Ao rocar, ela colapsa compulsoriamente para Torre.</li>
+    </ul>
+  </div>
+
+  <h2>3.3. As Duas Variantes Quânticas</h2>
+  <p>
+    <strong>Variante Simplificada (Padrão):</strong> 4 permutações por flanco &rarr; <strong>10 hipóteses conjuntas globais</strong> válidas por jogador. Ideal para introdução didática e partidas mais rápidas.<br>
+    <strong>Variante GHZ (Modelo Físico Completo):</strong> Todas as 6 permutações do grupo simétrico S₃ por flanco &rarr; <strong>20 hipóteses conjuntas globais</strong>. Representa a formulação canônica com máximo espaço de incerteza inicial.
+  </p>
+
+  <!-- SEÇÃO 4: CONFIGURAÇÃO E MULTIPLAYER -->
+  <div class="page-break"></div>
+  <h1>4. Guia de Configuração: Partidas, Torneios e Modo Online</h1>
+  <p>
+    O simulador oferece suporte tanto para estudo individual quanto para embates em rede e apresentações didáticas em sala de aula:
+  </p>
+
+  <div class="diagram-container">
+    <svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 989.93px; background-color: transparent;" viewBox="0 0 989.9296875 1145.65625" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePaths .path{stroke:#333333;stroke-width:1px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg .node .collapsed-indicator{fill:#aaaa33;stroke:none;opacity:0.6;}#my-svg .node .collapsed-separator{stroke:#aaaa33;stroke-width:0.75px;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#9370DB;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#my-svg [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .startStyle&gt;*{fill:rgb(15, 23, 42)!important;stroke:rgb(56, 189, 248)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:8px!important;ry:8px!important;}#my-svg .startStyle span{fill:rgb(15, 23, 42)!important;stroke:rgb(56, 189, 248)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:8px!important;ry:8px!important;}#my-svg .startStyle tspan{fill:rgb(248, 250, 252)!important;}#my-svg .decStyle&gt;*{fill:rgb(30, 41, 59)!important;stroke:rgb(250, 204, 21)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:6px!important;ry:6px!important;}#my-svg .decStyle span{fill:rgb(30, 41, 59)!important;stroke:rgb(250, 204, 21)!important;stroke-width:2px!important;color:rgb(248, 250, 252)!important;rx:6px!important;ry:6px!important;}#my-svg .decStyle tspan{fill:rgb(248, 250, 252)!important;}#my-svg .leafStyle&gt;*{fill:rgb(24, 34, 52)!important;stroke:rgb(56, 189, 248)!important;stroke-width:1.5px!important;color:rgb(226, 232, 240)!important;rx:6px!important;ry:6px!important;}#my-svg .leafStyle span{fill:rgb(24, 34, 52)!important;stroke:rgb(56, 189, 248)!important;stroke-width:1.5px!important;color:rgb(226, 232, 240)!important;rx:6px!important;ry:6px!important;}#my-svg .leafStyle tspan{fill:rgb(226, 232, 240)!important;}#my-svg .finalStyle&gt;*{fill:rgb(22, 44, 40)!important;stroke:rgb(52, 211, 153)!important;stroke-width:2px!important;color:rgb(240, 253, 244)!important;rx:8px!important;ry:8px!important;}#my-svg .finalStyle span{fill:rgb(22, 44, 40)!important;stroke:rgb(52, 211, 153)!important;stroke-width:2px!important;color:rgb(240, 253, 244)!important;rx:8px!important;ry:8px!important;}#my-svg .finalStyle tspan{fill:rgb(240, 253, 244)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M412.383,62L412.383,66.167C412.383,70.333,412.383,78.667,412.383,86.333C412.383,94,412.383,101,412.383,104.5L412.383,108" id="my-svg-L_Start_Choose_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Start_Choose_0" data-points="W3sieCI6NDEyLjM4MjgxMjUsInkiOjYyfSx7IngiOjQxMi4zODI4MTI1LCJ5Ijo4N30seyJ4Ijo0MTIuMzgyODEyNSwieSI6MTEyfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M344.017,247.759L308.388,265.32C272.759,282.881,201.5,318.003,165.871,341.064C130.242,364.125,130.242,375.125,130.242,380.625L130.242,386.125" id="my-svg-L_Choose_AI_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Choose_AI_0" data-points="W3sieCI6MzQ0LjAxNjgwMTM1MjYxNzEsInkiOjI0Ny43NTg5ODg4NTI2MTcxNH0seyJ4IjoxMzAuMjQyMTg3NSwieSI6MzUzLjEyNX0seyJ4IjoxMzAuMjQyMTg3NSwieSI6MzkwLjEyNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M412.383,316.125L412.383,322.292C412.383,328.458,412.383,340.792,412.383,352.458C412.383,364.125,412.383,375.125,412.383,380.625L412.383,386.125" id="my-svg-L_Choose_Local_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Choose_Local_0" data-points="W3sieCI6NDEyLjM4MjgxMjUsInkiOjMxNi4xMjV9LHsieCI6NDEyLjM4MjgxMjUsInkiOjM1My4xMjV9LHsieCI6NDEyLjM4MjgxMjUsInkiOjM5MC4xMjV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M481.358,247.15L518.179,264.812C554.999,282.475,628.64,317.8,665.461,340.962C702.281,364.125,702.281,375.125,702.281,380.625L702.281,386.125" id="my-svg-L_Choose_Online_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Choose_Online_0" data-points="W3sieCI6NDgxLjM1ODIyODg4NTg4ODksInkiOjI0Ny4xNDk1ODM2MTQxMTExMn0seyJ4Ijo3MDIuMjgxMjUsInkiOjM1My4xMjV9LHsieCI6NzAyLjI4MTI1LCJ5IjozOTAuMTI1fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M702.281,468.125L702.281,472.292C702.281,476.458,702.281,484.792,702.281,492.458C702.281,500.125,702.281,507.125,702.281,510.625L702.281,514.125" id="my-svg-L_Online_NetChoice_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Online_NetChoice_0" data-points="W3sieCI6NzAyLjI4MTI1LCJ5Ijo0NjguMTI1fSx7IngiOjcwMi4yODEyNSwieSI6NDkzLjEyNX0seyJ4Ijo3MDIuMjgxMjUsInkiOjUxOC4xMjV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M646.865,682.24L631.159,697.642C615.454,713.045,584.043,743.851,568.338,764.753C552.633,785.656,552.633,796.656,552.633,802.156L552.633,807.656" id="my-svg-L_NetChoice_Host_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_NetChoice_Host_0" data-points="W3sieCI6NjQ2Ljg2NDY2Nzc1NzE3NTcsInkiOjY4Mi4yMzk2Njc3NTcxNzU3fSx7IngiOjU1Mi42MzI4MTI1LCJ5Ijo3NzQuNjU2MjV9LHsieCI6NTUyLjYzMjgxMjUsInkiOjgxMS42NTYyNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M757.698,682.24L773.403,697.642C789.108,713.045,820.519,743.851,836.224,764.753C851.93,785.656,851.93,796.656,851.93,802.156L851.93,807.656" id="my-svg-L_NetChoice_Guest_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_NetChoice_Guest_0" data-points="W3sieCI6NzU3LjY5NzgzMjI0MjgyNDMsInkiOjY4Mi4yMzk2Njc3NTcxNzU3fSx7IngiOjg1MS45Mjk2ODc1LCJ5Ijo3NzQuNjU2MjV9LHsieCI6ODUxLjkyOTY4NzUsInkiOjgxMS42NTYyNX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M552.633,913.656L552.633,917.823C552.633,921.99,552.633,930.323,557.666,938.257C562.7,946.191,572.767,953.725,577.801,957.492L582.834,961.259" id="my-svg-L_Host_BellState_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Host_BellState_0" data-points="W3sieCI6NTUyLjYzMjgxMjUsInkiOjkxMy42NTYyNX0seyJ4Ijo1NTIuNjMyODEyNSwieSI6OTM4LjY1NjI1fSx7IngiOjU4Ni4wMzY0ODE1ODQ4MjE0LCJ5Ijo5NjMuNjU2MjV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M851.93,913.656L851.93,917.823C851.93,921.99,851.93,930.323,846.896,938.257C841.863,946.191,831.796,953.725,826.762,957.492L821.728,961.259" id="my-svg-L_Guest_BellState_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Guest_BellState_0" data-points="W3sieCI6ODUxLjkyOTY4NzUsInkiOjkxMy42NTYyNX0seyJ4Ijo4NTEuOTI5Njg3NSwieSI6OTM4LjY1NjI1fSx7IngiOjgxOC41MjYwMTg0MTUxNzg2LCJ5Ijo5NjMuNjU2MjV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_Start_Choose_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(130.2421875, 353.125)"><g class="label" data-id="L_Choose_AI_0" transform="translate(-89.265625, -12)"><foreignObject width="178.53125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Adversário Automatizado</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(412.3828125, 353.125)"><g class="label" data-id="L_Choose_Local_0" transform="translate(-52.9140625, -12)"><foreignObject width="105.828125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Dois Jogadores</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(702.28125, 353.125)"><g class="label" data-id="L_Choose_Online_0" transform="translate(-75.6796875, -12)"><foreignObject width="151.359375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Ação Fantasmagórica</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_Online_NetChoice_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(552.6328125, 774.65625)"><g class="label" data-id="L_NetChoice_Host_0" transform="translate(-68.4765625, -12)"><foreignObject width="136.953125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Gerar Par Quântico</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(851.9296875, 774.65625)"><g class="label" data-id="L_NetChoice_Guest_0" transform="translate(-68.25, -12)"><foreignObject width="136.5" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>Entrelaçar com Par</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_Host_BellState_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_Guest_BellState_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default startStyle" id="my-svg-flowchart-Start-0" data-look="classic" transform="translate(412.3828125, 35)"><rect class="basic label-container" style="fill:#0f172a !important;stroke:#38bdf8 !important;stroke-width:2px !important;rx:8px !important;ry:8px !important" x="-119.4609375" y="-27" width="238.921875" height="54"/><g class="label" style="color:#f8fafc !important" transform="translate(-89.4609375, -12)"><rect/><foreignObject width="178.921875" height="24"><div style="color: rgb(248, 250, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Tela Inicial: Nova Partida</p></span></div></foreignObject></g></g><g class="node default decStyle" id="my-svg-flowchart-Choose-1" data-look="classic" transform="translate(412.3828125, 214.0625)"><polygon points="102.0625,0 204.125,-102.0625 102.0625,-204.125 0,-102.0625" class="label-container" transform="translate(-101.5625, 102.0625)" style="fill:#1e293b !important;stroke:#facc15 !important;stroke-width:2px !important;rx:6px !important;ry:6px !important"/><g class="label" style="color:#f8fafc !important" transform="translate(-75.0625, -12)"><rect/><foreignObject width="150.125" height="24"><div style="color: rgb(248, 250, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Escolha do Oponente</p></span></div></foreignObject></g></g><g class="node default leafStyle" id="my-svg-flowchart-AI-3" data-look="classic" transform="translate(130.2421875, 429.125)"><rect class="basic label-container" style="fill:#182234 !important;stroke:#38bdf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-122.2421875" y="-39" width="244.484375" height="78"/><g class="label" style="color:#e2e8f0 !important" transform="translate(-92.2421875, -24)"><rect/><foreignObject width="184.484375" height="48"><div style="color: rgb(226, 232, 240) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e2e8f0 !important" class="nodeLabel"><p>Jogar contra a IA<br />(Fácil, Médio ou Minimax)</p></span></div></foreignObject></g></g><g class="node default leafStyle" id="my-svg-flowchart-Local-5" data-look="classic" transform="translate(412.3828125, 429.125)"><rect class="basic label-container" style="fill:#182234 !important;stroke:#38bdf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-109.8984375" y="-39" width="219.796875" height="78"/><g class="label" style="color:#e2e8f0 !important" transform="translate(-79.8984375, -24)"><rect/><foreignObject width="159.796875" height="48"><div style="color: rgb(226, 232, 240) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e2e8f0 !important" class="nodeLabel"><p>Mesmo Teclado/Mouse<br />(Pass-and-Play)</p></span></div></foreignObject></g></g><g class="node default leafStyle" id="my-svg-flowchart-Online-7" data-look="classic" transform="translate(702.28125, 429.125)"><rect class="basic label-container" style="fill:#182234 !important;stroke:#38bdf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-130" y="-39" width="260" height="78"/><g class="label" style="color:#e2e8f0 !important" transform="translate(-100, -24)"><rect/><foreignObject width="200" height="48"><div style="color: rgb(226, 232, 240) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e2e8f0 !important" class="nodeLabel"><p>Modo Online em Tempo Real</p></span></div></foreignObject></g></g><g class="node default decStyle" id="my-svg-flowchart-NetChoice-9" data-look="classic" transform="translate(702.28125, 627.890625)"><polygon points="109.765625,0 219.53125,-109.765625 109.765625,-219.53125 0,-109.765625" class="label-container" transform="translate(-109.265625, 109.765625)" style="fill:#1e293b !important;stroke:#facc15 !important;stroke-width:2px !important;rx:6px !important;ry:6px !important"/><g class="label" style="color:#f8fafc !important" transform="translate(-82.765625, -12)"><rect/><foreignObject width="165.53125" height="24"><div style="color: rgb(248, 250, 252) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f8fafc !important" class="nodeLabel"><p>Como deseja conectar?</p></span></div></foreignObject></g></g><g class="node default leafStyle" id="my-svg-flowchart-Host-11" data-look="classic" transform="translate(552.6328125, 862.65625)"><rect class="basic label-container" style="fill:#182234 !important;stroke:#38bdf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-119.296875" y="-51" width="238.59375" height="102"/><g class="label" style="color:#e2e8f0 !important" transform="translate(-89.296875, -36)"><rect/><foreignObject width="178.59375" height="72"><div style="color: rgb(226, 232, 240) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e2e8f0 !important" class="nodeLabel"><p>Cria Chave xq-XXXX<br />Copia Link de Jogador<br />ou Link de Telespectador</p></span></div></foreignObject></g></g><g class="node default leafStyle" id="my-svg-flowchart-Guest-13" data-look="classic" transform="translate(851.9296875, 862.65625)"><rect class="basic label-container" style="fill:#182234 !important;stroke:#38bdf8 !important;stroke-width:1.5px !important;rx:6px !important;ry:6px !important" x="-130" y="-51" width="260" height="102"/><g class="label" style="color:#e2e8f0 !important" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div style="color: rgb(226, 232, 240) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#e2e8f0 !important" class="nodeLabel"><p>Cola Chave ou Link<br />(Jogador ou Observador Passivo)</p></span></div></foreignObject></g></g><g class="node default finalStyle" id="my-svg-flowchart-BellState-15" data-look="classic" transform="translate(702.28125, 1050.65625)"><rect class="basic label-container" style="fill:#162c28 !important;stroke:#34d399 !important;stroke-width:2px !important;rx:8px !important;ry:8px !important" x="-130" y="-87" width="260" height="174"/><g class="label" style="color:#f0fdf4 !important" transform="translate(-100, -72)"><rect/><foreignObject width="200" height="144"><div style="color: rgb(240, 253, 244) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f0fdf4 !important" class="nodeLabel"><p>⚛️ Emaranhamento Estabelecido!<br />Sorteio Automático 50/50% de Cores<br />Compensação Dinâmica de Latência</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs></svg>
+    <div class="diagram-caption">Figura 2: Árvore de fluxos para inicialização de partidas locais, contra IA e online em tempo real.</div>
+  </div>
+
+  <h2>4.1. Modos Locais & IA</h2>
+  <ul>
+    <li><strong>Adversário Automatizado (IA):</strong> Três níveis disponíveis (Fácil, Médio e Difícil). No modo clássico avançado, executa busca <em>minimax</em> com poda alfa-beta em Web Worker em segundo plano.</li>
+    <li><strong>Dois Jogadores (Local):</strong> Permite o jogo alternado no mesmo computador ou celular (pass-and-play).</li>
+    <li><strong>Torneio "Melhor de Três":</strong> Computa automaticamente o placar acumulado e trata desistências com rigor esportivo.</li>
+  </ul>
+
+  <h2>4.2. Ação Fantasmagórica à Distância (Modo Online)</h2>
+  <p>
+    Permite que dois jogadores em máquinas diferentes disputem uma partida sincronizada em tempo real via <strong>Firebase Realtime Database</strong> (ou via <code>BroadcastChannel</code> para testes entre abas locais), sem necessidade de instalar nada:
+  </p>
+
+  <div class="card card-sucesso">
+    <strong>Passo a Passo para Jogar Online:</strong>
+    <ol>
+      <li><strong>Observador A (Criador):</strong> Na tela inicial, selecione <em>Oponente: Ação Fantasmagórica à Distância (Online)</em> e clique em <em>Começar partida</em>. Na tela de pareamento, clique em <strong>Gerar Par Quântico</strong>.</li>
+      <li><strong>Convite do Oponente:</strong> O sistema gera uma chave (ex.: <code>xq-7b2a</code>). Clique em <strong>📋 Copiar Convite de Jogador</strong> e envie o link para o adversário.</li>
+      <li><strong>Observador B (Convidado):</strong> Abre o link no navegador. O sistema identifica a chave quântica automaticamente; basta clicar em <strong>Conectar</strong>.</li>
+      <li><strong>Sorteio Neutro de Cores (50/50%):</strong> No exato instante do entrelaçamento, as cores são sorteadas de forma neutra. O tabuleiro inverte automaticamente para quem jogar de Pretas.</li>
+      <li><strong>Compensação Dinâmica de Latência:</strong> O sistema monitora o ping/RTT entre os navegadores e bonifica proporcionalmente o relógio do jogador por lance para garantir justiça competitiva.</li>
+    </ol>
+  </div>
+
+  <h2>4.3. Modo Telespectador (Observador Passivo)</h2>
+  <p>
+    Perfeito para professores, orientadores ou amigos que queiram assistir à partida:
+  </p>
+  <ul>
+    <li>Basta clicar em <strong>👁️ Copiar Convite de Telespectador</strong> na tela de pareamento ou na barra lateral do jogo.</li>
+    <li>O telespectador acompanha os lances, colapsos em cascata, tempos de relógio e alertas sonoros em tempo real, sem possibilidade de mover peças no tabuleiro.</li>
+  </ul>
+
+  <h2>4.4. Telemetria Científica: Download do Log em JSON</h2>
+  <p>
+    Ao clicar no botão <strong>📥 Baixar Log da Partida</strong>, o usuário exporta um arquivo JSON estruturado contendo a <em>matriz quântica momentânea</em> de cada casa a cada lance, servindo como base para pesquisas em IA e didática da física.
+  </p>
+
+  <!-- SEÇÃO 5: FICHA TÉCNICA -->
+  <div class="page-break"></div>
+  <h1>5. Ficha Técnica e Acesso Aberto</h1>
+
+  <div class="card card-destaque">
+    <ul>
+      <li><strong>Título Oficial:</strong> Xadrez de Schrödinger (Schrödinger's Chess)</li>
+      <li><strong>Licença:</strong> MIT (Código Aberto, livre para replicação, estudos e bifurcações)</li>
+      <li><strong>Arquitetura Técnica:</strong> HTML5, CSS3, JavaScript ES6+ (*Vanilla*), motor de regras clássico <code>chess.js</code> 0.10.3, Firebase Realtime Database & BroadcastChannel API.</li>
+      <li><strong>Arte das Peças:</strong> Ícones SVG por Colin M.L. Burnett (CC BY-SA 3.0 / BSD / GFDL).</li>
+      <li><strong>Ambiente Web Interativo:</strong> <a href="https://pedro-iaia.github.io/xadrez-quantico/" style="color: #38bdf8;">https://pedro-iaia.github.io/xadrez-quantico/</a></li>
+      <li><strong>Repositório do Código-Fonte:</strong> <a href="https://github.com/Pedro-iaia/xadrez-quantico" style="color: #38bdf8;">https://github.com/Pedro-iaia/xadrez-quantico</a></li>
+    </ul>
+  </div>
+
+  <p style="text-align: center; margin-top: 30px; font-style: italic; color: #94a3b8;">
+    "Se um tabuleiro de xadrez pode nos fazer sentir o peso real de um colapso quântico, quais outras leis invisíveis do universo estão esperando para serem jogadas?"
+  </p>
+
+  <div class="footer-bar">
+    <span>Xadrez de Schrödinger &bull; Manual e Léxico Científico</span>
+    <span>Projeto Open Source Educacional</span>
+  </div>
+
+</body>
+</html>

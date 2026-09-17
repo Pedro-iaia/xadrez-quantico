@@ -16,7 +16,7 @@ Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA
 > Esta versão do **Xadrez de Schrödinger** está estruturada com base nas diretrizes do parecer técnico de física quântica, situando-se formalmente no gênero de jogos conceituais com colapso projetivo discreto (*toy models* didáticos com amostragem clássica):
 > 
 > 1. **Regras de Superseleção e Conservação de Inventário**: Superposições não são geradas como variáveis binárias independentes por casa, mas sim como permutações do conjunto `{Torre, Cavalo, Bispo}` para cada flanco (tripla superposição inicial `{r, n, b}`). Isso garante matematicamente a conservação estrita dos setores superseletivos de tipos de peças.
-> 2. **Princípio de Exclusão de Pauli para Bispos**: Restrição do espaço de Hilbert inicial a hipóteses conjuntas globais onde os dois bispos nunca ocupam a mesma cor de casa (10 hipóteses na variante Simplificada; 20 hipóteses no grupo simétrico $S_3$ completo da variante GHZ).
+> 2. **Princípio de Exclusão de Pauli para Bispos**: Restrição do espaço de Hilbert inicial a hipóteses conjuntas globais onde os dois bispos nunca ocupam a mesma cor de casa (10 hipóteses na variante Simplificada; 20 hipóteses no grupo simétrico `S₃` completo da variante GHZ).
 > 3. **Emaranhamento com Estados Tipo GHZ e Redução a Pares de Bell**: A medição por lance ou captura em uma peça sob tripla superposição projeta o estado em cascata pelo grupo, reduzindo as peças remanescentes do flanco a superposições residuais de 2 estados emaranhados.
 > 4. **Amostragem Ponderada de Born**: Eliminação de determinismo heurístico na escolha de peças em lances válidos, aplicando amostragem probabilística uniforme sobre os autovetores legais.
 > 5. **Preservação Canônica do Rei e Ameaça Quântica**: O Rei é inviolável (não pode ser capturado) e é estritamente impedido de mover-se para qualquer casa interceptada por autovetores de ataque de peças em superposição, emitindo alertas de jogada proibida.
@@ -27,7 +27,7 @@ Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA
 
 O projeto insere-se em um campo fértil de iniciativas que usam o xadrez como metáfora pedagógica para conceitos quânticos:
 
-- **[Niel's Chess](https://arxiv.org/abs/2405.00677)**: variante didática voltada para salas de aula do ensino fundamental, jogável em tabuleiro físico. Enquanto no *Niel's Chess* as peças começam clássicas e entram em superposição através de um lance especial de emaranhamento, no *Xadrez de Schrödinger* as peças de cada flanco já iniciam em superposição nativa tripartite ($S_3$).
+- **[Niel's Chess](https://arxiv.org/abs/2405.00677)**: variante didática voltada para salas de aula do ensino fundamental, jogável em tabuleiro físico. Enquanto no *Niel's Chess* as peças começam clássicas e entram em superposição através de um lance especial de emaranhamento, no *Xadrez de Schrödinger* as peças de cada flanco já iniciam em superposição nativa tripartite (`S₃`).
 - **[Google Quantum Chess](https://quantumai.google/cirq/experiments/unitary/quantum_chess)** (Cirq / Unitary Fund / Caltech): formulação matematicamente estrita baseada em operadores unitários contínuos, capaz de rodar em simuladores de circuitos quânticos e hardware real, voltada para computação quântica avançada.
 - **[Quantum Tic-Tac-Toe / Minesweeper / Checkers](https://arxiv.org/pdf/2506.05962)**: gênero de *toy models* combinatórios no qual este projeto se posiciona — empregando aleatoriedade e contagem discreta para tornar o colapso e o entrelaçamento intuitivos e jogáveis no navegador sem exigir álgebra linear avançada do usuário.
 
@@ -47,6 +47,11 @@ O projeto insere-se em um campo fértil de iniciativas que usam o xadrez como me
 - **Relógio de Partida e Fim de Jogo**: cronômetros com cravamento em 00:00 e encerramento com bloqueio imediato do tabuleiro contra lances pós-jogo.
 - **Log da Partida e Matriz Momentânea (Download JSON)**: botão dedicado para exportar o histórico completo com a matriz de probabilidades e estados quânticos a cada lance.
 - **Adversário automatizado (IA)**: com três níveis; nos níveis médio/difícil no modo clássico, usa busca *minimax* com poda alfa-beta rodando em *Web Worker* (não trava a interface). ⚠️ Nota de honestidade técnica: essa IA opera sobre o `chess.js` clássico e **não é probabilisticamente consciente** do espaço de hipóteses quântico — ou seja, ela joga igualmente bem (ou mal) na variante Simplificada e na GHZ, sem tirar proveito da incerteza. Adaptar o motor para isso (PIMC/determinização ou expectiminimax, conforme o item 1.3 do `PLANO_DE_EXPANSAO.md`) é um próximo passo natural, ainda não implementado.
+- **Ação Fantasmagórica à Distância (Modo Online)**: partidas em tempo real entre dois computadores distintos sem backend customizado.
+  - **Emaranhamento por Chave Curta / Link**: geração de códigos (`xq-XXXX`) e links diretos para convite de adversário com sorteio dinâmico de cores na conexão.
+  - **Modo Observador Passivo (Telespectador)**: permite que terceiros assistam à partida em tempo real via link dedicado sem interferir na função de onda do tabuleiro.
+  - **Sincronização Quântica e Compensação de Latência**: medição executada exclusivamente pelo observador da vez e propagada com bônus de latência dinâmico.
+  - **Fallback local integrado**: suporta Firebase Realtime Database para nuvem e `BroadcastChannel` para testes locais imediatos entre abas.
 - **Modo dois jogadores** (mesmo dispositivo).
 - **Formato "Melhor de três"** com placar de torneio e cômputo correto de desistências.
 - **Painel de estudo** com reconhecimento de aberturas clássicas e dicas contextuais.
@@ -64,9 +69,10 @@ xadrez-quantico/
 ├── assets/pieces/    # Ícones SVG das peças de Cburnett (auto-hospedados localmente)
 ├── docs/             # Documentação técnica, parecer físico canônico e guias
 ├── vendor/           # Bibliotecas locais (chess.min.js 0.10.3)
-├── index.html        # Estrutura (HTML) — telas de boas-vindas, configuração e jogo
-├── style.css         # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos
+├── index.html        # Estrutura (HTML) — telas de boas-vindas, configuração, pareamento e jogo
+├── style.css         # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos e pareamento
 ├── script.js         # Lógica (JS) — regras quânticas, IA, relógio, dicas de estudo
+├── quantum-net.js    # Rede (JS) — sincronização em tempo real (Firebase / BroadcastChannel)
 └── LICENSE           # Licença MIT
 ```
 

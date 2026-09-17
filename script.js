@@ -54,6 +54,8 @@ let placarTorneio = {
 };
 let partidaEncerrada = false;
 let logPartida = null;
+let redeQuantica = null;
+let lanceRemotoEmAndamento = false;
 
 /* =========================================================
  * Alertas centrais piscantes na barra de status
@@ -592,9 +594,13 @@ function renderizarTabuleiro() {
           elemento.classList.add('casa-xeque');
         }
 
-        const podeMover = !partidaEncerrada && (configuracaoPartida?.oponente === 'ia'
-          ? (pecaQ.cor === corJogador && pecaQ.cor === chess.turn())
-          : (pecaQ.cor === chess.turn()));
+        const podeMover = !partidaEncerrada && (
+          configuracaoPartida?.oponente === 'online'
+            ? (redeQuantica && !redeQuantica.espectador && pecaQ.cor === corJogador && pecaQ.cor === chess.turn())
+            : (configuracaoPartida?.oponente === 'ia'
+                ? (pecaQ.cor === corJogador && pecaQ.cor === chess.turn())
+                : (pecaQ.cor === chess.turn()))
+        );
 
         const recipiente = document.createElement('div');
         recipiente.className = 'peca-container';
@@ -634,7 +640,11 @@ function renderizarTabuleiro() {
 
 function clicarCasa(casa) {
   if (partidaEncerrada) return;
-  if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador) return;
+  if (configuracaoPartida?.oponente === 'online') {
+    if (!redeQuantica || redeQuantica.espectador || chess.turn() !== corJogador) return;
+  } else if (configuracaoPartida?.oponente === 'ia' && chess.turn() !== corJogador) {
+    return;
+  }
   const peca = chess.get(casa);
   if (casaSelecionada === null) {
     if (peca && peca.color === chess.turn()) {
@@ -842,6 +852,21 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     captured: pecaCapturada ? (pecaCapturada.colapsada || pecaCapturada.possibilidades.join('/')) : null
   }, mensagem || `Lance: ${resultadoLance ? resultadoLance.san : `${origem}-${destino}`}`);
 
+  // Sincroniza o novo estado quântico com o observador parceiro (se online)
+  if (configuracaoPartida?.oponente === 'online' && redeQuantica && !lanceDaIA && !lanceRemotoEmAndamento) {
+    redeQuantica.enviarEstado({
+      fen: chess.fen(),
+      pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
+      gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+      relogio: {
+        w: relogioPartida.segundos.w,
+        b: relogioPartida.segundos.b
+      },
+      vez: chess.turn(),
+      ultimoLance: { origem, destino, san: resultadoLance ? resultadoLance.san : `${origem}-${destino}` }
+    }, mensagem || `Lance: ${resultadoLance ? resultadoLance.san : `${origem}-${destino}`}`);
+  }
+
   if (chess.game_over()) {
     const vencedor = chess.in_checkmate() ? (chess.turn() === 'w' ? 'b' : 'w') : null;
     finalizarPartida(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate');
@@ -852,6 +877,10 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
 
 function desfazerJogada() {
   if (!historicoDesfazer.length || partidaEncerrada) return;
+  if (configuracaoPartida?.oponente === 'online') {
+    mostrarAviso('Não é possível desfazer uma medição já observada remotamente.', 'info', 3000);
+    return;
+  }
 
   function aplicarSnapshot(snapshot) {
     chess.load(snapshot.fen);
@@ -900,6 +929,10 @@ function desfazerJogada() {
 
 function refazerJogada() {
   if (!historicoRefazer.length || partidaEncerrada) return;
+  if (configuracaoPartida?.oponente === 'online') {
+    mostrarAviso('Operação não permitida no modo online.', 'info', 3000);
+    return;
+  }
 
   function aplicarSnapshot(snapshot) {
     chess.load(snapshot.fen);
@@ -1063,13 +1096,16 @@ function atualizarRelogio() {
   }
 }
 
-function finalizarPartida(vencedor, motivo) {
+function finalizarPartida(vencedor, motivo, veioDaRede = false) {
   if (partidaEncerrada) return;
   partidaEncerrada = true;
   relogioPartida.ativo = false;
   if (relogioPartida.intervalId) {
     clearInterval(relogioPartida.intervalId);
     relogioPartida.intervalId = null;
+  }
+  if (configuracaoPartida?.oponente === 'online' && redeQuantica && !veioDaRede && !redeQuantica.espectador) {
+    redeQuantica.enviarFimPartida(vencedor, motivo);
   }
   const nomeVencedor = vencedor === 'w' ? 'Brancas' : (vencedor === 'b' ? 'Pretas' : 'Ninguém');
   let texto = '';
@@ -1224,6 +1260,15 @@ document.getElementById('configModo').addEventListener('change', evento => {
   if (notaNivelIA) notaNivelIA.classList.toggle('oculto', !modoQuantico);
 });
 
+document.getElementById('configOponente').addEventListener('change', evento => {
+  const ehOnline = evento.target.value === 'online';
+  const ehIa = evento.target.value === 'ia';
+  const campoNivelIA = document.getElementById('campoNivelIA');
+  if (campoNivelIA) campoNivelIA.classList.toggle('oculto', !ehIa);
+  const campoInicio = document.getElementById('campoInicio');
+  if (campoInicio) campoInicio.classList.toggle('oculto', ehOnline);
+});
+
 document.getElementById('btnComecar').addEventListener('click', () => {
   placarTorneio = {
     w: 0,
@@ -1231,7 +1276,12 @@ document.getElementById('btnComecar').addEventListener('click', () => {
     empates: 0,
     partida: 1
   };
-  iniciarPartida();
+  const oponente = document.getElementById('configOponente').value;
+  if (oponente === 'online') {
+    abrirTelaPareamento();
+  } else {
+    iniciarPartida();
+  }
 });
 
 document.getElementById('btnVoltarConfiguracao').addEventListener('click', () => {
@@ -1242,6 +1292,10 @@ document.getElementById('btnVoltarConfiguracao').addEventListener('click', () =>
     // Computa a derrota imediatamente para o jogador humano
     const vencedor = corJogador === 'w' ? 'b' : 'w';
     finalizarPartida(vencedor, 'desistência');
+
+    if (configuracaoPartida?.oponente === 'online' && redeQuantica) {
+      redeQuantica.enviarFimPartida(vencedor, 'desistência');
+    }
 
     // Se estiver em torneio melhor de 3 e o torneio ainda não tiver terminado
     const torneio = configuracaoPartida?.formato === 'melhor-de-tres';
@@ -1256,11 +1310,277 @@ document.getElementById('btnVoltarConfiguracao').addEventListener('click', () =>
     }
   }
 
+  if (redeQuantica) {
+    redeQuantica.desconectar();
+    redeQuantica = null;
+  }
+
+  const badgeOnline = document.getElementById('badgeStatusOnline');
+  if (badgeOnline) badgeOnline.classList.add('oculto');
+  const btnComp = document.getElementById('btnCompartilharTelespectador');
+  if (btnComp) btnComp.classList.add('oculto');
+
   relogioPartida.ativo = false;
   if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
   document.getElementById('areaJogo').classList.add('oculto');
+  document.getElementById('telaPareamento').classList.add('oculto');
   document.getElementById('telaInicial').classList.remove('oculto');
 });
+
+/* =========================================================
+ * Funções de Sincronização Quântica Online (Ação Fantasmagórica)
+ * ========================================================= */
+function abrirTelaPareamento() {
+  document.getElementById('telaInicial').classList.add('oculto');
+  document.getElementById('telaBoasVindas').classList.add('oculto');
+  document.getElementById('telaPareamento').classList.remove('oculto');
+}
+
+function fecharTelaPareamento() {
+  if (redeQuantica) {
+    redeQuantica.desconectar();
+    redeQuantica = null;
+  }
+  document.getElementById('blocoConviteGerado')?.classList.add('oculto');
+  document.getElementById('telaPareamento').classList.add('oculto');
+  document.getElementById('telaInicial').classList.remove('oculto');
+}
+
+function iniciarPartidaOnline(dadosSessao) {
+  configuracaoPartida = {
+    modo: document.getElementById('configModo').value,
+    variante: document.getElementById('configVariante')?.value || 'simplificada',
+    oponente: 'online',
+    nivel: 'facil',
+    relogio: document.getElementById('configRelogio').value,
+    formato: 'partida',
+    inicio: dadosSessao.cor === 'w' ? 'brancas' : 'pretas'
+  };
+
+  if (dadosSessao.config) {
+    configuracaoPartida.modo = dadosSessao.config.modo || configuracaoPartida.modo;
+    configuracaoPartida.variante = dadosSessao.config.variante || configuracaoPartida.variante;
+    configuracaoPartida.relogio = dadosSessao.config.relogio || configuracaoPartida.relogio;
+  }
+
+  corJogador = dadosSessao.cor || 'w';
+
+  chess.reset();
+  historicoDesfazer = [];
+  historicoRefazer = [];
+  ultimaPromocaoCasa = null;
+  ultimoColapsoCasa = null;
+  if (timerAlertaStatus) clearTimeout(timerAlertaStatus);
+  const statusAlerta = document.getElementById('statusAlerta');
+  if (statusAlerta) {
+    statusAlerta.textContent = '';
+    statusAlerta.className = 'status-alerta';
+  }
+  casaSelecionada = null;
+  partidaEncerrada = false;
+  configurarRelogio();
+  inicializarPecasQuanticas();
+  inicializarLogPartida();
+  renderizarTabuleiro();
+
+  const badge = document.getElementById('badgeStatusOnline');
+  if (badge) {
+    badge.classList.remove('oculto');
+    if (dadosSessao.espectador) {
+      badge.className = 'badge-online espectador';
+      badge.innerHTML = `👁️ Observador Passivo (Telespectador) · Chave: <strong>${dadosSessao.salaId}</strong>`;
+      emitirAlertaStatus('👁️ Modo Telespectador: observando em tempo real', 'info', 6000);
+      mostrarAviso('Você está conectado como Observador Passivo (Telespectador). Acompanhe os colapsos da partida sem interferir no tabuleiro.', 'info', 7000);
+    } else {
+      badge.className = 'badge-online';
+      const corTexto = corJogador === 'w' ? 'Brancas' : 'Pretas';
+      badge.innerHTML = `⚛️ Par Emaranhado: <strong>${dadosSessao.salaId}</strong> · Você joga de <strong>${corTexto}</strong>`;
+      emitirAlertaStatus(`⚛️ Par Emaranhado! Você é ${corTexto}!`, 'quantico', 6000);
+      mostrarAviso(`Par Quântico estabelecido! Você joga de ${corTexto}.`, 'sucesso', 6000);
+    }
+  }
+
+  const btnComp = document.getElementById('btnCompartilharTelespectador');
+  if (btnComp) btnComp.classList.remove('oculto');
+
+  // Desabilita botões desfazer/refazer para preservar a linha do tempo física compartilhada
+  const btnDesfazer = document.getElementById('btnDesfazer');
+  const btnRefazer = document.getElementById('btnRefazer');
+  if (btnDesfazer) btnDesfazer.disabled = true;
+  if (btnRefazer) btnRefazer.disabled = true;
+
+  document.getElementById('telaInicial').classList.add('oculto');
+  document.getElementById('telaPareamento').classList.add('oculto');
+  document.getElementById('telaBoasVindas').classList.add('oculto');
+  document.getElementById('areaJogo').classList.remove('oculto');
+  document.getElementById('placar').textContent = '';
+}
+
+function aplicarEstadoRemoto(estadoRemoto) {
+  if (!estadoRemoto || !estadoRemoto.fen) return;
+  lanceRemotoEmAndamento = true;
+
+  chess.load(estadoRemoto.fen);
+  pecasQuanticas = estadoRemoto.pecasQuanticas;
+  gruposFlanco = estadoRemoto.gruposFlanco || {};
+
+  if (estadoRemoto.relogio) {
+    relogioPartida.segundos.w = estadoRemoto.relogio.w;
+    relogioPartida.segundos.b = estadoRemoto.relogio.b;
+
+    // Compensação dinâmica de atraso de rede
+    const bonus = estadoRemoto.bonusLatenciaCompensado || 0;
+    const corAdversario = corJogador === 'w' ? 'b' : 'w';
+    if (bonus > 0 && relogioPartida.segundos[corAdversario] !== undefined) {
+      relogioPartida.segundos[corAdversario] += bonus;
+    }
+    atualizarRelogios();
+  }
+
+  iniciarRelogioSeNecessario();
+  casaSelecionada = null;
+  renderizarTabuleiro();
+
+  if (estadoRemoto.mensagem) {
+    mostrarAviso(estadoRemoto.mensagem, 'quantico', 6000);
+    emitirAlertaStatus('⚛️ Ação fantasmagórica recebida!', 'quantico', 3500);
+  }
+
+  if (chess.game_over()) {
+    const vencedor = chess.in_checkmate() ? (chess.turn() === 'w' ? 'b' : 'w') : null;
+    finalizarPartida(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate', true);
+  }
+
+  lanceRemotoEmAndamento = false;
+}
+
+// Configuração dos botões de pareamento
+document.getElementById('btnGerarPar')?.addEventListener('click', async () => {
+  try {
+    redeQuantica = new QuantumNet();
+    redeQuantica.configurarCallbacks({
+      onParEmaranhado: (dados) => {
+        iniciarPartidaOnline(dados);
+      },
+      onEstadoRecebido: (estado) => {
+        aplicarEstadoRemoto(estado);
+      },
+      onFimPartida: (resultado) => {
+        finalizarPartida(resultado.vencedor, resultado.motivo, true);
+      }
+    });
+
+    const configPartida = {
+      modo: document.getElementById('configModo').value,
+      variante: document.getElementById('configVariante')?.value || 'simplificada',
+      relogio: document.getElementById('configRelogio').value
+    };
+
+    const resultado = await redeQuantica.gerarParEmaranhado(configPartida);
+    document.getElementById('codigoParGerado').textContent = resultado.salaId;
+    document.getElementById('blocoConviteGerado').classList.remove('oculto');
+    mostrarAviso(`Chave ${resultado.salaId} gerada! Envie o link para seu adversário.`, 'sucesso', 5500);
+  } catch (err) {
+    mostrarAviso(`Falha ao gerar par quântico: ${err.message}`, 'erro', 5000);
+  }
+});
+
+document.getElementById('btnCopiarLinkJogador')?.addEventListener('click', async () => {
+  if (!redeQuantica) return;
+  const link = redeQuantica.obterLinkConvite(false);
+  try {
+    await navigator.clipboard.writeText(link);
+    mostrarAviso('📋 Link do jogador copiado para a área de transferência!', 'sucesso', 4000);
+  } catch (e) {
+    prompt('Copie o link de convite do jogador:', link);
+  }
+});
+
+document.getElementById('btnCopiarLinkEspectador')?.addEventListener('click', async () => {
+  if (!redeQuantica) return;
+  const link = redeQuantica.obterLinkConvite(true);
+  try {
+    await navigator.clipboard.writeText(link);
+    mostrarAviso('👁️ Link de telespectador copiado para a área de transferência!', 'sucesso', 4000);
+  } catch (e) {
+    prompt('Copie o link de telespectador (observador passivo):', link);
+  }
+});
+
+document.getElementById('btnCompartilharTelespectador')?.addEventListener('click', async () => {
+  if (!redeQuantica) return;
+  const link = redeQuantica.obterLinkConvite(true);
+  try {
+    await navigator.clipboard.writeText(link);
+    mostrarAviso('👁️ Link de telespectador copiado!', 'sucesso', 3500);
+  } catch (e) {
+    prompt('Copie o link de telespectador:', link);
+  }
+});
+
+document.getElementById('btnConectarPar')?.addEventListener('click', async () => {
+  const input = document.getElementById('inputChavePar').value.trim();
+  if (!input) {
+    mostrarAviso('Por favor, informe a chave quântica ou o link de convite.', 'erro', 4000);
+    return;
+  }
+
+  // Extrai o código caso o usuário tenha colado um link completo
+  let codigo = input;
+  if (input.includes('par=' || input.includes('?'))) {
+    try {
+      const url = new URL(input.startsWith('http') ? input : `http://dummy.com/${input}`);
+      codigo = url.searchParams.get('par') || codigo;
+    } catch (e) { }
+  }
+
+  const comoEspectador = document.getElementById('checkEntrarComoEspectador').checked;
+
+  try {
+    redeQuantica = new QuantumNet();
+    redeQuantica.configurarCallbacks({
+      onParEmaranhado: (dados) => {
+        iniciarPartidaOnline(dados);
+      },
+      onEstadoRecebido: (estado) => {
+        aplicarEstadoRemoto(estado);
+      },
+      onFimPartida: (resultado) => {
+        finalizarPartida(resultado.vencedor, resultado.motivo, true);
+      }
+    });
+
+    emitirAlertaStatus('⚛️ Estabelecendo entrelaçamento com o par...', 'quantico', 5000);
+    await redeQuantica.conectarPar(codigo, comoEspectador);
+  } catch (err) {
+    mostrarAviso(`Erro ao conectar ao par quântico: ${err.message}`, 'erro', 5000);
+  }
+});
+
+document.getElementById('btnVoltarTelaInicial')?.addEventListener('click', fecharTelaPareamento);
+
+// Detecção automática de convite via parâmetro na URL
+function verificarParametrosConviteUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const chavePar = params.get('par');
+    if (chavePar) {
+      const comoEspectador = params.get('espectador') === '1' || params.get('espectador') === 'true';
+      const selectOponente = document.getElementById('configOponente');
+      if (selectOponente) selectOponente.value = 'online';
+      const inputChave = document.getElementById('inputChavePar');
+      if (inputChave) inputChave.value = chavePar;
+      const checkEspectador = document.getElementById('checkEntrarComoEspectador');
+      if (checkEspectador) checkEspectador.checked = comoEspectador;
+      abrirTelaPareamento();
+      mostrarAviso(`Convite quântico detectado para a chave: ${chavePar}`, 'quantico', 5000);
+    }
+  } catch (e) {
+    console.error('Erro ao verificar parâmetros de convite:', e);
+  }
+}
+
+verificarParametrosConviteUrl();
 
 /* =========================================================
  * Página de boas-vindas (artigo sobre mecânica quântica)

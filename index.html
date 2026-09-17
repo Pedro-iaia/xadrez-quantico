@@ -10,7 +10,11 @@
   <meta name="keywords"
     content="chess, quantum-computing, education, javascript, minimax, schrodinger-chess, xadrez-quantico, game-ai">
   <script src="vendor/chess.min.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260916">
+  <!-- Firebase SDK para sincronização em tempo real (compatível com frontend puro) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="quantum-net.js"></script>
+  <link rel="stylesheet" href="style.css?v=20260917">
 </head>
 
 <body>
@@ -95,8 +99,9 @@
       <label>
         Oponente
         <select id="configOponente">
-          <option value="ia" selected>Adversário automatizado</option>
-          <option value="humano">Dois jogadores</option>
+          <option value="ia" selected>Adversário automatizado (IA)</option>
+          <option value="humano">Dois jogadores (mesmo teclado)</option>
+          <option value="online">Ação Fantasmagórica à Distância (Online)</option>
         </select>
       </label>
       <label id="campoNivelIA">
@@ -135,7 +140,7 @@
           <option value="melhor-de-tres">Melhor de três</option>
         </select>
       </label>
-      <label>
+      <label id="campoInicio">
         Quem começa
         <select id="configInicio">
           <option value="brancas">Você joga com as Brancas</option>
@@ -148,11 +153,66 @@
     <button class="link-discreto" id="btnReabrirArtigo" type="button">O que são superposição e emaranhamento? (reabrir
       explicação)</button>
   </section>
+
+  <!-- Tela de Pareamento Quântico (Ação Fantasmagórica à Distância) -->
+  <section class="tela-inicial oculto" id="telaPareamento">
+    <h2>⚛️ Ação Fantasmagórica à Distância</h2>
+    <p class="subtitulo">Entrelaçamento quântico entre dois observadores remotos.</p>
+
+    <div class="pareamento-grid">
+      <!-- Opção 1: Gerar Par Quântico -->
+      <div class="card-pareamento" id="cardCriarPar">
+        <h3>1. Gerar Novo Par Emaranhado</h3>
+        <p>Crie um estado de Bell compartilhado e convide outro observador para a partida.</p>
+        <button class="btn-principal" id="btnGerarPar">Gerar Par Quântico</button>
+
+        <div class="bloco-convite oculto" id="blocoConviteGerado">
+          <div class="codigo-destaque">
+            <span class="label-codigo">Chave Quântica:</span>
+            <strong id="codigoParGerado">xq-????</strong>
+          </div>
+          <div class="botoes-compartilhar">
+            <button class="btn-principal btn-secundario" id="btnCopiarLinkJogador">
+              📋 Copiar Convite de Jogador (Adversário)
+            </button>
+            <button class="btn-principal btn-secundario" id="btnCopiarLinkEspectador">
+              👁️ Copiar Convite de Telespectador (Observador Passivo)
+            </button>
+          </div>
+          <div class="status-espera-pulso">
+            <span class="pulso-quantico"></span>
+            <span>Aguardando segundo observador entrelaçar... (As cores serão sorteadas na conexão)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opção 2: Conectar a Par Existente -->
+      <div class="card-pareamento" id="cardConectarPar">
+        <h3>2. Entrelaçar com Par Existente</h3>
+        <p>Insira a chave quântica ou o link recebido de outro observador.</p>
+        <div class="input-grupo">
+          <input type="text" id="inputChavePar" placeholder="Ex: xq-7a2b ou cole o link aqui" spellcheck="false" autocomplete="off" />
+          <button class="btn-principal" id="btnConectarPar">Conectar</button>
+        </div>
+        <label class="checkbox-linha" style="margin-top: 10px;">
+          <input id="checkEntrarComoEspectador" type="checkbox" />
+          Entrar apenas como Telespectador (Observador Passivo)
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-principal btn-secundario" id="btnVoltarTelaInicial" style="margin-top: 18px;">
+      Voltar às Configurações
+    </button>
+  </section>
+
   <section class="oculto" id="areaJogo">
     <div class="jogo-cabecalho">
       <h1>Xadrez de Schrödinger</h1>
       <div class="placar" id="placar"></div>
     </div>
+    <!-- Badge de Conexão Quântica Online / Espectador -->
+    <div id="badgeStatusOnline" class="badge-online oculto"></div>
     <div class="container">
       <div class="tabuleiro-area" id="tabuleiroArea">
         <div id="status" class="barra-status">
@@ -183,6 +243,7 @@
           <div class="historico-lista" id="didatica"></div>
         </div>
         <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à página de configuração</button>
+        <button class="btn-principal btn-secundario oculto" id="btnCompartilharTelespectador" style="margin-top: 8px;">👁️ Copiar Convite de Telespectador</button>
         <button class="btn-principal btn-secundario" id="btnBaixarLog" style="margin-top: 8px;">📥 Baixar Log da Partida</button>
       </div>
     </div>

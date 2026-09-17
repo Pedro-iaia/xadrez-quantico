@@ -832,3 +832,160 @@ h1 {
 .rodape-creditos a:hover {
   color: var(--cyan-forte);
 }
+
+/* =========================================================
+ * Estilos do Modo "Ação Fantasmagórica à Distância" (Online)
+ * ========================================================= */
+#telaPareamento {
+  width: min(640px, 94vw);
+}
+
+.pareamento-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.card-pareamento {
+  background: rgba(36, 36, 44, 0.85);
+  border: 1px solid rgba(80, 160, 255, 0.25);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.card-pareamento h3 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+  color: var(--cyan);
+}
+
+.card-pareamento p {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: #c4c4d0;
+  line-height: 1.4;
+}
+
+.bloco-convite {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(20, 20, 28, 0.9);
+  border: 1px solid var(--cyan-fraco, #385068);
+  border-radius: 8px;
+}
+
+.codigo-destaque {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.codigo-destaque strong {
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: var(--dourado);
+  background: #111116;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px dashed var(--dourado);
+  font-family: monospace;
+}
+
+.botoes-compartilhar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.botoes-compartilhar .btn-principal {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.status-espera-pulso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #a0d4ff;
+}
+
+.pulso-quantico {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00d8ff;
+  box-shadow: 0 0 0 0 rgba(0, 216, 255, 0.7);
+  animation: pulsoEmaranhado 1.6s infinite ease-out;
+  flex-shrink: 0;
+}
+
+@keyframes pulsoEmaranhado {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(0, 216, 255, 0.8);
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(0, 216, 255, 0);
+  }
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(0, 216, 255, 0);
+  }
+}
+
+.input-grupo {
+  display: flex;
+  gap: 8px;
+}
+
+.input-grupo input {
+  flex: 1;
+  padding: 8px 12px;
+  background: #191922;
+  border: 1px solid #3c3c4a;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.88rem;
+}
+
+.input-grupo input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+
+.input-grupo .btn-principal {
+  padding: 8px 16px;
+  margin-top: 0;
+  width: auto;
+}
+
+.badge-online {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 5px 14px;
+  margin-bottom: 10px;
+  background: rgba(22, 32, 48, 0.9);
+  border: 1px solid #00a8e8;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: #d8f0ff;
+  box-shadow: 0 2px 8px rgba(0, 168, 232, 0.2);
+}
+
+.badge-online.espectador {
+  background: rgba(48, 32, 22, 0.9);
+  border-color: #ffaa33;
+  color: #ffe8cc;
+  box-shadow: 0 2px 8px rgba(255, 170, 51, 0.2);
+}
