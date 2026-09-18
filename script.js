@@ -32,6 +32,7 @@ let casaSelecionada = null;
 let corJogador = 'w';
 let historicoDesfazer = [];
 let historicoRefazer = [];
+let historicoPartidaLances = [];
 let ultimaPromocaoCasa = null;
 let ultimoColapsoCasa = null;
 let timerAlertaStatus = null;
@@ -211,8 +212,7 @@ function dicaPorFase() {
 }
 
 function atualizarDidatica() {
-  const historicoVerboso = chess.history({ verbose: true });
-  const historicoUCI = historicoVerboso.map(m => `${m.from}${m.to}`);
+  const historicoUCI = historicoPartidaLances.map(m => (m.from && m.to ? `${m.from}${m.to}` : '')).filter(Boolean);
   const abertura = identificarAbertura(historicoUCI);
   const painel = document.getElementById('didatica');
   if (!abertura) {
@@ -322,6 +322,35 @@ function colapsarNoGrupo(casa, tipoConfirmado) {
   return grupo.casas
     .filter(c => pecasQuanticas[c].colapsada && !antesColapsadas.has(c))
     .map(c => ({ casa: c, tipo: pecasQuanticas[c].colapsada }));
+}
+
+// Amostragem honesta de Born: pondera a probabilidade de cada tipo candidato pelo
+// número de hipóteses globais ainda vivas no grupo que contêm aquele tipo na casa indicada.
+function sortearTipoPorPesosHipoteses(casa, tiposCandidatos, grupo) {
+  if (!tiposCandidatos || !tiposCandidatos.length) return null;
+  if (tiposCandidatos.length === 1) return tiposCandidatos[0];
+  if (!grupo || !grupo.hipoteses || !grupo.hipoteses.length) {
+    return tiposCandidatos[Math.floor(Math.random() * tiposCandidatos.length)];
+  }
+
+  const pesos = {};
+  let totalPesos = 0;
+  for (const tipo of tiposCandidatos) {
+    const contagem = grupo.hipoteses.filter(h => h[casa] === tipo).length;
+    pesos[tipo] = contagem;
+    totalPesos += contagem;
+  }
+
+  if (totalPesos <= 0) {
+    return tiposCandidatos[Math.floor(Math.random() * tiposCandidatos.length)];
+  }
+
+  let sorteio = Math.random() * totalPesos;
+  for (const tipo of tiposCandidatos) {
+    sorteio -= pesos[tipo];
+    if (sorteio <= 0) return tipo;
+  }
+  return tiposCandidatos[tiposCandidatos.length - 1];
 }
 
 // Uma vez que uma peça do flanco sai da casa original (por mover-se ou por
@@ -486,6 +515,7 @@ function salvarEstadoQuantico() {
     fen: chess.fen(),
     pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
     gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+    historicoLances: [...historicoPartidaLances],
     relogio: {
       w: relogioPartida.segundos.w,
       b: relogioPartida.segundos.b
@@ -759,17 +789,19 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     }
   }
 
-  const tipoEscolhido = candidatos[Math.floor(Math.random() * candidatos.length)];
+  const grupoOrigem = gruposFlanco[pecaQ.cor];
+  const tipoEscolhido = sortearTipoPorPesosHipoteses(origem, candidatos, grupoOrigem);
 
   // Snapshot fiel do estado (com a peça em sua casa de origem íntegra)
   salvarEstadoQuantico();
   let mensagem = '';
 
   // Captura de peça ainda em superposição: a captura também é uma medição
-  // (Regra 6) — revela seu tipo real e propaga pelo grupo antes de sair do tabuleiro.
+  // (Regra 4) — revela seu tipo real via Regra de Born e propaga pelo grupo antes de sair do tabuleiro.
   const pecaCapturada = pecasQuanticas[destino];
   if (pecaCapturada && pecaCapturada.possibilidades.length > 1) {
-    const tipoRevelado = pecaCapturada.possibilidades[Math.floor(Math.random() * pecaCapturada.possibilidades.length)];
+    const grupoCapturada = gruposFlanco[pecaCapturada.cor];
+    const tipoRevelado = sortearTipoPorPesosHipoteses(destino, pecaCapturada.possibilidades, grupoCapturada);
     const revelacoesCaptura = colapsarNoGrupo(destino, tipoRevelado);
     if (revelacoesCaptura.length) {
       mensagem += `🔮 A captura revelou: ${revelacoesCaptura.map(r => `${r.casa} = ${nomesPecas[r.tipo]}`).join(', ')}.`;
@@ -843,14 +875,23 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
   renderizarTabuleiro();
   if (mensagem) mostrarAviso(mensagem, 'quantico', 6600);
 
+  // Registra no histórico persistente do jogo (imune a resets por chess.load)
+  const lanceSAN = resultadoLance ? resultadoLance.san : `${origem}-${destino}`;
+  historicoPartidaLances.push({
+    san: lanceSAN,
+    cor: pecaQ.cor,
+    from: origem,
+    to: destino
+  });
+
   // Registra no log da partida
   registrarEstadoNoLog({
     from: origem,
     to: destino,
-    san: resultadoLance ? resultadoLance.san : `${origem}-${destino}`,
+    san: lanceSAN,
     piece: tipoEscolhido,
     captured: pecaCapturada ? (pecaCapturada.colapsada || pecaCapturada.possibilidades.join('/')) : null
-  }, mensagem || `Lance: ${resultadoLance ? resultadoLance.san : `${origem}-${destino}`}`);
+  }, mensagem || `Lance: ${lanceSAN}`);
 
   // Sincroniza o novo estado quântico com o observador parceiro (se online)
   if (configuracaoPartida?.oponente === 'online' && redeQuantica && !lanceDaIA && !lanceRemotoEmAndamento) {
@@ -863,8 +904,9 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
         b: relogioPartida.segundos.b
       },
       vez: chess.turn(),
-      ultimoLance: { origem, destino, san: resultadoLance ? resultadoLance.san : `${origem}-${destino}` }
-    }, mensagem || `Lance: ${resultadoLance ? resultadoLance.san : `${origem}-${destino}`}`);
+      ultimoLance: { origem, destino, san: lanceSAN },
+      historicoLances: [...historicoPartidaLances]
+    }, mensagem || `Lance: ${lanceSAN}`);
   }
 
   if (chess.game_over()) {
@@ -886,6 +928,9 @@ function desfazerJogada() {
     chess.load(snapshot.fen);
     pecasQuanticas = snapshot.pecasQuanticas;
     gruposFlanco = snapshot.gruposFlanco || {};
+    if (snapshot.historicoLances) {
+      historicoPartidaLances = [...snapshot.historicoLances];
+    }
     if (snapshot.relogio) {
       relogioPartida.segundos.w = snapshot.relogio.w;
       relogioPartida.segundos.b = snapshot.relogio.b;
@@ -897,6 +942,7 @@ function desfazerJogada() {
     fen: chess.fen(),
     pecasQuanticas: JSON.parse(JSON.stringify(pecasQuanticas)),
     gruposFlanco: JSON.parse(JSON.stringify(gruposFlanco)),
+    historicoLances: [...historicoPartidaLances],
     relogio: {
       w: relogioPartida.segundos.w,
       b: relogioPartida.segundos.b
@@ -1007,7 +1053,7 @@ function atualizarStatusEHistorial() {
 
   const historico = document.getElementById('historico');
   historico.innerHTML = '';
-  chess.history().forEach((lance, indice) => {
+  historicoPartidaLances.forEach((lanceObj, indice) => {
     if (indice % 2 === 0) {
       const linha = document.createElement('div');
       linha.className = 'jogada-linha';
@@ -1018,11 +1064,12 @@ function atualizarStatusEHistorial() {
 
       const spanBrancas = document.createElement('span');
       spanBrancas.className = 'jogada-lance';
-      spanBrancas.textContent = lance;
+      spanBrancas.textContent = lanceObj.san || lanceObj;
 
+      const proximo = historicoPartidaLances[indice + 1];
       const spanPretas = document.createElement('span');
       spanPretas.className = 'jogada-lance';
-      spanPretas.textContent = chess.history()[indice + 1] || '';
+      spanPretas.textContent = proximo ? (proximo.san || proximo) : '';
 
       linha.appendChild(spanNum);
       linha.appendChild(spanBrancas);
@@ -1030,6 +1077,7 @@ function atualizarStatusEHistorial() {
       historico.appendChild(linha);
     }
   });
+  historico.scrollTop = historico.scrollHeight;
   atualizarDidatica();
   const btnDesfazer = document.getElementById('btnDesfazer');
   const btnRefazer = document.getElementById('btnRefazer');
@@ -1096,7 +1144,11 @@ function atualizarRelogio() {
   relogioPartida.segundos[cor] = Math.max(0, relogioPartida.segundos[cor] - decorrido);
   atualizarRelogios();
   if (relogioPartida.segundos[cor] <= 0) {
-    finalizarPartida(cor === 'w' ? 'b' : 'w', 'tempo');
+    const ehOnline = configuracaoPartida?.oponente === 'online';
+    const ehMeuTurno = !ehOnline || !redeQuantica || redeQuantica.espectador || cor === corJogador;
+    if (ehMeuTurno) {
+      finalizarPartida(cor === 'w' ? 'b' : 'w', 'tempo');
+    }
   }
 }
 
@@ -1107,6 +1159,11 @@ function finalizarPartida(vencedor, motivo, veioDaRede = false) {
   if (relogioPartida.intervalId) {
     clearInterval(relogioPartida.intervalId);
     relogioPartida.intervalId = null;
+  }
+  if (motivo === 'tempo') {
+    const derrotado = vencedor === 'w' ? 'b' : 'w';
+    relogioPartida.segundos[derrotado] = 0;
+    atualizarRelogios();
   }
   if (configuracaoPartida?.oponente === 'online' && redeQuantica && !veioDaRede && !redeQuantica.espectador) {
     redeQuantica.enviarFimPartida(vencedor, motivo);
@@ -1242,6 +1299,7 @@ function iniciarPartida() {
 
   historicoDesfazer = [];
   historicoRefazer = [];
+  historicoPartidaLances = [];
   ultimaPromocaoCasa = null;
   ultimoColapsoCasa = null;
   if (timerAlertaStatus) clearTimeout(timerAlertaStatus);
@@ -1391,6 +1449,7 @@ function iniciarPartidaOnline(dadosSessao) {
   chess.reset();
   historicoDesfazer = [];
   historicoRefazer = [];
+  historicoPartidaLances = [];
   ultimaPromocaoCasa = null;
   ultimoColapsoCasa = null;
   if (timerAlertaStatus) clearTimeout(timerAlertaStatus);
@@ -1411,13 +1470,19 @@ function iniciarPartidaOnline(dadosSessao) {
     badge.classList.remove('oculto');
     if (dadosSessao.espectador) {
       badge.className = 'badge-online espectador';
-      badge.innerHTML = `👁️ Observador Passivo (Telespectador) · Chave: <strong>${dadosSessao.salaId}</strong>`;
+      badge.innerHTML = `
+        <div class="badge-linha badge-linha-chave">Chave: <strong>${dadosSessao.salaId}</strong></div>
+        <div class="badge-linha badge-linha-papel">👁️ Modo Observador Passivo (Telespectador)</div>
+      `;
       emitirAlertaStatus('👁️ Modo Telespectador: observando em tempo real', 'info', 6000);
       mostrarAviso('Você está conectado como Observador Passivo (Telespectador). Acompanhe os colapsos da partida sem interferir no tabuleiro.', 'info', 7000);
     } else {
       badge.className = 'badge-online';
       const corTexto = corJogador === 'w' ? 'Brancas' : 'Pretas';
-      badge.innerHTML = `⚛️ Par Emaranhado: <strong>${dadosSessao.salaId}</strong> · Você joga de <strong>${corTexto}</strong>`;
+      badge.innerHTML = `
+        <div class="badge-linha badge-linha-chave">⚛️ Par Emaranhado: <strong>${dadosSessao.salaId}</strong></div>
+        <div class="badge-linha badge-linha-papel">Você joga de <strong>${corTexto}</strong></div>
+      `;
       emitirAlertaStatus(`⚛️ Par Emaranhado! Você é ${corTexto}!`, 'quantico', 6000);
       mostrarAviso(`Par Quântico estabelecido! Você joga de ${corTexto}.`, 'sucesso', 6000);
     }
@@ -1443,6 +1508,20 @@ function aplicarEstadoRemoto(estadoRemoto) {
   chess.load(estadoRemoto.fen);
   pecasQuanticas = estadoRemoto.pecasQuanticas;
   gruposFlanco = estadoRemoto.gruposFlanco || {};
+
+  if (estadoRemoto.historicoLances && Array.isArray(estadoRemoto.historicoLances)) {
+    historicoPartidaLances = [...estadoRemoto.historicoLances];
+  } else if (estadoRemoto.ultimoLance) {
+    const ultimo = estadoRemoto.ultimoLance;
+    const jaExiste = historicoPartidaLances.some(l => l.from === ultimo.origem && l.to === ultimo.destino && l.san === ultimo.san);
+    if (!jaExiste) {
+      historicoPartidaLances.push({
+        san: ultimo.san,
+        from: ultimo.origem,
+        to: ultimo.destino
+      });
+    }
+  }
 
   if (estadoRemoto.relogio) {
     relogioPartida.segundos.w = estadoRemoto.relogio.w;
@@ -1512,7 +1591,7 @@ document.getElementById('btnGerarPar')?.addEventListener('click', async () => {
 
 document.getElementById('btnCopiarCodigoCurto')?.addEventListener('click', async () => {
   const codigo = document.getElementById('codigoParGerado')?.textContent?.trim();
-  if (!codigo || codigo === 'xq-????') return;
+  if (!codigo || codigo === 'xq????' || codigo === 'xq-????') return;
   try {
     await navigator.clipboard.writeText(codigo);
     mostrarAviso(`🔑 Chave curta "${codigo}" copiada para a área de transferência!`, 'sucesso', 4000);
@@ -1556,15 +1635,15 @@ document.getElementById('btnCompartilharTelespectador')?.addEventListener('click
 
 function extrairCodigoSala(entrada) {
   if (!entrada) return '';
-  const limpo = entrada.trim();
+  let limpo = entrada.trim().toLowerCase();
   if (limpo.includes('par=') || limpo.includes('?')) {
     try {
       const url = new URL(limpo.startsWith('http') ? limpo : `https://dummy.com/${limpo.startsWith('?') ? limpo : '?' + limpo}`);
       const par = url.searchParams.get('par');
-      if (par) return par.trim().toLowerCase();
+      if (par) limpo = par.trim().toLowerCase();
     } catch (e) { }
   }
-  return limpo.toLowerCase();
+  return limpo.replace(/[^a-z0-9]/g, '');
 }
 
 document.getElementById('btnConectarPar')?.addEventListener('click', async () => {
@@ -1792,3 +1871,12 @@ const btnBaixarLog = document.getElementById('btnBaixarLog');
 if (btnBaixarLog) {
   btnBaixarLog.addEventListener('click', baixarLogPartida);
 }
+
+// Ao reativar a aba em smartphones (após alternar abas), reseta o instante do relógio
+// para impedir que o congelamento em segundo plano consuma tempo repentinamente
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && relogioPartida.ativo) {
+    relogioPartida.ultimoInstante = performance.now();
+  }
+});
+

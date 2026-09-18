@@ -3,8 +3,10 @@
  * Sincronização em tempo real de partidas de Xadrez Quântico.
  * 
  * Suporta:
- * - Firebase Realtime Database (modo online em nuvem)
- * - BroadcastChannel API (fallback automático para testes locais entre abas)
+ * - WebRTC P2P (via PeerJS: conexão direta gratuita entre navegadores e celulares diferentes)
+ * - BroadcastChannel API + LocalStorage (emaranhamento local instantâneo entre abas)
+ * - Firebase Realtime Database (opcional, para persistência em nuvem)
+ * - Códigos curtos amigáveis para mobile (somente letras, sem hífens)
  * - Pareamento de observadores com sorteio de cores no entrelaçamento
  * - Modo Observador Passivo (Telespectador)
  * - Compensação dinâmica de latência por lance
@@ -13,10 +15,7 @@
 (function (global) {
   'use strict';
 
-  // Configuração padrão do Firebase.
-  // Substitua pelos dados do seu console Firebase (Projeto -> Configurações -> Web App)
-  // Caso não preenchido, o jogo entrará automaticamente em modo 'Simulação Quântica Local'
-  // permitindo testes imediatos entre duas abas ou janelas no mesmo computador.
+  // Configuração opcional do Firebase (se preenchido, usa Firebase como backend primário).
   const FIREBASE_CONFIG = {
     apiKey: "",
     authDomain: "",
@@ -36,12 +35,17 @@
       this.conectado = false;
       this.parEmaranhado = false;
       this.espectador = false;
-      this.backend = 'broadcast'; // 'firebase' ou 'broadcast'
+      this.backend = 'broadcast'; // 'firebase' | 'peerjs' | 'broadcast'
       this.canalBroadcast = null;
       this.dbRef = null;
+      this.peer = null;
+      this.conexoesP2P = [];
+      this.connP2P = null;
       this.tempoEnvioLance = 0;
-      this.latenciaEstimadaMs = 60;
+      this.latenciaEstimadaMs = 50;
       this.ultimoTimestampEstado = 0;
+      this.partidaEncerradaNotificada = false;
+      this.salaDados = null;
 
       // Callbacks fornecidos pelo script.js
       this.callbacks = {
@@ -61,12 +65,26 @@
     }
 
     _gerarCodigoSala() {
-      const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
-      let codigo = 'xq-';
+      // 6 letras minúsculas fáceis de digitar em teclado mobile (sem hífens ou números)
+      const letras = 'abcdefghjkmnpqrstuvwxyz';
+      let codigo = 'xq';
       for (let i = 0; i < 4; i++) {
-        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+        codigo += letras.charAt(Math.floor(Math.random() * letras.length));
       }
       return codigo;
+    }
+
+    _normalizarCodigo(codigo) {
+      if (!codigo) return '';
+      let limpo = String(codigo).trim().toLowerCase();
+      if (limpo.includes('par=') || limpo.includes('?')) {
+        try {
+          const url = new URL(limpo.startsWith('http') ? limpo : `https://dummy.com/${limpo.startsWith('?') ? limpo : '?' + limpo}`);
+          const par = url.searchParams.get('par');
+          if (par) limpo = par.trim().toLowerCase();
+        } catch (e) { }
+      }
+      return limpo.replace(/[^a-z0-9]/g, '');
     }
 
     _inicializarBackend() {
@@ -87,12 +105,17 @@
           console.info('⚛️ [QuantumNet] Conectado ao Firebase Realtime Database');
           return;
         } catch (err) {
-          console.warn('⚠️ [QuantumNet] Falha ao inicializar Firebase. Alternando para BroadcastChannel:', err);
+          console.warn('⚠️ [QuantumNet] Falha ao inicializar Firebase:', err);
         }
       }
 
-      this.backend = 'broadcast';
-      console.info('⚛️ [QuantumNet] Usando canal de emaranhamento local (BroadcastChannel).');
+      if (typeof Peer !== 'undefined') {
+        this.backend = 'peerjs';
+        console.info('⚛️ [QuantumNet] WebRTC P2P (PeerJS) disponível para conexão entre navegadores.');
+      } else {
+        this.backend = 'broadcast';
+        console.info('⚛️ [QuantumNet] Usando canal de emaranhamento local (BroadcastChannel).');
+      }
     }
 
     configurarCallbacks(callbacks) {
@@ -116,13 +139,20 @@
         estadoAtual: null
       };
 
+      this.salaDados = salaInicial;
+
+      // Mantém sempre BroadcastChannel e LocalStorage ativos (para abas no mesmo navegador)
+      this._iniciarBroadcastChannel();
+      try {
+        localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(salaInicial));
+      } catch (e) { }
+
       if (this.backend === 'firebase') {
         this.dbRef = this.database.ref(`salas/${this.salaId}`);
         await this.dbRef.set(salaInicial);
         this._ouvirFirebase();
-      } else {
-        this._iniciarBroadcastChannel();
-        localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(salaInicial));
+      } else if (typeof Peer !== 'undefined') {
+        this._iniciarHostPeerJS(salaInicial);
       }
 
       this.conectado = true;
@@ -133,10 +163,51 @@
       };
     }
 
+    _iniciarHostPeerJS(salaInicial) {
+      try {
+        const peerId = `xqpeer_${this.salaId}`;
+        this.peer = new Peer(peerId, { debug: 1 });
+
+        this.peer.on('open', (id) => {
+          console.info(`⚛️ [QuantumNet] Host P2P registrado na rede com chave: ${this.salaId}`);
+        });
+
+        this.peer.on('connection', (conn) => {
+          console.info('⚛️ [QuantumNet] Conexão P2P recebida de outro observador!');
+          this.conexoesP2P.push(conn);
+
+          conn.on('open', () => {
+            // Se ainda não houve sorteio de cores, realiza agora
+            if (!this.salaDados.sorteioCores) {
+              this.salaDados.sorteioCores = this._realizarSorteioCores();
+              this.salaDados.status = 'jogando';
+            }
+            conn.send({
+              tipo: 'SALA_INIT',
+              sala: this.salaDados
+            });
+            this._processarMudancaSala(this.salaDados);
+          });
+
+          conn.on('data', (dados) => {
+            this._tratarMensagemP2P(dados);
+          });
+        });
+
+        this.peer.on('error', (err) => {
+          console.warn('⚠️ [QuantumNet] Aviso P2P Host:', err);
+        });
+      } catch (e) {
+        console.warn('⚠️ [QuantumNet] Não foi possível iniciar Host PeerJS:', e);
+      }
+    }
+
     async conectarPar(codigoSala, comoEspectador = false) {
-      this.salaId = codigoSala.toLowerCase().trim();
+      this.salaId = this._normalizarCodigo(codigoSala);
       this.espectador = comoEspectador;
       this.papel = comoEspectador ? 'espectador' : 'guest';
+
+      this._iniciarBroadcastChannel();
 
       if (this.backend === 'firebase') {
         this.dbRef = this.database.ref(`salas/${this.salaId}`);
@@ -166,28 +237,36 @@
         }
 
         this._ouvirFirebase();
-      } else {
-        this._iniciarBroadcastChannel();
-        const raw = localStorage.getItem(`xq_sala_${this.salaId}`);
-        if (!raw) {
-          throw new Error('Assinatura quântica local não encontrada.');
-        }
-        const sala = JSON.parse(raw);
+        this.conectado = true;
+        return { salaId: this.salaId, papel: this.papel, espectador: this.espectador };
+      }
 
-        if (!this.espectador && sala.jogadores?.guest && sala.jogadores.guest.id !== this.clientId) {
-          this.espectador = true;
-          this.papel = 'espectador';
-        }
+      // 1. Tenta encontrar imediatamente no armazenamento local (mesmo navegador)
+      const raw = localStorage.getItem(`xq_sala_${this.salaId}`);
+      if (raw) {
+        try {
+          const sala = JSON.parse(raw);
+          if (!this.espectador && sala.jogadores?.guest && sala.jogadores.guest.id !== this.clientId) {
+            this.espectador = true;
+            this.papel = 'espectador';
+          }
+          if (!this.espectador) {
+            sala.status = 'jogando';
+            sala.jogadores.guest = { id: this.clientId, ativo: true, onlineEm: Date.now() };
+            sala.sorteioCores = sala.sorteioCores || this._realizarSorteioCores();
+            localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(sala));
+            this.canalBroadcast?.postMessage({ tipo: 'GUEST_CONECTOU', sala });
+          }
+          this._processarMudancaSala(sala);
+          this.conectado = true;
+        } catch (e) { }
+      }
 
-        if (!this.espectador) {
-          sala.status = 'jogando';
-          sala.jogadores.guest = { id: this.clientId, ativo: true, onlineEm: Date.now() };
-          sala.sorteioCores = sala.sorteioCores || this._realizarSorteioCores();
-          localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(sala));
-          this.canalBroadcast.postMessage({ tipo: 'GUEST_CONECTOU', sala });
-        }
-
-        this._processarMudancaSala(sala);
+      // 2. Conecta também via WebRTC P2P (funciona entre navegadores e aparelhos diferentes)
+      if (typeof Peer !== 'undefined') {
+        await this._conectarGuestPeerJS();
+      } else if (!this.conectado) {
+        throw new Error('Assinatura quântica não encontrada. Verifique se o código está correto e se a partida foi gerada.');
       }
 
       this.conectado = true;
@@ -196,6 +275,112 @@
         papel: this.papel,
         espectador: this.espectador
       };
+    }
+
+    _conectarGuestPeerJS() {
+      return new Promise((resolve, reject) => {
+        let finalizado = false;
+        const timeout = setTimeout(() => {
+          if (!finalizado) {
+            finalizado = true;
+            if (this.conectado) {
+              resolve();
+            } else {
+              reject(new Error('Tempo esgotado ao buscar assinatura quântica. Verifique o código informado e certifique-se de que o primeiro jogador gerou o par.'));
+            }
+          }
+        }, 7000);
+
+        try {
+          this.peer = new Peer({ debug: 1 });
+
+          this.peer.on('open', () => {
+            const hostPeerId = `xqpeer_${this.salaId}`;
+            console.info(`⚛️ [QuantumNet] Tentando conexão P2P com host: ${hostPeerId}`);
+            this.connP2P = this.peer.connect(hostPeerId, { reliable: true });
+
+            this.connP2P.on('open', () => {
+              console.info('⚛️ [QuantumNet] Canal P2P aberto com sucesso com o Host!');
+              this.connP2P.send({
+                tipo: 'GUEST_CONECTOU',
+                guestId: this.clientId,
+                espectador: this.espectador
+              });
+              if (!finalizado) {
+                finalizado = true;
+                clearTimeout(timeout);
+                resolve();
+              }
+            });
+
+            this.connP2P.on('data', (dados) => {
+              this._tratarMensagemP2P(dados);
+              if (!finalizado) {
+                finalizado = true;
+                clearTimeout(timeout);
+                resolve();
+              }
+            });
+
+            this.connP2P.on('error', (err) => {
+              console.warn('⚠️ [QuantumNet] Erro de conexão P2P:', err);
+            });
+          });
+
+          this.peer.on('error', (err) => {
+            console.warn('⚠️ [QuantumNet] Erro no PeerJS guest:', err);
+            if (!finalizado && !this.conectado) {
+              finalizado = true;
+              clearTimeout(timeout);
+              reject(new Error('Assinatura quântica não encontrada na rede. Verifique a chave informada.'));
+            }
+          });
+        } catch (err) {
+          if (!finalizado) {
+            finalizado = true;
+            clearTimeout(timeout);
+            if (this.conectado) resolve();
+            else reject(err);
+          }
+        }
+      });
+    }
+
+    _tratarMensagemP2P(msg) {
+      if (!msg) return;
+      if (msg.tipo === 'SALA_INIT' || msg.tipo === 'SALA_UPDATE') {
+        this.salaDados = msg.sala;
+        this._processarMudancaSala(msg.sala);
+      } else if (msg.tipo === 'GUEST_CONECTOU') {
+        if (this.papel === 'host' && this.salaDados) {
+          if (!this.salaDados.sorteioCores) {
+            this.salaDados.sorteioCores = this._realizarSorteioCores();
+          }
+          this.salaDados.status = 'jogando';
+          this.salaDados.jogadores.guest = { id: msg.guestId, ativo: true, onlineEm: Date.now() };
+          this._enviarParaTodosP2P({ tipo: 'SALA_UPDATE', sala: this.salaDados });
+          this._processarMudancaSala(this.salaDados);
+        }
+      } else if (msg.tipo === 'ESTADO_ATUALIZADO') {
+        if (msg.sala) this._processarMudancaSala(msg.sala);
+      } else if (msg.tipo === 'FIM_PARTIDA') {
+        this.callbacks.onFimPartida(msg.resultado);
+      }
+    }
+
+    _enviarParaTodosP2P(msg) {
+      if (this.conexoesP2P && this.conexoesP2P.length) {
+        this.conexoesP2P.forEach(conn => {
+          try {
+            if (conn.open) conn.send(msg);
+          } catch (e) { }
+        });
+      }
+      if (this.connP2P && this.connP2P.open) {
+        try {
+          this.connP2P.send(msg);
+        } catch (e) { }
+      }
     }
 
     _realizarSorteioCores() {
@@ -278,6 +463,7 @@
         relogio: snapshotEstado.relogio,
         vez: snapshotEstado.vez,
         ultimoLance: snapshotEstado.ultimoLance,
+        historicoLances: snapshotEstado.historicoLances || [],
         mensagem: mensagemLance,
         autorId: this.clientId,
         timestamp: agora,
@@ -286,14 +472,23 @@
 
       this.ultimoTimestampEstado = agora;
 
+      const raw = localStorage.getItem(`xq_sala_${this.salaId}`);
+      const sala = raw ? JSON.parse(raw) : (this.salaDados || { codigo: this.salaId });
+      sala.estadoAtual = dadosEstado;
+      this.salaDados = sala;
+
+      try {
+        localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(sala));
+      } catch (e) { }
+
+      if (this.canalBroadcast) {
+        this.canalBroadcast.postMessage({ tipo: 'ESTADO_ATUALIZADO', sala });
+      }
+
+      this._enviarParaTodosP2P({ tipo: 'ESTADO_ATUALIZADO', sala });
+
       if (this.backend === 'firebase' && this.dbRef) {
         this.dbRef.child('estadoAtual').set(dadosEstado);
-      } else if (this.canalBroadcast) {
-        const raw = localStorage.getItem(`xq_sala_${this.salaId}`);
-        const sala = raw ? JSON.parse(raw) : { codigo: this.salaId };
-        sala.estadoAtual = dadosEstado;
-        localStorage.setItem(`xq_sala_${this.salaId}`, JSON.stringify(sala));
-        this.canalBroadcast.postMessage({ tipo: 'ESTADO_ATUALIZADO', sala });
       }
     }
 
@@ -307,10 +502,14 @@
         timestamp: Date.now()
       };
 
+      if (this.canalBroadcast) {
+        this.canalBroadcast.postMessage({ tipo: 'FIM_PARTIDA', resultado: payload });
+      }
+
+      this._enviarParaTodosP2P({ tipo: 'FIM_PARTIDA', resultado: payload });
+
       if (this.backend === 'firebase' && this.dbRef) {
         this.dbRef.child('resultado').set(payload);
-      } else if (this.canalBroadcast) {
-        this.canalBroadcast.postMessage({ tipo: 'FIM_PARTIDA', resultado: payload });
       }
     }
 
@@ -333,6 +532,14 @@
         this.canalBroadcast.close();
         this.canalBroadcast = null;
       }
+      if (this.peer) {
+        try {
+          this.peer.destroy();
+        } catch (e) { }
+        this.peer = null;
+      }
+      this.conexoesP2P = [];
+      this.connP2P = null;
       this.conectado = false;
       this.parEmaranhado = false;
     }

@@ -18,13 +18,13 @@ Trata-se de uma delimitação de escopo deliberada, e não de uma imprecisão a 
 
 ---
 
-## 2. Fundamentação Física: Regras de Superseleção e o Princípio de Exclusão
+## 2. Fundamentação Física: Regras de Superseleção e Invariantes Estruturais
 
 A propriedade central que o modelo deve preservar é que o inventário de peças de cada jogador — exatamente 2 torres, 2 cavalos, 2 bispos, 1 dama, 1 rei e 8 peões — nunca seja alterado por qualquer processo de superposição ou colapso. O conceito físico correto para essa exigência não é uma "lei de conservação" no sentido de uma trajetória clássica, mas sim uma **regra de superseleção**: a existência de setores do espaço de estados que nenhuma superposição física admissível pode misturar. O exemplo canônico na literatura é a carga elétrica — não existe, na natureza, um estado que seja superposição entre "um elétron" e "dois elétrons e uma ausência de carga"; a soma de cargas é um número de superseleção. A noção foi introduzida formalmente por Wick, Wightman e Wigner (1952) e permanece o tratamento de referência do tema.
 
-A restrição adicional de que os dois bispos de um mesmo jogador nunca ocupem casas da mesma cor tem um paralelo ainda mais preciso: o **Princípio de Exclusão de Pauli** (Pauli, 1925). A cor da casa em que um bispo permanece pelo resto da partida funciona, no modelo, como um número quântico interno que o distingue do seu par — de modo análogo a como dois férmions idênticos não podem ocupar o mesmo estado quântico simultâneo. Cavalos e torres, por não carregarem essa propriedade distintiva, comportam-se como objetos livremente intercambiáveis — a analogia formal, desenvolvida com as devidas ressalvas na Seção 11, é com a estatística bosônica.
+A restrição adicional de que os dois bispos de um mesmo jogador nunca ocupem casas da mesma cor constitui um **invariante estrutural de superseleção geométrica** do xadrez. Embora a física rigorosa da exclusão de Pauli aplique-se a férmions idênticos indistinguíveis sob antissimetrização de troca na função de onda contínua, a analogia didática com Pauli (Pauli, 1925) é empregada no projeto em sentido ilustrativo: dois objetos de mesma classe (Bispos) não podem coexistir no mesmo estado funcional (mesma cor de casa). Cavalos e torres, por não carregarem essa restrição geométrica de cor, comportam-se como objetos livremente intercambiáveis no inventário do flanco.
 
-Essa distinção conceitual — superseleção para a conservação de inventário, exclusão para a restrição de cor — é o que permite construir, na Seção 5, uma solução estruturalmente simples em vez de um conjunto de regras ad hoc.
+Essa distinção conceitual — superseleção para a conservação de inventário e restrição topológica-geométrica para a cor dos bispos — é o que permite construir, na Seção 5, uma solução estruturalmente simples em vez de um conjunto de regras ad hoc.
 
 ---
 
@@ -60,48 +60,50 @@ Propõe-se aqui uma analogia estrutural — não uma redução formal, dado que 
 
 A conservação estrita do inventário de um flanco (exatamente 1 Torre, 1 Cavalo, 1 Bispo) é garantida de forma estrutural, e não por verificação a posteriori, ao modelar a superposição como uma distribuição sobre **permutações** do conjunto {R, N, B}, em vez de três sorteios binários independentes por casa. Uma permutação, por definição, reatribui rótulos sem jamais duplicar ou omitir um elemento.
 
-O estado inicial de cada flanco é descrito num espaço de 3! = 6 estados-base, um por permutação σ ∈ S₃ de {R, N, B} sobre as três casas do flanco:
+O espaço de configurações de cada flanco é formado por 3! = 6 permutações σ ∈ S₃ de {R, N, B} sobre as três casas do flanco. Quando os flancos são acoplados pela restrição global de cores dos bispos (Seção 5.2), o sistema conjunto passa a ser descrito pela superposição uniforme sobre as configurações válidas:
 
 ```
-|ψ_flanco⟩ = (1/√6) · Σ_σ |σ⟩
+|Ψ_global⟩ = (1/√20) · Σ_{k=1}^{20} |config_k⟩
 ```
 
-A escolha de amplitude uniforme sobre as 6 permutações corresponde à distribuição de máxima entropia sobre o espaço amostral — a escolha menos arbitrária, por não introduzir parâmetros adicionais não motivados pela simetria do problema.
+A distribuição uniforme sobre o conjunto de 20 estados válidos reflete o princípio da máxima entropia na ausência de informação prévia — a escolha menos arbitrária, preservando todas as simetrias permitidas pelas regras.
 
-**Regra 2:** cada flanco é um único sistema quântico de 6 estados-base (as permutações de R/N/B), e não três casas tratadas independentemente.
+**Regra 2:** cada flanco é tratado como um sistema de permutações de {R, N, B}, e não como casas sorteadas de forma independente.
 
 ### 5.2 A restrição entre flancos
 
-A Regra 2 resolve a conservação de inventário dentro de um flanco, mas não impede que os dois flancos, tratados de forma independente, produzam dois bispos da mesma cor de casa. A magnitude do problema, se nada for feito, é substancial:
+A Regra 2 resolve a conservação de inventário dentro de um flanco, mas não impede que os dois flancos, tratados de forma independente, produzam dois bispos da mesma cor de casa. A magnitude do problema, sob independência estrita, seria substancial:
 
 - O bispo do flanco da dama ocupa uma casa escura com probabilidade 2/3 e uma casa clara com probabilidade 1/3.
 - O bispo do flanco do rei ocupa uma casa clara com probabilidade 2/3 e uma casa escura com probabilidade 1/3.
-- Sob independência, P(mesma cor) = (2/3 × 1/3) + (1/3 × 2/3) = 4/9 ≈ 44%.
+- Sob independência pura: P(mesma cor) = (2/3 × 1/3) + (1/3 × 2/3) = 4/9 ≈ 44,4%.
 
-Uma configuração fisicamente inconsistente ocorreria, portanto, em quase metade das preparações — não é um caso de borda, é o comportamento predominante do modelo sem essa restrição.
+Uma configuração fisicamente inconsistente com o xadrez clássico ocorreria, portanto, em quase metade das preparações.
 
-**Regra 3:** os dois flancos de um mesmo jogador formam um único estado emaranhado, restrito ao subespaço em que os bispos ocupam cores de casa distintas (a aplicação, neste sistema, do Princípio de Exclusão de Pauli descrito na Seção 2).
+**Regra 3:** os dois flancos de um mesmo jogador formam um único sistema emaranhado correlacionado, restrito ao subespaço em que os bispos ocupam cores de casa distintas.
 
-**Contagem exata:** das 6 × 6 = 36 combinações possíveis entre os dois flancos, exatamente 20 respeitam a restrição de cores distintas. O estado inicial correto é a superposição uniforme sobre essas 20 configurações válidas, com amplitude 1/√20 (probabilidade 1/20 = 5% cada).
+**Contagem exata:** das 6 × 6 = 36 combinações possíveis entre os dois flancos, exatamente 20 respeitam a restrição de cores distintas. O estado inicial completo é a superposição uniforme sobre essas 20 configurações válidas, com amplitude 1/√20 (probabilidade 1/20 = 5% cada).
 
-### 5.3 Uma consequência não trivial da restrição conjunta
+### 5.3 Uma consequência não trivial da restrição conjunta: No-Signaling e Condicionamento Bayesiano
 
-Sem a restrição entre flancos, a probabilidade de a casa de canto a1 efetivamente conter uma Torre seria 1/3, por simetria simples entre as 3 permutações do flanco. **Com a restrição de cor corretamente imposta, essa probabilidade passa a 3/10** — o vínculo global desloca a estatística marginal de uma única casa, exatamente como, em um sistema genuinamente emaranhado, a medição de uma parte do sistema pode alterar as probabilidades marginais atribuídas ingenuamente a outra parte, caso o emaranhamento não seja levado em conta. (Cálculo: dos 20 estados globais válidos, exatamente 6 têm Torre em a1: 6/20 = 3/10.) Por simetria, o mesmo vale para o canto h1. Uma consequência prática dessa conta é que a probabilidade a priori de qualquer lado dispor de uma Torre genuína no canto para viabilizar o roque é, sob o modelo correto, ligeiramente inferior à intuição ingênua.
+Sem a restrição entre flancos, a probabilidade a priori de a casa de canto a1 conter uma Torre seria 1/3 (2 permutações em 6). **Com a restrição global de bispos conjuntamente imposta, essa probabilidade a priori passa a ser de exatamente 3/10 = 30%** (das 20 configurações válidas no espaço global, exatamente 6 contêm Torre em a1: 6/20 = 3/10; por simetria, o mesmo se aplica a h1, a8 e h8).
+
+Fisicamente, essa alteração da probabilidade marginal a priori não decorre de qualquer transmissão superluminal de sinal (o que violaria o **Teorema de No-Signaling** da mecânica quântica e da relatividade), mas sim do recorte do espaço de Hilbert admissível. A revelação de uma peça durante o jogo opera uma **atualização bayesiana de probabilidades (Regra de Born)** sobre as hipóteses que permanecem compatíveis com a observação realizada. Em termos didáticos e práticos para o enxadrista, isso significa que a probabilidade a priori de uma casa de canto conter uma Torre para rocar é honestamente de 30%, e não de 33,3%.
 
 ---
 
-## 6. Dinâmica do Colapso: Estrutura GHZ
+## 6. Dinâmica do Colapso: Analogia com Estados GHZ e Pares de Bell
 
-A estrutura de colapso em cascata de um flanco de três objetos corresponde, em forma, a um **estado GHZ** (Greenberger, Horne & Zeilinger, 1989) — o estado emaranhado padrão de três partículas na literatura de fundamentos da mecânica quântica. A regra de atualização, aplicação sequencial do postulado de projeção:
+A cascata de colapso de três peças correlacionadas oferece uma **analogia combinatória direta com a estrutura de um estado GHZ** (Greenberger, Horne & Zeilinger, 1989) sobre uma base de estados discretos de permutação:
 
-1. **Na primeira medição do flanco** (por lance ou por captura — Seção 7), o resultado é sorteado com peso igual entre as possibilidades ainda vivas, nunca por uma ordem de avaliação fixa.
-2. **As duas casas restantes do flanco passam a uma superposição residual de 2 estados** entre os tipos remanescentes — permanecem indeterminadas, mas correlacionadas. Esse par residual corresponde, formalmente, a um par de Bell — o estado de duas partículas de um GHZ tripartite após a medição da terceira.
-3. **Na segunda medição**, a terceira casa colapsa deterministicamente para o único tipo restante, já que o inventário do flanco está, nesse ponto, quase inteiramente revelado.
+1. **Na primeira medição do flanco** (por lance ou por captura — Seção 7), o resultado é amostrado segundo a **Regra de Born**, pesando a probabilidade de cada tipo candidato pelo número de hipóteses globais ainda vivas que contêm aquele tipo naquela casa.
+2. **As duas casas restantes do flanco passam a uma superposição residual de 2 estados** entre os tipos remanescentes — permanecem indeterminadas entre si, mas fortemente correlacionadas (analogia estrutural com um par de Bell bipartido).
+3. **Na segunda medição**, a terceira casa colapsa deterministicamente para o único tipo restante, completando a revelação do inventário do flanco.
 
 | Etapa | Casa medida | Estado das outras duas |
 |---|---|---|
-| Antes de qualquer lance | — | Superposição uniforme sobre as 6 permutações |
-| Após a 1ª medição | Colapsada (1 de 3 tipos, prob. 1/3 cada) | Superposição uniforme sobre as 2 permutações restantes |
+| Antes de qualquer lance | — | Superposição conjunta (20 estados válidos) |
+| Após a 1ª medição | Colapsada (tipo sorteado via Regra de Born) | Superposição residual correlacionada (análogo a par de Bell) |
 | Após a 2ª medição | (já colapsada) | Colapso determinístico (resta 1 único tipo) |
 
 ---
@@ -111,37 +113,37 @@ A estrutura de colapso em cascata de um flanco de três objetos corresponde, em 
 A captura de uma peça ainda em superposição deve ser tratada com a mesma dinâmica de colapso do lance ordinário, por dois motivos:
 
 - Qualquer função de avaliação de material — humana ou de um motor de busca — só pode atribuir valor a uma peça capturada se a identidade dessa peça estiver definida, o que exige colapso.
-- Fisicamente, uma captura é uma interação irreversível que registra, no restante do sistema, informação sobre qual peça estava naquela casa — a peça sai do tabuleiro, mas essa saída em si constitui um evento de medição, independentemente do destino físico do resultado.
+- Fisicamente, uma captura é uma interação irreversível que registra, no restante do sistema, informação macroscópica sobre qual peça estava naquela casa.
 
-**Regra 4:** capturar uma peça ainda não colapsada aciona a mesma dinâmica da Seção 6 — sorteio com peso igual entre as possibilidades vivas, propagando a atualização às demais casas do flanco e, quando aplicável, ao bispo do flanco oposto.
+**Regra 4:** capturar uma peça ainda não colapsada constitui medição física — amostragem ponderada pelas hipóteses sobreviventes via Regra de Born, propagando imediatamente o colapso e o descarte de estados pelas demais casas do flanco e pelo bispo do flanco oposto.
 
 ---
 
-## 8. Roque sob o Modelo Proposto
+## 8. Roque sob o Modelo Proposto: Medição Operacional Intuitiva
 
-A dinâmica de colapso desenvolvida nas Seções 6 e 7 tem uma consequência direta e não-trivial sobre a legalidade do roque:
+A dinâmica de colapso tem impacto direto sobre a legalidade do roque clássico:
 
-**Regra 5:** o roque para um lado só é legal enquanto `'r'` permanecer uma possibilidade viva da casa de canto correspondente. A própria tentativa de roque pode constituir o evento de medição que colapsa essa casa para Torre — exatamente como qualquer outro lance testado contra as possibilidades vivas —, mas nunca deve ignorar um colapso anterior para outro tipo, ocorrido por qualquer via (movimento direto da peça ou efeito de cascata do restante do flanco). Se `'r'` não estiver mais entre as possibilidades vivas, o roque para aquele lado permanece indisponível pelo restante da partida.
+**Regra 5:** o roque para um lado é permitido sempre que `'r'` permanecer como uma possibilidade viva na casa de canto correspondente. A execução do lance de roque atua como uma **medição operacional**: o jogador expressa a intenção de rocar e, caso a Torre ainda esteja contida no leque de hipóteses admissíveis, a casa do canto colapsa para Torre (propagando a atualização em cascata para o restante do flanco). Caso a casa do canto já tenha colapsado previamente para Cavalo ou Bispo (por movimento direto ou colapso complementar), o roque torna-se estritamente proibido pelo restante da partida.
 
-Essa regra não introduz mecanismo novo: estende o mesmo teste de legalidade-como-medição já empregado para qualquer peça, agora também aplicado à casa de canto antes de se confiar nos direitos de roque mantidos internamente por um motor de regras clássico, que não possui, por definição, conhecimento da camada quântica sobreposta.
+Essa formulação preserva a intuitividade enxadrística para o jogador humano e o respeito estrito ao inventário de peças, sem frustrar a partida com falhas aleatórias inesperadas em um lance clássico básico.
 
 ---
 
 ## 9. Resumo das Regras Propostas
 
-1. Rei, Dama e Peões de cada lado são sempre clássicos, desde a configuração inicial (condição de contorno, Seção 4).
-2. Cada flanco (Torre/Cavalo/Bispo de um lado) é um único sistema quântico de 6 estados-base — as permutações de {R, N, B} — com amplitude uniforme 1/√6 sobre os estados permitidos pela Regra 4 abaixo.
-3. Os bispos dos dois flancos de um mesmo jogador são conjuntamente restritos a cores de casa distintas; o estado inicial completo é a superposição uniforme sobre as 20 (de 36) combinações globais que respeitam essa restrição.
-4. O colapso é sempre uma amostragem aleatória com peso igual entre as possibilidades ainda vivas no momento da medição — nunca uma escolha determinística por ordem de avaliação.
-5. Tanto mover quanto capturar uma peça ainda não colapsada constitui medição, disparando a cascata de colapso (Regra 6).
-6. Ao colapsar a primeira casa de um flanco, as outras duas passam a um estado emaranhado residual de 2 possibilidades (par de Bell); a segunda medição resolve deterministicamente a terceira casa.
-7. O roque permanece legal apenas enquanto `'r'` for uma possibilidade viva da casa de canto correspondente.
+1. Rei, Dama e Peões de cada lado são sempre clássicos, desde a configuração inicial (condições de contorno, Seção 4).
+2. Cada flanco (Torre/Cavalo/Bispo de um lado) é modelado sobre o espaço de permutações de {R, N, B} em S₃.
+3. Os bispos dos dois flancos de um mesmo jogador são conjuntamente restritos a cores de casa distintas; o estado inicial completo é a superposição uniforme sobre as 20 combinações globais admissíveis (amplitude 1/√20 cada).
+4. O colapso é sempre uma amostragem probabilística fiel à Regra de Born, proporcional ao número de hipóteses globais sobreviventes para cada tipo legal — nunca um determinismo arbitrário nem amostragem plana ingênua.
+5. Mover ou capturar uma peça em superposição constitui medição, acionando a cascata de colapso.
+6. A medição de uma casa de um flanco projeta as outras duas em um par residual correlacionado; a segunda medição resolve deterministicamente a última peça do flanco.
+7. O roque permanece acessível enquanto `'r'` for uma possibilidade viva da casa de canto correspondente, colapsando-a para Torre no momento da execução.
 
 ---
 
 ## 10. Variante de Espaço Amostral Reduzido
 
-Para contextos em que a complexidade do modelo integral (Seção 5) seja excessiva para o público-alvo, um espaço amostral reduzido — porém estruturalmente consistente — pode ser obtido restringindo cada flanco às 4 permutações alcançáveis por, no máximo, uma troca a partir da configuração clássica (a identidade e as 3 trocas simples), em vez das 6 permutações completas de S₃. A Regra 3 (restrição de cor entre flancos) permanece válida sobre esse espaço amostral menor, mas as contagens da Seção 5.3 devem ser recalculadas para o novo espaço em vez de reaproveitadas.
+Para contextos em que a complexidade do modelo integral (Seção 5) seja excessiva para o público-alvo, um espaço amostral reduzido — porém estruturalmente consistente — pode ser obtido restringindo cada flanco às 4 permutações alcançáveis por, no máximo, uma troca a partir da configuração clássica (a identidade e as 3 trocas simples), em vez das 6 permutações completas de S₃. A Regra 3 (restrição de cor entre flancos) permanece válida sobre esse espaço amostral menor (resultando em 10 hipóteses conjuntas de 16 possíveis).
 
 ---
 

@@ -824,20 +824,41 @@ h1 {
 
 @media (max-width: 760px) {
   body {
-    padding: 10px;
+    padding: 8px;
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
     overflow-x: hidden;
   }
 
+  .jogo-cabecalho {
+    margin-bottom: 4px;
+  }
+
+  .jogo-cabecalho h1 {
+    font-size: 1.15rem;
+  }
+
   .container {
-    gap: 10px;
+    gap: 8px;
+  }
+
+  #tabuleiro {
+    width: min(420px, 90vw, 50vh);
+    max-width: 100%;
+  }
+
+  .barra-status,
+  .relogios-topo,
+  .badge-online {
+    width: min(420px, 90vw, 50vh);
   }
 
   .tabuleiro-area {
-    width: min(480px, 92vw);
+    width: auto;
   }
 
   .coluna-lateral {
-    width: min(480px, 92vw);
+    width: min(420px, 90vw, 50vh);
   }
 
   .avisos {
@@ -1092,23 +1113,53 @@ h1 {
 }
 
 .badge-online {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 5px 14px;
-  margin-bottom: 10px;
-  background: rgba(22, 32, 48, 0.9);
+  gap: 3px;
+  width: min(480px, 92vw);
+  margin: 0 auto 8px;
+  padding: 6px 12px;
+  background: rgba(20, 30, 46, 0.92);
   border: 1px solid #00a8e8;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  color: #d8f0ff;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 168, 232, 0.2);
+  box-sizing: border-box;
 }
 
 .badge-online.espectador {
-  background: rgba(48, 32, 22, 0.9);
+  background: rgba(44, 30, 20, 0.92);
   border-color: #ffaa33;
-  color: #ffe8cc;
   box-shadow: 0 2px 8px rgba(255, 170, 51, 0.2);
+}
+
+.badge-linha {
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-linha-chave {
+  font-size: 0.84rem;
+  color: #a0d4ff;
+  font-weight: 600;
+}
+
+.badge-linha-chave strong {
+  color: var(--dourado);
+  letter-spacing: 1.5px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  background: rgba(10, 14, 22, 0.7);
+  padding: 1px 8px;
+  border-radius: 5px;
+  border: 1px dashed rgba(232, 201, 146, 0.4);
+}
+
+.badge-linha-papel {
+  font-size: 0.8rem;
+  color: #f2f2f5;
+  font-weight: 500;
 }
