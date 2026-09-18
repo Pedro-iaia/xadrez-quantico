@@ -14,7 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="quantum-net.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260917">
+  <link rel="stylesheet" href="style.css?v=20260918">
 </head>
 
 <body>
@@ -80,7 +80,13 @@
   </section>
   <section class="tela-inicial" id="telaInicial">
     <h2>Nova partida</h2>
-    <p class="subtitulo">Configuração padrão: partida rápida contra a IA.</p>
+    <p class="subtitulo">Configuração padrão: partida rápida online.</p>
+
+    <!-- Botão de atalho direto para o modo online -->
+    <button type="button" class="btn-atalho-online" id="btnAtalhoOnline">
+      ⚛️ Jogar ou assistir partida on-line
+    </button>
+
     <div class="config-grid">
       <label>
         Modo
@@ -92,19 +98,19 @@
       <label id="campoVariante">
         Variante quântica
         <select id="configVariante">
-          <option value="simplificada" selected>Simplificada (4 permutações por flanco)</option>
-          <option value="ghz">GHZ — modelo físico completo (6 permutações por flanco)</option>
+          <option value="simplificada">Simplificada (4 permutações por flanco)</option>
+          <option value="ghz" selected>GHZ (6 permutações por flanco)</option>
         </select>
       </label>
       <label>
         Oponente
         <select id="configOponente">
-          <option value="ia" selected>Adversário automatizado (IA)</option>
+          <option value="online" selected>Ação Fantasmagórica à Distância (Online)</option>
+          <option value="ia">Adversário automatizado (IA)</option>
           <option value="humano">Dois jogadores (mesmo teclado)</option>
-          <option value="online">Ação Fantasmagórica à Distância (Online)</option>
         </select>
       </label>
-      <label id="campoNivelIA">
+      <label id="campoNivelIA" class="oculto">
         Nível da IA
         <select id="configNivel">
           <option value="facil">Fácil</option>
@@ -117,10 +123,10 @@
         Modalidade
         <select id="configRelogio">
           <option value="sem-relogio">Sem relógio</option>
-          <option value="bullet" selected>Bullet · 1+0</option>
+          <option value="bullet">Bullet · 1+0</option>
           <option value="blitz">Blitz · 3+0</option>
           <option value="blitz-fischer">Blitz Fischer · 3+2</option>
-          <option value="rapida">Rápida · 10+5</option>
+          <option value="rapida" selected>Rápida · 10+5</option>
           <option value="classica">Clássica · 30+10</option>
           <option value="personalizada">Personalizada</option>
         </select>
@@ -140,11 +146,11 @@
           <option value="melhor-de-tres">Melhor de três</option>
         </select>
       </label>
-      <label id="campoInicio">
+      <label id="campoInicio" class="oculto">
         Quem começa
         <select id="configInicio">
-          <option value="brancas">Você joga com as Brancas</option>
           <option value="sorteio" selected>Sorteio</option>
+          <option value="brancas">Você joga com as Brancas</option>
           <option value="pretas">Você joga com as Pretas</option>
         </select>
       </label>
@@ -167,17 +173,30 @@
         <button class="btn-principal" id="btnGerarPar">Gerar Par Quântico</button>
 
         <div class="bloco-convite oculto" id="blocoConviteGerado">
-          <div class="codigo-destaque">
-            <span class="label-codigo">Chave Quântica:</span>
-            <strong id="codigoParGerado">xq-????</strong>
-          </div>
-          <div class="botoes-compartilhar">
-            <button class="btn-principal btn-secundario" id="btnCopiarLinkJogador">
-              📋 Copiar Convite de Jogador (Adversário)
-            </button>
-            <button class="btn-principal btn-secundario" id="btnCopiarLinkEspectador">
-              👁️ Copiar Convite de Telespectador (Observador Passivo)
-            </button>
+          <div class="convite-opcoes">
+            <!-- Opção Chave Curta -->
+            <div class="opcao-compartilhamento">
+              <div class="codigo-destaque">
+                <span class="label-codigo">Chave Curta:</span>
+                <strong id="codigoParGerado">xq-????</strong>
+              </div>
+              <button class="btn-principal btn-secundario" id="btnCopiarCodigoCurto">
+                🔑 Copiar Código Curto
+              </button>
+            </div>
+
+            <!-- Opção Links Completos -->
+            <div class="opcao-compartilhamento">
+              <span class="label-codigo-bloco">Links Completos de Acesso:</span>
+              <div class="botoes-compartilhar">
+                <button class="btn-principal btn-secundario" id="btnCopiarLinkJogador">
+                  📋 Copiar Link de Jogador (Adversário)
+                </button>
+                <button class="btn-principal btn-secundario" id="btnCopiarLinkEspectador">
+                  👁️ Copiar Link de Telespectador (Observador Passivo)
+                </button>
+              </div>
+            </div>
           </div>
           <div class="status-espera-pulso">
             <span class="pulso-quantico"></span>
@@ -189,11 +208,12 @@
       <!-- Opção 2: Conectar a Par Existente -->
       <div class="card-pareamento" id="cardConectarPar">
         <h3>2. Entrelaçar com Par Existente</h3>
-        <p>Insira a chave quântica ou o link recebido de outro observador.</p>
+        <p>Insira a chave quântica curta (ex: xq-7a2b) ou cole o link completo recebido de outro observador.</p>
         <div class="input-grupo">
           <input type="text" id="inputChavePar" placeholder="Ex: xq-7a2b ou cole o link aqui" spellcheck="false" autocomplete="off" />
           <button class="btn-principal" id="btnConectarPar">Conectar</button>
         </div>
+        <div id="msgAlertaConexao" class="status-inline-alerta oculto"></div>
         <label class="checkbox-linha" style="margin-top: 10px;">
           <input id="checkEntrarComoEspectador" type="checkbox" />
           Entrar apenas como Telespectador (Observador Passivo)
@@ -215,19 +235,26 @@
     <div id="badgeStatusOnline" class="badge-online oculto"></div>
     <div class="container">
       <div class="tabuleiro-area" id="tabuleiroArea">
+        <!-- Relógios reposicionados no topo do tabuleiro com molduras distintas e tamanho reduzido -->
+        <div class="relogios-topo oculto" id="relogios">
+          <div class="relogio relogio-brancas" id="relogioBrancas">
+            <span class="relogio-rotulo">⚪ Brancas</span>
+            <strong>--:--</strong>
+          </div>
+          <div class="relogio relogio-pretas" id="relogioPretas">
+            <span class="relogio-rotulo">⚫ Pretas</span>
+            <strong>--:--</strong>
+          </div>
+        </div>
+
         <div id="status" class="barra-status">
           <div id="statusTurno" class="status-turno"><span class="indicador-vez"></span><span id="textoTurno">Vez das
               Brancas</span></div>
           <div id="statusAlerta" class="status-alerta"></div>
         </div>
         <div id="tabuleiro"></div>
-        <div class="avisos" id="avisos"></div>
       </div>
       <div class="coluna-lateral">
-        <div class="relogios oculto" id="relogios">
-          <div class="relogio" id="relogioBrancas">Brancas<strong>--:--</strong></div>
-          <div class="relogio" id="relogioPretas">Pretas<strong>--:--</strong></div>
-        </div>
         <div class="painel-lateral">
           <div class="painel-topo">
             <span class="painel-titulo">Lances</span>
@@ -248,10 +275,14 @@
       </div>
     </div>
   </section>
+
+  <!-- Contêiner de avisos/toasts global fixo, visível em todas as telas -->
+  <div class="avisos" id="avisos"></div>
+
   <footer class="rodape-creditos">
     <p>Peças em SVG por <a href="https://commons.wikimedia.org/wiki/User:Cburnett" target="_blank" rel="noopener">Cburnett</a> (CC BY-SA 3.0 / BSD) · Regras clássicas por <a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener">chess.js</a> (BSD-2-Clause) · Projeto sob licença MIT.</p>
   </footer>
-  <script src="script.js?v=20260914"></script>
+  <script src="script.js?v=20260918"></script>
 </body>
 
 </html>
