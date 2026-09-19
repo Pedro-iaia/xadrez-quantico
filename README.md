@@ -12,7 +12,7 @@ Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA
 
 ## 🔬 Nota de Versionamento Oficial: Coerência Física e Literatura
 
-> **Versão Oficial 2.1 (Fisicamente Coerente e Totalmente Auto-Hospedada)**  
+> **Versão Oficial 2.2 (Fisicamente Coerente, Auto-Hospedada e Revisada para Celulares)**  
 > Esta versão do **Xadrez de Schrödinger** está estruturada com base nas diretrizes do parecer técnico de física quântica, situando-se formalmente no gênero de jogos conceituais com colapso projetivo discreto (*toy models* didáticos com amostragem clássica):
 > 
 > 1. **Regras de Superseleção e Conservação de Inventário**: Superposições não são geradas como variáveis binárias independentes por casa, mas sim como permutações do conjunto `{Torre, Cavalo, Bispo}` para cada flanco (tripla superposição inicial `{r, n, b}`). Isso garante matematicamente a conservação estrita dos setores superseletivos de tipos de peças.
@@ -21,7 +21,16 @@ Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA
 > 4. **Amostragem Ponderada de Born**: Eliminação de determinismo heurístico na escolha de peças em lances válidos, aplicando amostragem probabilística uniforme sobre os autovetores legais.
 > 5. **Preservação Canônica do Rei e Ameaça Quântica**: O Rei é inviolável (não pode ser capturado) e é estritamente impedido de mover-se para qualquer casa interceptada por autovetores de ataque de peças em superposição, emitindo alertas de jogada proibida.
 > 6. **Log Estruturado e Download da Matriz Momentânea**: Rastreamento auditável de cada lance com FEN clássico, tempos de relógio e a matriz completa das configurações quânticas para inspeção acadêmica e científica.
-> 7. **Segurança e Privacidade Absoluta (Offline-First)**: Código 100% autônomo, com regras do `chess.js` e ícones SVG auto-hospedados localmente, sem envio de telemetria e sem cookies de rastreamento de terceiros.
+> 7. **Segurança e Privacidade (Offline-First)**: Código autônomo, com `chess.js`, `PeerJS` e ícones SVG auto-hospedados localmente, sem telemetria e sem cookies de rastreamento de terceiros. Única exceção, apenas no modo online: o navegador contata o servidor público de sinalização do PeerJS e servidores STUN para estabelecer a conexão WebRTC entre os dois jogadores; nenhum lance passa por servidor (o tráfego de jogo é P2P).
+
+### 🆕 Novidades da v2.2 (auditoria e correções)
+
+- **Toque**: tocar em outra peça da própria cor agora troca a seleção (antes gerava o aviso "Movimento inválido"); arrastar-e-soltar só é ativado em aparelhos com mouse.
+- **Layout móvel**: tabuleiro usa a largura útil em retrato e cabe inteiro na altura da tela em paisagem; campo da chave não dispara mais o zoom do iOS; avisos vão para o rodapé; alvos de toque ampliados.
+- **Consistência quântica**: após um colapso em cascata, o `chess.js` passa a refletir os tipos revelados (antes validava xeques e cravadas com peças "nominais" já descartadas).
+- **Online robusto**: estados ordenados por número de sequência (e não pelo relógio de cada aparelho); telespectadores recebem os lances dos dois jogadores; um terceiro jogador entra como telespectador; reconexão automática após o navegador ser suspenso; funciona com `localStorage`/`BroadcastChannel` bloqueados; latência medida por PING/PONG.
+- **Desempenho**: SDK do Firebase (sem configuração) removido do carregamento; PeerJS auto-hospedado; Worker do minimax reutilizado entre lances; `wakeLock` mantém a tela acesa em partidas online.
+- **Testes automatizados** em `test/` (`npm test`).
 
 ### 📚 Relação com a Literatura e Jogos Correlatos
 
@@ -51,7 +60,7 @@ O projeto insere-se em um campo fértil de iniciativas que usam o xadrez como me
   - **Emaranhamento por Chave Curta / Link**: geração de códigos (`xq-XXXX`) e links diretos para convite de adversário com sorteio dinâmico de cores na conexão.
   - **Modo Observador Passivo (Telespectador)**: permite que terceiros assistam à partida em tempo real via link dedicado sem interferir na função de onda do tabuleiro.
   - **Sincronização Quântica e Compensação de Latência**: medição executada exclusivamente pelo observador da vez e propagada com bônus de latência dinâmico.
-  - **Fallback local integrado**: suporta Firebase Realtime Database para nuvem e `BroadcastChannel` para testes locais imediatos entre abas.
+  - **Fallback local integrado**: `BroadcastChannel` para testes locais imediatos entre abas; Firebase Realtime Database continua disponível como opção (preencha `FIREBASE_CONFIG` em `quantum-net.js` e reinclua os SDKs do Firebase no `index.html`).
 - **Modo dois jogadores** (mesmo dispositivo).
 - **Formato "Melhor de três"** com placar de torneio e cômputo correto de desistências.
 - **Painel de estudo** com reconhecimento de aberturas clássicas e dicas contextuais.
@@ -68,7 +77,8 @@ xadrez-quantico/
 ├── .github/          # Templates de issues e pull request
 ├── assets/pieces/    # Ícones SVG das peças de Cburnett (auto-hospedados localmente)
 ├── docs/             # Documentação técnica, parecer físico canônico e guias
-├── vendor/           # Bibliotecas locais (chess.min.js 0.10.3)
+├── vendor/           # Bibliotecas locais (chess.min.js 0.10.3, peerjs.min.js 1.5.4)
+├── test/             # Testes automatizados (núcleo quântico, rede P2P simulada, checagem móvel)
 ├── index.html        # Estrutura (HTML) — telas de boas-vindas, configuração, pareamento e jogo
 ├── style.css         # Aparência (CSS) — tema escuro, tabuleiro, painel, avisos e pareamento
 ├── script.js         # Lógica (JS) — regras quânticas, IA, relógio, dicas de estudo
@@ -78,6 +88,7 @@ xadrez-quantico/
 
 Todas as dependências são **auto-hospedadas** diretamente no repositório, sem requisições a CDNs externas ou cookies de terceiros:
 
+- [`PeerJS` 1.5.4](https://peerjs.com/) em `vendor/peerjs.min.js` — conexão WebRTC P2P do modo online (licença MIT).
 - [`chess.js` 0.10.3](https://github.com/jhlywa/chess.js) em `vendor/chess.min.js` — validação de regras e notação SAN do xadrez clássico subjacente (licença BSD-2-Clause).
 - Ícones de peças em SVG de **Cburnett** em `assets/pieces/` — multi-licenciados (BSD / GFDL / GPL / CC BY-SA 3.0); atribuição mantida ao autor. Veja [`docs/DEPENDENCIAS.md`](docs/DEPENDENCIAS.md) para detalhes.
 
@@ -94,6 +105,16 @@ npx serve .
 ```
 
 Depois acesse `http://localhost:8000`.
+
+## 🧪 Testes
+
+```bash
+cd test
+npm install
+npm test            # núcleo quântico + rede P2P simulada (Node, sem navegador)
+BC=1 node rede.test.js ../quantum-net.js   # idem, simulando navegador com BroadcastChannel
+python3 mobile_check.py .. rotulo          # opcional: viewports móveis (requer Playwright)
+```
 
 ## 🧠 Como funciona o núcleo quântico (para quem for contribuir)
 

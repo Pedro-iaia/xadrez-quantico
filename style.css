@@ -31,8 +31,11 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 16px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 h1 {
@@ -179,6 +182,14 @@ h1 {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 
+.casa,
+.peca-container {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .casa {
   display: flex;
   align-items: center;
@@ -262,6 +273,8 @@ h1 {
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
 }
 
 /* Superposição: peças possíveis esmaecidas e sobrepostas */
@@ -557,6 +570,7 @@ h1 {
 .tela-boas-vindas {
   width: min(560px, 100%);
   max-height: 88vh;
+  max-height: 88dvh;
   display: flex;
   flex-direction: column;
 }
@@ -647,6 +661,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.72rem;
@@ -842,15 +857,17 @@ h1 {
     gap: 8px;
   }
 
+  /* Em retrato a página rola, então a largura é o único limite (o 50vh anterior encolhia o
+     tabuleiro e a coluna lateral em telas baixas). */
   #tabuleiro {
-    width: min(420px, 90vw, 50vh);
+    width: min(480px, calc(100vw - 16px));
     max-width: 100%;
   }
 
   .barra-status,
   .relogios-topo,
   .badge-online {
-    width: min(420px, 90vw, 50vh);
+    width: min(480px, calc(100vw - 16px));
   }
 
   .tabuleiro-area {
@@ -858,7 +875,7 @@ h1 {
   }
 
   .coluna-lateral {
-    width: min(420px, 90vw, 50vh);
+    width: min(480px, calc(100vw - 16px));
   }
 
   .avisos {
@@ -883,8 +900,15 @@ h1 {
 
   /* Evita zoom automático do iOS em campos com fonte < 16px */
   .config-grid select,
-  .config-grid input {
+  .config-grid input,
+  #telaPareamento .input-grupo input {
     font-size: 16px;
+  }
+
+  /* Avisos no rodapé: no topo cobriam a barra de status e as fileiras superiores do tabuleiro */
+  .avisos {
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   .tela-inicial {
@@ -1093,6 +1117,7 @@ h1 {
 
 .input-grupo input {
   flex: 1;
+  min-width: 0;
   padding: 8px 12px;
   background: #191922;
   border: 1px solid #3c3c4a;
@@ -1162,4 +1187,117 @@ h1 {
   font-size: 0.8rem;
   color: #f2f2f5;
   font-weight: 500;
+}
+
+/* =========================================================
+ * Ajustes para telas de toque (v2.2)
+ * ========================================================= */
+@media (pointer: coarse) {
+  .btn-nav {
+    width: 40px;
+    height: 36px;
+  }
+
+  .aviso-fechar {
+    padding: 6px 8px;
+    margin: -6px -6px -6px 0;
+  }
+
+  .link-discreto {
+    padding: 10px 4px;
+  }
+
+  .checkbox-linha input {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-principal {
+    min-height: 44px;
+  }
+}
+
+/* Celulares em paisagem: o tabuleiro fica ao lado do painel e cabe inteiro na altura da tela,
+   sem exigir rolagem para ver as fileiras 8 e 1 nem os relógios. */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 1100px) {
+  :root {
+    --sobra-vertical: 96px;
+  }
+
+  #areaJogo.jogo-online {
+    --sobra-vertical: 128px;
+  }
+
+  body {
+    justify-content: flex-start;
+    padding: 6px max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  }
+
+  .jogo-cabecalho {
+    display: none;
+  }
+
+  .container {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  #tabuleiro,
+  .barra-status,
+  .relogios-topo {
+    width: min(calc(100dvh - var(--sobra-vertical)), 62vw);
+  }
+
+  .badge-online {
+    width: min(calc(100dvh - var(--sobra-vertical)), 62vw);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    padding: 3px 8px;
+    margin-bottom: 4px;
+  }
+
+  .relogios-topo {
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .relogio {
+    padding: 2px 6px;
+    gap: 4px;
+  }
+
+  .relogio-rotulo {
+    font-size: 0.68rem;
+  }
+
+  .relogio strong {
+    font-size: 0.8rem;
+  }
+
+  .coluna-lateral {
+    width: min(260px, 34vw);
+    max-height: calc(100dvh - 12px);
+    overflow-y: auto;
+  }
+
+  .painel-lateral {
+    min-height: 0;
+  }
+
+  #historico {
+    min-height: 60px;
+    height: 90px;
+  }
+
+  .rodape-creditos {
+    display: none;
+  }
+
+  .tela-inicial,
+  .tela-boas-vindas {
+    max-height: calc(100dvh - 12px);
+    overflow-y: auto;
+  }
 }

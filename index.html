@@ -3,20 +3,20 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#17171d">
   <title>Xadrez Quântico · Xadrez de Schrödinger</title>
   <meta name="description"
     content="Xadrez de Schrödinger: jogo de xadrez quântico com superposição, emaranhamento, IA Minimax e fins didáticos rodando 100% no navegador.">
   <meta name="keywords"
     content="chess, quantum-computing, education, javascript, minimax, schrodinger-chess, xadrez-quantico, game-ai">
   <script src="vendor/chess.min.js"></script>
-  <!-- PeerJS para pareamento direto P2P WebRTC entre navegadores e dispositivos diferentes -->
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <!-- Firebase SDK para sincronização em tempo real (compatível com frontend puro) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="quantum-net.js"></script>
-  <link rel="stylesheet" href="style.css?v=20260918b">
+  <!-- PeerJS 1.5.4 auto-hospedado: pareamento direto P2P WebRTC entre aparelhos diferentes.
+       (O SDK do Firebase deixou de ser carregado: FIREBASE_CONFIG está vazio, então eram
+       requisições bloqueantes e inúteis, sobretudo em redes móveis. Ver quantum-net.js.) -->
+  <script src="vendor/peerjs.min.js"></script>
+  <script src="quantum-net.js?v=20260919b"></script>
+  <link rel="stylesheet" href="style.css?v=20260919b">
 </head>
 
 <body>
@@ -191,6 +191,9 @@
             <div class="opcao-compartilhamento">
               <span class="label-codigo-bloco">Links Completos de Acesso:</span>
               <div class="botoes-compartilhar">
+                <button class="btn-principal btn-secundario oculto" id="btnCompartilharNativo">
+                  📤 Compartilhar convite (WhatsApp, Telegram…)
+                </button>
                 <button class="btn-principal btn-secundario" id="btnCopiarLinkJogador">
                   📋 Copiar Link de Jogador (Adversário)
                 </button>
@@ -212,7 +215,7 @@
         <h3>2. Entrelaçar com Par Existente</h3>
         <p>Insira a chave quântica curta (ex: xqycbe) ou cole o link completo recebido de outro observador.</p>
         <div class="input-grupo">
-          <input type="text" id="inputChavePar" placeholder="Ex: xqycbe ou cole o link aqui" spellcheck="false" autocomplete="off" />
+          <input type="text" id="inputChavePar" placeholder="Ex: xqycbe ou cole o link aqui" spellcheck="false" autocomplete="off" autocapitalize="none" autocorrect="off" enterkeyhint="go" />
           <button class="btn-principal" id="btnConectarPar">Conectar</button>
         </div>
         <div id="msgAlertaConexao" class="status-inline-alerta oculto"></div>
@@ -284,7 +287,7 @@
   <footer class="rodape-creditos">
     <p>Peças em SVG por <a href="https://commons.wikimedia.org/wiki/User:Cburnett" target="_blank" rel="noopener">Cburnett</a> (CC BY-SA 3.0 / BSD) · Regras clássicas por <a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener">chess.js</a> (BSD-2-Clause) · Projeto sob licença MIT.</p>
   </footer>
-  <script src="script.js?v=20260918b"></script>
+  <script src="script.js?v=20260919b"></script>
 </body>
 
 </html>

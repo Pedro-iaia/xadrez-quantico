@@ -57,6 +57,18 @@ let partidaEncerrada = false;
 let logPartida = null;
 let redeQuantica = null;
 let lanceRemotoEmAndamento = false;
+let workerMinimax = null;
+let bloqueioTela = null;
+
+// Arrastar e soltar (HTML5 drag) não funciona em telas de toque e ainda dispara o
+// menu de "pressionar e segurar" no Android/iOS. Só habilitamos com mouse/trackpad.
+const ARRASTAR_HABILITADO = (() => {
+  try {
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  } catch (e) {
+    return true;
+  }
+})();
 
 /* =========================================================
  * Alertas centrais piscantes na barra de status
@@ -194,7 +206,7 @@ function identificarAbertura(historicoUCI) {
 }
 
 function dicaPorFase() {
-  const numeroLance = chess.history().length;
+  const numeroLance = historicoPartidaLances.length;
   const pecasNoTabuleiro = chess.board().flat().filter(Boolean);
   const materialMenor = pecasNoTabuleiro.filter(p => !['k', 'p'].includes(p.type)).length;
   const haEmaranhadasAtivas = Object.values(pecasQuanticas).some(p => p.emaranhadaComId && !p.colapsada);
@@ -634,7 +646,7 @@ function renderizarTabuleiro() {
 
         const recipiente = document.createElement('div');
         recipiente.className = 'peca-container';
-        recipiente.draggable = podeMover;
+        recipiente.draggable = podeMover && ARRASTAR_HABILITADO;
         if (pecaQ.emaranhadaComId && !pecaQ.colapsada) recipiente.classList.add('emaranhada');
         recipiente.addEventListener('dragstart', evento => {
           if (!podeMover) {
@@ -683,9 +695,33 @@ function clicarCasa(casa) {
     }
   } else {
     const origem = casaSelecionada;
+    if (origem === casa) {
+      casaSelecionada = null;
+      renderizarTabuleiro();
+      return;
+    }
+    // Tocar em outra peça da própria cor troca a seleção (em vez de tentar "capturar" a própria peça).
+    if (peca && peca.color === chess.turn()) {
+      casaSelecionada = casa;
+      renderizarTabuleiro();
+      return;
+    }
     casaSelecionada = null;
-    if (origem === casa) renderizarTabuleiro();
-    else executarMovimento(origem, casa);
+    executarMovimento(origem, casa);
+  }
+}
+
+// O chess.js só conhece UM tipo por casa. Quando uma medição revela o tipo de outras peças do
+// flanco (cascata), o chess.js precisa refletir isso; senão ele valida xeques, cravadas e
+// xeque-mate com peças "nominais" que já se sabe que não existem.
+function sincronizarChessComRevelacoes(revelacoes, casasIgnoradas = []) {
+  for (const revelacao of revelacoes) {
+    if (casasIgnoradas.includes(revelacao.casa)) continue;
+    const pecaQ = pecasQuanticas[revelacao.casa];
+    const noChess = chess.get(revelacao.casa);
+    if (pecaQ && noChess && noChess.color === pecaQ.cor && noChess.type !== revelacao.tipo) {
+      chess.put({ type: revelacao.tipo, color: pecaQ.cor }, revelacao.casa);
+    }
   }
 }
 
@@ -803,6 +839,7 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     const grupoCapturada = gruposFlanco[pecaCapturada.cor];
     const tipoRevelado = sortearTipoPorPesosHipoteses(destino, pecaCapturada.possibilidades, grupoCapturada);
     const revelacoesCaptura = colapsarNoGrupo(destino, tipoRevelado);
+    sincronizarChessComRevelacoes(revelacoesCaptura, [destino]);
     if (revelacoesCaptura.length) {
       mensagem += `🔮 A captura revelou: ${revelacoesCaptura.map(r => `${r.casa} = ${nomesPecas[r.tipo]}`).join(', ')}.`;
     }
@@ -813,6 +850,7 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
   if (pecaQ.possibilidades.length > 1) {
     ultimoColapsoCasa = destino;
     const revelacoes = colapsarNoGrupo(origem, tipoEscolhido);
+    sincronizarChessComRevelacoes(revelacoes, [origem]);
     const linhaMsg = `🔮 Colapso! A peça em ${destino} revelou-se: ${nomesPecas[tipoEscolhido]}.`;
     const outras = revelacoes.filter(r => r.casa !== origem);
     const cascata = outras.length
@@ -858,6 +896,7 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     if (torreQ) {
       if (!torreQ.colapsada) {
         const revelacoesRoque = colapsarNoGrupo(torreOrigem, 'r');
+        sincronizarChessComRevelacoes(revelacoesRoque, [torreOrigem]);
         if (revelacoesRoque.length) {
           const texto = revelacoesRoque.map(r => `${r.casa} = ${nomesPecas[r.tipo]}`).join(', ');
           mensagem += (mensagem ? '\n' : '') + `⛓️ O roque revelou: ${texto}.`;
@@ -1226,16 +1265,32 @@ function escolherLanceFacil() {
   return movimentos.length ? movimentos[Math.floor(Math.random() * movimentos.length)] : null;
 }
 
+// O worker é criado uma única vez e reaproveitado: criar um por lance (com importScripts
+// do chess.js a cada vez) pesa em celulares e vazava uma Blob URL por jogada.
+function obterWorkerMinimax() {
+  if (workerMinimax) return workerMinimax;
+  const chessScriptUrl = new URL('vendor/chess.min.js', location.href).href;
+  const codigo = ` importScripts('${chessScriptUrl}'); const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); } function buscar(jogo, profundidade, alpha, beta, maximizando) { if (!profundidade || jogo.game_over()) return avaliar(jogo); let melhor = maximizando ? -Infinity : Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando); jogo.undo(); melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor); if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor); if (beta <= alpha) break; } return melhor; } self.onmessage = evento => { const jogo = new Chess(evento.data.fen); let melhorLance = null; let melhorValor = -Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false); jogo.undo(); if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; } } self.postMessage(melhorLance); };`;
+  workerMinimax = new Worker(URL.createObjectURL(new Blob([codigo], {
+    type: 'text/javascript'
+  })));
+  return workerMinimax;
+}
+
 function escolherLanceComMinimax(profundidade) {
   return new Promise(resolve => {
-    const chessScriptUrl = new URL('vendor/chess.min.js', location.href).href;
-    const codigo = ` importScripts('${chessScriptUrl}'); const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); } function buscar(jogo, profundidade, alpha, beta, maximizando) { if (!profundidade || jogo.game_over()) return avaliar(jogo); let melhor = maximizando ? -Infinity : Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando); jogo.undo(); melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor); if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor); if (beta <= alpha) break; } return melhor; } self.onmessage = evento => { const jogo = new Chess(evento.data.fen); let melhorLance = null; let melhorValor = -Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false); jogo.undo(); if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; } } self.postMessage(melhorLance); };`;
-    const worker = new Worker(URL.createObjectURL(new Blob([codigo], {
-      type: 'text/javascript'
-    })));
-    worker.onmessage = evento => {
-      worker.terminate();
-      resolve(evento.data);
+    let worker;
+    try {
+      worker = obterWorkerMinimax();
+    } catch (e) {
+      resolve(null);
+      return;
+    }
+    worker.onmessage = evento => resolve(evento.data);
+    worker.onerror = () => {
+      try { worker.terminate(); } catch (e) { }
+      workerMinimax = null;
+      resolve(null);
     };
     worker.postMessage({
       fen: chess.fen(),
@@ -1243,11 +1298,17 @@ function escolherLanceComMinimax(profundidade) {
     });
   });
 }
+
 async function fazerLanceDaIA() {
   if (!configuracaoPartida || configuracaoPartida.oponente !== 'ia' || chess.turn() === corJogador) return;
-  const movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil'
+  const fenAoPensar = chess.fen();
+  let movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil'
     ? await escolherLanceComMinimax(configuracaoPartida.nivel === 'dificil' ? 3 : 2)
     : escolherLanceFacil();
+  // Se a partida mudou enquanto a IA "pensava" (voltou à configuração, nova partida, desfazer),
+  // descarta o lance: ele pertenceria a uma posição que já não existe.
+  if (partidaEncerrada || chess.fen() !== fenAoPensar) return;
+  if (!movimento) movimento = escolherLanceFacil();
   if (movimento) executarMovimento(movimento.from, movimento.to, true);
 }
 
@@ -1314,6 +1375,7 @@ function iniciarPartida() {
   inicializarPecasQuanticas();
   inicializarLogPartida();
   renderizarTabuleiro();
+  document.getElementById('areaJogo').classList.remove('jogo-online');
   navegarParaTela('areaJogo');
   document.getElementById('placar').textContent = configuracaoPartida.formato === 'melhor-de-tres' ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
 
@@ -1398,6 +1460,7 @@ document.getElementById('btnVoltarConfiguracao').addEventListener('click', () =>
 
   relogioPartida.ativo = false;
   if (relogioPartida.intervalId) clearInterval(relogioPartida.intervalId);
+  liberarTela();
   navegarParaTela('telaInicial');
 });
 
@@ -1497,6 +1560,8 @@ function iniciarPartidaOnline(dadosSessao) {
   if (btnDesfazer) btnDesfazer.disabled = true;
   if (btnRefazer) btnRefazer.disabled = true;
 
+  document.getElementById('areaJogo').classList.add('jogo-online');
+  manterTelaAcesa();
   navegarParaTela('areaJogo');
   document.getElementById('placar').textContent = '';
 }
@@ -1553,6 +1618,23 @@ function aplicarEstadoRemoto(estadoRemoto) {
   lanceRemotoEmAndamento = false;
 }
 
+function criarCallbacksRede() {
+  return {
+    onParEmaranhado: (dados) => iniciarPartidaOnline(dados),
+    onEstadoRecebido: (estado) => aplicarEstadoRemoto(estado),
+    onFimPartida: (resultado) => finalizarPartida(resultado.vencedor, resultado.motivo, true),
+    onErro: (erro) => mostrarAviso(erro?.message || 'Falha na rede quântica.', 'erro', 7000),
+    onConexaoPerdida: () => {
+      emitirAlertaStatus('📡 Conexão com o par perdida — reconectando…', 'tempo', 8000);
+      mostrarAviso('Conexão com o par perdida. Tentando restabelecer o emaranhamento…', 'info', 6000);
+    },
+    onConexaoRestabelecida: () => {
+      emitirAlertaStatus('⚛️ Emaranhamento restabelecido!', 'quantico', 4000);
+      mostrarAviso('Conexão restabelecida. A partida continua de onde parou.', 'sucesso', 4500);
+    }
+  };
+}
+
 // Atalho direto no menu de configurações
 document.getElementById('btnAtalhoOnline')?.addEventListener('click', () => {
   abrirTelaPareamento();
@@ -1562,17 +1644,7 @@ document.getElementById('btnAtalhoOnline')?.addEventListener('click', () => {
 document.getElementById('btnGerarPar')?.addEventListener('click', async () => {
   try {
     redeQuantica = new QuantumNet();
-    redeQuantica.configurarCallbacks({
-      onParEmaranhado: (dados) => {
-        iniciarPartidaOnline(dados);
-      },
-      onEstadoRecebido: (estado) => {
-        aplicarEstadoRemoto(estado);
-      },
-      onFimPartida: (resultado) => {
-        finalizarPartida(resultado.vencedor, resultado.motivo, true);
-      }
-    });
+    redeQuantica.configurarCallbacks(criarCallbacksRede());
 
     const configPartida = {
       modo: document.getElementById('configModo').value,
@@ -1658,7 +1730,7 @@ document.getElementById('btnConectarPar')?.addEventListener('click', async () =>
   }
 
   if (!rawInput) {
-    const msg = 'Por favor, informe a chave quântica (ex: xq-7a2b) ou o link de convite.';
+    const msg = 'Por favor, informe a chave quântica (ex: xqkfmt) ou o link de convite.';
     if (msgAlerta) {
       msgAlerta.textContent = `⚠️ ${msg}`;
       msgAlerta.className = 'status-inline-alerta';
@@ -1688,21 +1760,14 @@ document.getElementById('btnConectarPar')?.addEventListener('click', async () =>
 
   try {
     redeQuantica = new QuantumNet();
-    redeQuantica.configurarCallbacks({
-      onParEmaranhado: (dados) => {
-        iniciarPartidaOnline(dados);
-      },
-      onEstadoRecebido: (estado) => {
-        aplicarEstadoRemoto(estado);
-      },
-      onFimPartida: (resultado) => {
-        finalizarPartida(resultado.vencedor, resultado.motivo, true);
-      }
-    });
+    redeQuantica.configurarCallbacks(criarCallbacksRede());
 
     emitirAlertaStatus('⚛️ Estabelecendo entrelaçamento com o par...', 'quantico', 5000);
     mostrarAviso('⚛️ Buscando par quântico na rede...', 'info', 4000);
     await redeQuantica.conectarPar(codigo, comoEspectador);
+    if (redeQuantica && !redeQuantica.parEmaranhado) {
+      mostrarAviso('Conectado à sala. Aguardando o início da partida…', 'info', 6000);
+    }
   } catch (err) {
     const erroTexto = err.message || 'Erro ao conectar ao par quântico';
     if (msgAlerta) {
@@ -1855,14 +1920,17 @@ function baixarLogPartida() {
     mostrarAviso('Nenhum log disponível para download no momento.', 'info', 3500);
     return;
   }
-  const dadosStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logPartida, null, 2));
+  // Blob URL em vez de data: URI — logs longos estouram o limite de data: URIs em vários celulares.
+  const blob = new Blob([JSON.stringify(logPartida, null, 2)], { type: 'application/json' });
+  const urlBlob = URL.createObjectURL(blob);
   const linkDownload = document.createElement('a');
   const dataFormatada = new Date().toISOString().replace(/[:.]/g, '-');
-  linkDownload.setAttribute('href', dadosStr);
+  linkDownload.setAttribute('href', urlBlob);
   linkDownload.setAttribute('download', `xadrez_schrodinger_log_${dataFormatada}.json`);
   document.body.appendChild(linkDownload);
   linkDownload.click();
   linkDownload.remove();
+  setTimeout(() => URL.revokeObjectURL(urlBlob), 4000);
   mostrarAviso('📥 Log da partida baixado com sucesso!', 'sucesso', 4500);
   emitirAlertaStatus('📥 Log baixado!', 'info', 3000);
 }
@@ -1875,8 +1943,49 @@ if (btnBaixarLog) {
 // Ao reativar a aba em smartphones (após alternar abas), reseta o instante do relógio
 // para impedir que o congelamento em segundo plano consuma tempo repentinamente
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && relogioPartida.ativo) {
+  if (document.hidden) return;
+  if (relogioPartida.ativo) {
     relogioPartida.ultimoInstante = performance.now();
   }
+  // Ao voltar (ex.: depois de compartilhar o convite no WhatsApp), o navegador pode ter
+  // derrubado a conexão P2P e liberado o bloqueio de tela: restabelece os dois.
+  if (configuracaoPartida?.oponente === 'online' && redeQuantica) {
+    redeQuantica.aoVoltarAoPrimeiroPlano();
+    if (!partidaEncerrada) manterTelaAcesa();
+  }
 });
+
+// Mantém a tela acesa durante a partida online: telas que apagam suspendem a aba e derrubam a conexão.
+async function manterTelaAcesa() {
+  try {
+    if (!('wakeLock' in navigator) || bloqueioTela) return;
+    bloqueioTela = await navigator.wakeLock.request('screen');
+    bloqueioTela.addEventListener('release', () => { bloqueioTela = null; });
+  } catch (e) {
+    bloqueioTela = null;
+  }
+}
+
+function liberarTela() {
+  try { if (bloqueioTela) bloqueioTela.release(); } catch (e) { }
+  bloqueioTela = null;
+}
+
+// Compartilhamento nativo (WhatsApp, Telegram, SMS…) quando o aparelho oferece.
+const btnCompartilharNativo = document.getElementById('btnCompartilharNativo');
+if (btnCompartilharNativo && navigator.share) {
+  btnCompartilharNativo.classList.remove('oculto');
+  btnCompartilharNativo.addEventListener('click', async () => {
+    if (!redeQuantica) return;
+    try {
+      await navigator.share({
+        title: 'Xadrez de Schrödinger',
+        text: `Vamos entrelaçar uma partida de Xadrez de Schrödinger! Chave: ${redeQuantica.salaId}`,
+        url: redeQuantica.obterLinkConvite(false)
+      });
+    } catch (e) {
+      if (e && e.name !== 'AbortError') mostrarAviso('Não foi possível abrir o compartilhamento.', 'erro', 4000);
+    }
+  });
+}
 

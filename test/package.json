@@ -1,0 +1,16 @@
+{
+  "name": "xadrez-quantico-testes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node nucleo.test.js ../script.js && node rede.test.js ../quantum-net.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chess.js": "0.10.3"
+  },
+  "private": true
+}
