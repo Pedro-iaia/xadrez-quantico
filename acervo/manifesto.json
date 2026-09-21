@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ghz-cascata-dama",
+    "titulo": "01. Colapso em Cascata no Flanco da Dama (GHZ)",
+    "descricao": "Demonstração do modelo GHZ completo: a medição da peça em a1 colapsa o tripleto quântico do flanco da dama (Torre, Cavalo e Bispo) em cascata instantânea.",
+    "variante": "ghz",
+    "arquivo": "acervo/01_colapso_ghz_flanco_dama.json"
+  },
+  {
+    "id": "pauli-bispos",
+    "titulo": "02. Princípio de Exclusão de Pauli nos Bispos",
+    "descricao": "Ilustração do colapso cruzado entre os dois flancos: a revelação de um Bispo numa casa clara restringe instantaneamente o outro Bispo para casas escuras.",
+    "variante": "ghz",
+    "arquivo": "acervo/02_principio_exclusao_pauli_bispos.json"
+  }
+]

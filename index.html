@@ -15,8 +15,8 @@
        (O SDK do Firebase deixou de ser carregado: FIREBASE_CONFIG está vazio, então eram
        requisições bloqueantes e inúteis, sobretudo em redes móveis. Ver quantum-net.js.) -->
   <script src="vendor/peerjs.min.js"></script>
-  <script src="quantum-net.js?v=20260919b"></script>
-  <link rel="stylesheet" href="style.css?v=20260919b">
+  <script src="quantum-net.js?v=20260921"></script>
+  <link rel="stylesheet" href="style.css?v=20260921">
 </head>
 
 <body>
@@ -157,6 +157,41 @@
         </select>
       </label>
     </div>
+    
+    <!-- Bloco de Playback e Acervo Didático -->
+    <div class="card-acervo-playback" id="cardAcervoPlayback">
+      <div class="acervo-topo">
+        <span class="acervo-icone">📼</span>
+        <div>
+          <h3>Playback & Acervo Didático</h3>
+          <p class="acervo-subtitulo">Reveja partidas lance a lance, estude fenômenos quânticos ou carregue lições salvas.</p>
+        </div>
+      </div>
+      
+      <div class="acervo-controles-grid">
+        <div class="acervo-item">
+          <label for="selectPartidasAcervo">📚 Partidas Modelo do Acervo</label>
+          <select id="selectPartidasAcervo">
+            <option value="" selected disabled>Carregando acervo didático...</option>
+          </select>
+        </div>
+
+        <div class="acervo-item">
+          <label for="selectPartidasRecentes">🕒 Partidas Locais Recentes</label>
+          <select id="selectPartidasRecentes">
+            <option value="" selected disabled>Nenhuma partida recente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="acervo-botoes">
+        <input type="file" id="inputArquivoLog" accept=".json" class="oculto" />
+        <button type="button" class="btn-principal btn-secundario" id="btnCarregarArquivoLog">
+          📂 Carregar Partida (.json)
+        </button>
+      </div>
+    </div>
+
     <button class="btn-principal" id="btnComecar">Começar partida</button>
     <button class="link-discreto" id="btnReabrirArtigo" type="button">O que são superposição e emaranhamento? (reabrir
       explicação)</button>
@@ -238,6 +273,8 @@
     </div>
     <!-- Badge de Conexão Quântica Online / Espectador -->
     <div id="badgeStatusOnline" class="badge-online oculto"></div>
+    <!-- Badge de Modo Didático / Playback -->
+    <div id="badgePlayback" class="badge-playback oculto">📼 MODO DIDÁTICO / PLAYBACK</div>
     <div class="container">
       <div class="tabuleiro-area" id="tabuleiroArea">
         <!-- Relógios reposicionados no topo do tabuleiro com molduras distintas e tamanho reduzido -->
@@ -258,6 +295,29 @@
           <div id="statusAlerta" class="status-alerta"></div>
         </div>
         <div id="tabuleiro"></div>
+
+        <!-- Barra de Controles de Reprodução / Playback -->
+        <div id="barraPlayback" class="barra-playback oculto">
+          <div class="playback-botoes">
+            <button type="button" class="btn-playback" id="btnInicioPlayback" title="Início da partida (|◀)" aria-label="Início da partida">|◀</button>
+            <button type="button" class="btn-playback" id="btnVoltarLance" title="Lance anterior (◀)" aria-label="Lance anterior">◀</button>
+            <button type="button" class="btn-playback btn-playback-play" id="btnPlayPause" title="Reproduzir / Autoplay (▶)" aria-label="Reproduzir">▶</button>
+            <button type="button" class="btn-playback" id="btnAvancarLance" title="Próximo lance (▶)" aria-label="Próximo lance">▶</button>
+            <button type="button" class="btn-playback" id="btnFimPlayback" title="Fim da partida (▶|)" aria-label="Fim da partida">▶|</button>
+          </div>
+          <div class="playback-timeline">
+            <input type="range" id="sliderPlayback" min="0" max="0" value="0" step="1" aria-label="Navegador de lances da partida" />
+            <span id="contadorPlayback" class="contador-playback">0 / 0</span>
+          </div>
+          <div class="playback-velocidade">
+            <label for="selectVelocidadePlayback" class="label-velocidade">Velocidade:</label>
+            <select id="selectVelocidadePlayback" class="select-velocidade">
+              <option value="3000">0.5x (3s)</option>
+              <option value="1500" selected>1.0x (1.5s)</option>
+              <option value="800">2.0x (0.8s)</option>
+            </select>
+          </div>
+        </div>
       </div>
       <div class="coluna-lateral">
         <div class="painel-lateral">
@@ -274,6 +334,8 @@
           <div class="painel-subtitulo">Dica de Estudo</div>
           <div class="historico-lista" id="didatica"></div>
         </div>
+        <button class="btn-principal oculto" id="btnReverPartidaFimJogo" style="margin-top: 8px;">📼 Rever Partida (Playback)</button>
+        <button class="btn-principal btn-secundario oculto" id="btnSairPlayback" style="margin-top: 8px;">🚪 Sair do Playback</button>
         <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à página de configuração</button>
         <button class="btn-principal btn-secundario oculto" id="btnCompartilharTelespectador" style="margin-top: 8px;">👁️ Copiar Convite de Telespectador</button>
         <button class="btn-principal btn-secundario" id="btnBaixarLog" style="margin-top: 8px;">📥 Baixar Log da Partida</button>
@@ -287,7 +349,7 @@
   <footer class="rodape-creditos">
     <p>Peças em SVG por <a href="https://commons.wikimedia.org/wiki/User:Cburnett" target="_blank" rel="noopener">Cburnett</a> (CC BY-SA 3.0 / BSD) · Regras clássicas por <a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener">chess.js</a> (BSD-2-Clause) · Projeto sob licença MIT.</p>
   </footer>
-  <script src="script.js?v=20260919b"></script>
+  <script src="script.js?v=20260921"></script>
 </body>
 
 </html>

@@ -1,0 +1,110 @@
+{
+  "versao": "2.1.0-fisica-coerente",
+  "idPartida": "pauli-bispos",
+  "modelo": "Parecer Técnico de Coerência Física — Variante GHZ (S3 completo, 20 hipóteses)",
+  "variante": "ghz",
+  "iniciadoEm": "2026-09-21T08:30:00.000Z",
+  "configuracao": {
+    "modo": "quantico",
+    "variante": "ghz",
+    "oponente": "humano",
+    "relogio": "rapida"
+  },
+  "corJogadorHumano": "w",
+  "historicoLances": [
+    {
+      "lanceIndex": 0,
+      "timestamp": "2026-09-21T08:30:00.000Z",
+      "turno": "w",
+      "lance": null,
+      "detalhes": null,
+      "descricao": "Posição inicial: Dois pares de bispos em superposição com restrição física de Pauli.",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "relogio": { "w": 600, "b": 600 },
+      "matrizQuanticaMomentanea": {
+        "a1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "b1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "c1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "a8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "b8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "c8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "f8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" },
+        "g8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" },
+        "h8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "r", "b1": "n", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }, { "f1": "r", "g1": "b", "h1": "n" }] }
+      }
+    },
+    {
+      "lanceIndex": 1,
+      "timestamp": "2026-09-21T08:30:15.000Z",
+      "turno": "b",
+      "lance": "d4",
+      "detalhes": { "from": "d2", "to": "d4", "san": "d4", "piece": "p", "captured": null },
+      "descricao": "Abertura com d2-d4 preparando a liberação das diagonais do Bispo de casa escura.",
+      "fen": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+      "relogio": { "w": 597, "b": 600 },
+      "matrizQuanticaMomentanea": {
+        "a1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "b1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "c1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "r", "b1": "n", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }, { "f1": "r", "g1": "b", "h1": "n" }] }
+      }
+    },
+    {
+      "lanceIndex": 2,
+      "timestamp": "2026-09-21T08:30:30.000Z",
+      "turno": "w",
+      "lance": "d5",
+      "detalhes": { "from": "d7", "to": "d5", "san": "d5", "piece": "p", "captured": null },
+      "descricao": "Pretas ocupam o centro com d7-d5.",
+      "fen": "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2",
+      "relogio": { "w": 597, "b": 594 },
+      "matrizQuanticaMomentanea": {
+        "a1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "b1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "c1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "r", "b1": "n", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }, { "f1": "r", "g1": "b", "h1": "n" }] }
+      }
+    },
+    {
+      "lanceIndex": 3,
+      "timestamp": "2026-09-21T08:30:45.000Z",
+      "turno": "b",
+      "lance": "Bf4",
+      "detalhes": { "from": "c1", "to": "f4", "san": "Bf4", "piece": "b", "captured": null },
+      "descricao": "Medição em c1→f4: Peça observada como Bispo (casa escura). O Princípio de Exclusão de Pauli restringe instantaneamente o Bispo do flanco do rei para casas claras!",
+      "fen": "rnbqkbnr/ppp1pppp/8/3p4/3P1B2/8/PPP1PPPP/RN1QKBNR b KQkq - 1 2",
+      "relogio": { "w": 591, "b": 594 },
+      "matrizQuanticaMomentanea": {
+        "a1": { "cor": "w", "colapsada": "r", "possibilidades": ["r"], "emaranhadaComId": null },
+        "b1": { "cor": "w", "colapsada": "n", "possibilidades": ["n"], "emaranhadaComId": null },
+        "f4": { "cor": "w", "colapsada": "b", "possibilidades": ["b"], "emaranhadaComId": null },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n"], "emaranhadaComId": "w_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "r", "b1": "n", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }] }
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "versao": "2.1.0-fisica-coerente",
+  "idPartida": "ghz-cascata-dama",
+  "modelo": "Parecer Técnico de Coerência Física — Variante GHZ (S3 completo, 20 hipóteses)",
+  "variante": "ghz",
+  "iniciadoEm": "2026-09-21T08:00:00.000Z",
+  "configuracao": {
+    "modo": "quantico",
+    "variante": "ghz",
+    "oponente": "humano",
+    "relogio": "rapida"
+  },
+  "corJogadorHumano": "w",
+  "historicoLances": [
+    {
+      "lanceIndex": 0,
+      "timestamp": "2026-09-21T08:00:00.000Z",
+      "turno": "w",
+      "lance": null,
+      "detalhes": null,
+      "descricao": "Posição inicial: Peças de primeira linha em superposição quântica com emaranhamento GHZ.",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "relogio": { "w": 600, "b": 600 },
+      "matrizQuanticaMomentanea": {
+        "a1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "b1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "c1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_q" },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "a8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "b8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "c8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_q" },
+        "f8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" },
+        "g8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" },
+        "h8": { "cor": "b", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "b_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "n", "b1": "r", "c1": "b" }, { "a1": "r", "b1": "n", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }] }
+      }
+    },
+    {
+      "lanceIndex": 1,
+      "timestamp": "2026-09-21T08:00:15.000Z",
+      "turno": "b",
+      "lance": "b3",
+      "detalhes": { "from": "a1", "to": "b3", "san": "b3", "piece": "n", "captured": null },
+      "descricao": "Medição em a1→b3: Peça observada como Cavalo! Cascata GHZ colapsa b1 em Torre e c1 em Bispo.",
+      "fen": "rnbqkbnr/pppppppp/8/8/8/1N6/PPPPPPPP/1RBQKBNR b KQkq - 1 1",
+      "relogio": { "w": 595, "b": 600 },
+      "matrizQuanticaMomentanea": {
+        "b3": { "cor": "w", "colapsada": "n", "possibilidades": ["n"], "emaranhadaComId": null },
+        "b1": { "cor": "w", "colapsada": "r", "possibilidades": ["r"], "emaranhadaComId": null },
+        "c1": { "cor": "w", "colapsada": "b", "possibilidades": ["b"], "emaranhadaComId": null },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "n", "b1": "r", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }] }
+      }
+    },
+    {
+      "lanceIndex": 2,
+      "timestamp": "2026-09-21T08:00:30.000Z",
+      "turno": "w",
+      "lance": "e5",
+      "detalhes": { "from": "e7", "to": "e5", "san": "e5", "piece": "p", "captured": null },
+      "descricao": "Pretas respondem com e7-e5, abrindo linhas no centro clássico.",
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/8/1N6/PPPPPPPP/1RBQKBNR w KQkq e6 0 2",
+      "relogio": { "w": 595, "b": 592 },
+      "matrizQuanticaMomentanea": {
+        "b3": { "cor": "w", "colapsada": "n", "possibilidades": ["n"], "emaranhadaComId": null },
+        "b1": { "cor": "w", "colapsada": "r", "possibilidades": ["r"], "emaranhadaComId": null },
+        "c1": { "cor": "w", "colapsada": "b", "possibilidades": ["b"], "emaranhadaComId": null },
+        "f1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "g1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" },
+        "h1": { "cor": "w", "colapsada": null, "possibilidades": ["r", "n", "b"], "emaranhadaComId": "w_k" }
+      },
+      "gruposFlanco": {
+        "w_q": { "hipoteses": [{ "a1": "n", "b1": "r", "c1": "b" }] },
+        "w_k": { "hipoteses": [{ "f1": "b", "g1": "n", "h1": "r" }] }
+      }
+    }
+  ]
+}

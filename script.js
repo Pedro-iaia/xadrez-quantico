@@ -59,6 +59,15 @@ let redeQuantica = null;
 let lanceRemotoEmAndamento = false;
 let workerMinimax = null;
 let bloqueioTela = null;
+let modoPlayback = false;
+let dadosPlayback = {
+  log: null,
+  cursor: 0,
+  totalLances: 0,
+  temporizadorAutoplay: null,
+  velocidadeMs: 1500,
+  origem: null
+};
 
 // Arrastar e soltar (HTML5 drag) não funciona em telas de toque e ainda dispara o
 // menu de "pressionar e segurar" no Android/iOS. Só habilitamos com mouse/trackpad.
@@ -681,6 +690,7 @@ function renderizarTabuleiro() {
 }
 
 function clicarCasa(casa) {
+  if (modoPlayback) return;
   if (partidaEncerrada) return;
   if (configuracaoPartida?.oponente === 'online') {
     if (!redeQuantica || redeQuantica.espectador || chess.turn() !== corJogador) return;
@@ -1231,7 +1241,12 @@ function finalizarPartida(vencedor, motivo, veioDaRede = false) {
       texto,
       finalizadoEm: new Date().toISOString()
     };
+    salvarPartidaRecenteLocal(logPartida);
+    atualizarDropdownPartidasRecentes();
   }
+
+  const btnRever = document.getElementById('btnReverPartidaFimJogo');
+  if (btnRever) btnRever.classList.remove('oculto');
 
   registrarResultado(vencedor, motivo);
   renderizarTabuleiro();
@@ -1376,6 +1391,8 @@ function iniciarPartida() {
   inicializarLogPartida();
   renderizarTabuleiro();
   document.getElementById('areaJogo').classList.remove('jogo-online');
+  const btnRever = document.getElementById('btnReverPartidaFimJogo');
+  if (btnRever) btnRever.classList.add('oculto');
   navegarParaTela('areaJogo');
   document.getElementById('placar').textContent = configuracaoPartida.formato === 'melhor-de-tres' ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
 
@@ -1866,8 +1883,34 @@ document.getElementById('btnComecarLeitura').addEventListener('click', () => {
 document.getElementById('btnReabrirArtigo').addEventListener('click', mostrarBoasVindas);
 
 /* =========================================================
- * Sistema de Log e Download da Matriz de Configuração Momentânea
+ * Sistema de Log, Imutabilidade e Validação de Schema
  * ========================================================= */
+function deepFreeze(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  Object.freeze(obj);
+  for (const chave of Object.keys(obj)) {
+    const prop = obj[chave];
+    if (typeof prop === 'object' && prop !== null && !Object.isFrozen(prop)) {
+      deepFreeze(prop);
+    }
+  }
+  return obj;
+}
+
+function validarSchemaLog(dados) {
+  if (!dados || typeof dados !== 'object') {
+    return { valido: false, erro: 'Arquivo de log inválido ou não é um objeto JSON.' };
+  }
+  if (!Array.isArray(dados.historicoLances) || dados.historicoLances.length === 0) {
+    return { valido: false, erro: 'Log sem histórico de lances registrado.' };
+  }
+  const primeiro = dados.historicoLances[0];
+  if (!primeiro || typeof primeiro.fen !== 'string' || typeof primeiro.matrizQuanticaMomentanea !== 'object') {
+    return { valido: false, erro: 'Formato de quadro quântico inválido.' };
+  }
+  return { valido: true };
+}
+
 function inicializarLogPartida() {
   logPartida = {
     versao: '2.1.0-fisica-coerente',
@@ -1940,6 +1983,300 @@ if (btnBaixarLog) {
   btnBaixarLog.addEventListener('click', baixarLogPartida);
 }
 
+/* =========================================================
+ * Motor e Controlador do Modo Playback
+ * ========================================================= */
+function iniciarPlayback(objetoLog, origem = 'manual') {
+  const validacao = validarSchemaLog(objetoLog);
+  if (!validacao.valido) {
+    mostrarAviso(validacao.erro, 'erro', 4000);
+    return false;
+  }
+
+  // Interrompe relógio da partida em curso se ativo
+  relogioPartida.ativo = false;
+  if (relogioPartida.intervalId) {
+    clearInterval(relogioPartida.intervalId);
+    relogioPartida.intervalId = null;
+  }
+
+  // Interrompe qualquer cálculo da IA
+  if (workerMinimax) {
+    try { workerMinimax.terminate(); } catch (e) {}
+    workerMinimax = null;
+  }
+
+  dadosPlayback.log = deepFreeze(JSON.parse(JSON.stringify(objetoLog)));
+  dadosPlayback.totalLances = dadosPlayback.log.historicoLances.length;
+  dadosPlayback.cursor = 0;
+  dadosPlayback.origem = origem;
+  dadosPlayback.temporizadorAutoplay = null;
+  modoPlayback = true;
+
+  // Ajustes visuais de UI
+  const barraPlayback = document.getElementById('barraPlayback');
+  if (barraPlayback) barraPlayback.classList.remove('oculto');
+  const badgePlayback = document.getElementById('badgePlayback');
+  if (badgePlayback) badgePlayback.classList.remove('oculto');
+  const btnSairPlayback = document.getElementById('btnSairPlayback');
+  if (btnSairPlayback) btnSairPlayback.classList.remove('oculto');
+
+  const btnDesfazer = document.getElementById('btnDesfazer');
+  if (btnDesfazer && btnDesfazer.parentElement) {
+    btnDesfazer.parentElement.classList.add('oculto');
+  }
+
+  const telaInicial = document.getElementById('telaInicial');
+  if (telaInicial) telaInicial.classList.add('oculto');
+  const areaJogo = document.getElementById('areaJogo');
+  if (areaJogo) areaJogo.classList.remove('oculto');
+
+  carregarHistoricoNoPlayback();
+  exibirLancePlayback(0);
+  return true;
+}
+
+function exibirLancePlayback(indice) {
+  if (!modoPlayback || !dadosPlayback.log) return;
+  indice = Math.max(0, Math.min(indice, dadosPlayback.totalLances - 1));
+  dadosPlayback.cursor = indice;
+
+  const quadro = dadosPlayback.log.historicoLances[indice];
+  if (!quadro) return;
+
+  // Sincroniza chess.js com o FEN do quadro histórico
+  chess.load(quadro.fen);
+
+  // Sincroniza matriz quântica e flancos
+  pecasQuanticas = JSON.parse(JSON.stringify(quadro.matrizQuanticaMomentanea || {}));
+  gruposFlanco = JSON.parse(JSON.stringify(quadro.gruposFlanco || {}));
+  casaSelecionada = null;
+
+  renderizarTabuleiro();
+
+  // Destaque das casas de movimento do lance atual
+  if (quadro.detalhes && quadro.detalhes.from && quadro.detalhes.to) {
+    const elOrigem = document.querySelector(`[data-casa="${quadro.detalhes.from}"]`);
+    const elDestino = document.querySelector(`[data-casa="${quadro.detalhes.to}"]`);
+    if (elOrigem) elOrigem.classList.add('casa-movimento-origem');
+    if (elDestino) elDestino.classList.add('casa-movimento-destino');
+  }
+
+  // Sincroniza relógios
+  if (quadro.relogio) {
+    relogioPartida.segundos.w = quadro.relogio.w;
+    relogioPartida.segundos.b = quadro.relogio.b;
+    atualizarRelogios();
+  }
+
+  // Atualiza indicadores de turno e contadores
+  const textoTurno = document.getElementById('textoTurno');
+  if (textoTurno) {
+    textoTurno.textContent = `Lance ${indice} de ${dadosPlayback.totalLances - 1} · Vez das ${chess.turn() === 'w' ? 'Brancas' : 'Pretas'}`;
+  }
+  const badgePlayback = document.getElementById('badgePlayback');
+  if (badgePlayback) {
+    badgePlayback.textContent = `📼 MODO DIDÁTICO / PLAYBACK · Lance ${indice} de ${dadosPlayback.totalLances - 1}`;
+  }
+
+  const sliderPlayback = document.getElementById('sliderPlayback');
+  if (sliderPlayback) {
+    sliderPlayback.max = dadosPlayback.totalLances - 1;
+    sliderPlayback.value = indice;
+  }
+  const contadorPlayback = document.getElementById('contadorPlayback');
+  if (contadorPlayback) {
+    contadorPlayback.textContent = `${indice} / ${dadosPlayback.totalLances - 1}`;
+  }
+
+  const btnInicio = document.getElementById('btnInicioPlayback');
+  const btnVoltar = document.getElementById('btnVoltarLance');
+  const btnAvancar = document.getElementById('btnAvancarLance');
+  const btnFim = document.getElementById('btnFimPlayback');
+  if (btnInicio) btnInicio.disabled = indice === 0;
+  if (btnVoltar) btnVoltar.disabled = indice === 0;
+  if (btnAvancar) btnAvancar.disabled = indice === dadosPlayback.totalLances - 1;
+  if (btnFim) btnFim.disabled = indice === dadosPlayback.totalLances - 1;
+
+  // Atualiza painel didático
+  const painelDidatica = document.getElementById('didatica');
+  if (painelDidatica) {
+    painelDidatica.innerHTML = '';
+    const item = document.createElement('div');
+    item.className = 'dica-item';
+    item.textContent = quadro.descricao || 'Posição do tabuleiro neste momento.';
+    painelDidatica.appendChild(item);
+  }
+
+  atualizarDestaqueHistoricoPlayback(indice);
+}
+
+function navegarPlayback(delta) {
+  if (!modoPlayback) return;
+  exibirLancePlayback(dadosPlayback.cursor + delta);
+}
+
+function sairPlayback() {
+  if (dadosPlayback.temporizadorAutoplay) {
+    clearInterval(dadosPlayback.temporizadorAutoplay);
+    dadosPlayback.temporizadorAutoplay = null;
+  }
+  modoPlayback = false;
+  dadosPlayback.log = null;
+  dadosPlayback.cursor = 0;
+  dadosPlayback.totalLances = 0;
+
+  const barraPlayback = document.getElementById('barraPlayback');
+  if (barraPlayback) barraPlayback.classList.add('oculto');
+  const badgePlayback = document.getElementById('badgePlayback');
+  if (badgePlayback) badgePlayback.classList.add('oculto');
+  const btnSairPlayback = document.getElementById('btnSairPlayback');
+  if (btnSairPlayback) btnSairPlayback.classList.add('oculto');
+
+  const btnDesfazer = document.getElementById('btnDesfazer');
+  if (btnDesfazer && btnDesfazer.parentElement) {
+    btnDesfazer.parentElement.classList.remove('oculto');
+  }
+
+  const telaInicial = document.getElementById('telaInicial');
+  if (telaInicial) telaInicial.classList.remove('oculto');
+  const areaJogo = document.getElementById('areaJogo');
+  if (areaJogo) areaJogo.classList.add('oculto');
+}
+
+function carregarHistoricoNoPlayback() {
+  const historico = document.getElementById('historico');
+  if (!historico || !dadosPlayback.log) return;
+  historico.innerHTML = '';
+
+  const lances = dadosPlayback.log.historicoLances.slice(1);
+  for (let i = 0; i < lances.length; i += 2) {
+    const linha = document.createElement('div');
+    linha.className = 'jogada-linha';
+
+    const spanNum = document.createElement('span');
+    spanNum.className = 'jogada-num';
+    spanNum.textContent = `${Math.floor(i / 2) + 1}.`;
+
+    const spanBrancas = document.createElement('span');
+    spanBrancas.className = 'jogada-lance';
+    spanBrancas.textContent = lances[i].lance || (lances[i].detalhes?.san || '—');
+    spanBrancas.dataset.indiceLance = i + 1;
+    spanBrancas.addEventListener('click', () => exibirLancePlayback(i + 1));
+
+    linha.appendChild(spanNum);
+    linha.appendChild(spanBrancas);
+
+    if (i + 1 < lances.length) {
+      const spanPretas = document.createElement('span');
+      spanPretas.className = 'jogada-lance';
+      spanPretas.textContent = lances[i + 1].lance || (lances[i + 1].detalhes?.san || '—');
+      spanPretas.dataset.indiceLance = i + 2;
+      spanPretas.addEventListener('click', () => exibirLancePlayback(i + 2));
+      linha.appendChild(spanPretas);
+    }
+
+    historico.appendChild(linha);
+  }
+}
+
+function atualizarDestaqueHistoricoPlayback(indice) {
+  const todos = document.querySelectorAll('.jogada-lance');
+  todos.forEach(el => {
+    const ind = Number(el.dataset.indiceLance);
+    if (ind === indice) {
+      el.classList.add('lance-ativo');
+      try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+    } else {
+      el.classList.remove('lance-ativo');
+    }
+  });
+}
+
+const CHAVE_STORAGE_RECENTES = 'xq_partidas_recentes';
+
+function salvarPartidaRecenteLocal(log) {
+  if (!log || typeof log !== 'object') return false;
+  try {
+    const lista = obterPartidasRecentesLocais();
+    const filtrada = lista.filter(item => {
+      if (log.idPartida && item.idPartida) return item.idPartida !== log.idPartida;
+      if (log.iniciadoEm && item.iniciadoEm) return item.iniciadoEm !== log.iniciadoEm;
+      return true;
+    });
+
+    filtrada.unshift(JSON.parse(JSON.stringify(log)));
+    const truncada = filtrada.slice(0, 10);
+    localStorage.setItem(CHAVE_STORAGE_RECENTES, JSON.stringify(truncada));
+    return true;
+  } catch (e) {
+    console.warn('Não foi possível salvar a partida recente no localStorage:', e);
+    return false;
+  }
+}
+
+function obterPartidasRecentesLocais() {
+  try {
+    const raw = localStorage.getItem(CHAVE_STORAGE_RECENTES);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function ajustarVelocidadePlayback(velocidadeMs) {
+  const num = Number(velocidadeMs);
+  if (isNaN(num) || num <= 0) {
+    dadosPlayback.velocidadeMs = 1500;
+  } else {
+    dadosPlayback.velocidadeMs = num;
+  }
+
+  if (dadosPlayback.temporizadorAutoplay) {
+    clearInterval(dadosPlayback.temporizadorAutoplay);
+    dadosPlayback.temporizadorAutoplay = setInterval(() => {
+      if (dadosPlayback.cursor < dadosPlayback.totalLances - 1) {
+        exibirLancePlayback(dadosPlayback.cursor + 1);
+      } else {
+        alternarAutoplay();
+      }
+    }, dadosPlayback.velocidadeMs);
+  }
+}
+
+function alternarAutoplay() {
+  if (!modoPlayback || !dadosPlayback.log) return;
+  const btnPlayPause = document.getElementById('btnPlayPause');
+
+  if (dadosPlayback.temporizadorAutoplay) {
+    clearInterval(dadosPlayback.temporizadorAutoplay);
+    dadosPlayback.temporizadorAutoplay = null;
+    if (btnPlayPause) {
+      btnPlayPause.textContent = '▶';
+      btnPlayPause.setAttribute('title', 'Reproduzir (Autoplay)');
+      btnPlayPause.setAttribute('aria-label', 'Reproduzir');
+    }
+  } else {
+    if (dadosPlayback.cursor >= dadosPlayback.totalLances - 1) {
+      exibirLancePlayback(0);
+    }
+    if (btnPlayPause) {
+      btnPlayPause.textContent = '⏸';
+      btnPlayPause.setAttribute('title', 'Pausar reprodução');
+      btnPlayPause.setAttribute('aria-label', 'Pausar');
+    }
+    dadosPlayback.temporizadorAutoplay = setInterval(() => {
+      if (dadosPlayback.cursor < dadosPlayback.totalLances - 1) {
+        exibirLancePlayback(dadosPlayback.cursor + 1);
+      } else {
+        alternarAutoplay();
+      }
+    }, dadosPlayback.velocidadeMs || 1500);
+  }
+}
+
 // Ao reativar a aba em smartphones (após alternar abas), reseta o instante do relógio
 // para impedir que o congelamento em segundo plano consuma tempo repentinamente
 document.addEventListener('visibilitychange', () => {
@@ -1987,5 +2324,194 @@ if (btnCompartilharNativo && navigator.share) {
       if (e && e.name !== 'AbortError') mostrarAviso('Não foi possível abrir o compartilhamento.', 'erro', 4000);
     }
   });
+}
+
+/* =========================================================
+ * Integração de Arquivos, Acervo e Eventos de Playback
+ * ========================================================= */
+function carregarArquivoLog(file) {
+  if (!file) return;
+  const leitor = new FileReader();
+  leitor.onload = (evento) => {
+    try {
+      const conteudo = JSON.parse(evento.target.result);
+      const validacao = validarSchemaLog(conteudo);
+      if (!validacao.valido) {
+        mostrarAviso(`Arquivo incompatível: ${validacao.erro}`, 'erro', 4500);
+        return;
+      }
+      iniciarPlayback(conteudo, 'arquivo');
+      mostrarAviso('Partida carregada com sucesso!', 'sucesso', 3500);
+    } catch (err) {
+      mostrarAviso('Falha ao processar o arquivo JSON da partida.', 'erro', 4000);
+    }
+  };
+  leitor.onerror = () => {
+    mostrarAviso('Erro ao ler o arquivo selecionado.', 'erro', 4000);
+  };
+  leitor.readAsText(file);
+}
+
+async function carregarPartidaDoAcervo(caminho) {
+  try {
+    mostrarAviso('Carregando lição do acervo...', 'info', 2000);
+    const resp = await fetch(caminho);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const dados = await resp.json();
+    const validacao = validarSchemaLog(dados);
+    if (!validacao.valido) {
+      mostrarAviso(`Arquivo do acervo inválido: ${validacao.erro}`, 'erro', 4000);
+      return;
+    }
+    iniciarPlayback(dados, 'acervo');
+    mostrarAviso('Partida modelo carregada!', 'sucesso', 3500);
+  } catch (e) {
+    mostrarAviso('Não foi possível carregar a partida do acervo.', 'erro', 4000);
+  }
+}
+
+async function inicializarAcervoEDropdowns() {
+  const selectAcervo = document.getElementById('selectPartidasAcervo');
+  if (selectAcervo) {
+    try {
+      const resp = await fetch('acervo/manifesto.json');
+      if (resp.ok) {
+        const manifesto = await resp.json();
+        selectAcervo.innerHTML = '<option value="" selected disabled>Selecione uma lição didática...</option>';
+        manifesto.forEach(item => {
+          const opt = document.createElement('option');
+          opt.value = item.arquivo;
+          opt.textContent = `${item.titulo} (${item.variante.toUpperCase()})`;
+          selectAcervo.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      selectAcervo.innerHTML = '<option value="" selected disabled>Acervo indisponível offline</option>';
+    }
+  }
+
+  atualizarDropdownPartidasRecentes();
+}
+
+function atualizarDropdownPartidasRecentes() {
+  const selectRecentes = document.getElementById('selectPartidasRecentes');
+  if (!selectRecentes) return;
+  const recentes = obterPartidasRecentesLocais();
+  selectRecentes.innerHTML = '';
+  if (recentes.length === 0) {
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.selected = true;
+    opt.disabled = true;
+    opt.textContent = 'Nenhuma partida recente gravada';
+    selectRecentes.appendChild(opt);
+    return;
+  }
+  const optDefault = document.createElement('option');
+  optDefault.value = '';
+  optDefault.selected = true;
+  optDefault.disabled = true;
+  optDefault.textContent = `Escolha uma partida recente (${recentes.length} salvas)...`;
+  selectRecentes.appendChild(optDefault);
+
+  recentes.forEach((partida, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    const dataStr = partida.iniciadoEm ? new Date(partida.iniciadoEm).toLocaleString('pt-BR') : `Partida #${idx + 1}`;
+    const totalLances = partida.historicoLances ? Math.max(0, partida.historicoLances.length - 1) : 0;
+    opt.textContent = `${dataStr} (${totalLances} lances, ${partida.variante || 'quântico'})`;
+    selectRecentes.appendChild(opt);
+  });
+}
+
+// Vinculação de eventos dos controles de reprodução
+const btnInicioPlayback = document.getElementById('btnInicioPlayback');
+if (btnInicioPlayback) {
+  btnInicioPlayback.addEventListener('click', () => exibirLancePlayback(0));
+}
+
+const btnVoltarLance = document.getElementById('btnVoltarLance');
+if (btnVoltarLance) {
+  btnVoltarLance.addEventListener('click', () => navegarPlayback(-1));
+}
+
+const btnPlayPause = document.getElementById('btnPlayPause');
+if (btnPlayPause) {
+  btnPlayPause.addEventListener('click', alternarAutoplay);
+}
+
+const btnAvancarLance = document.getElementById('btnAvancarLance');
+if (btnAvancarLance) {
+  btnAvancarLance.addEventListener('click', () => navegarPlayback(1));
+}
+
+const btnFimPlayback = document.getElementById('btnFimPlayback');
+if (btnFimPlayback) {
+  btnFimPlayback.addEventListener('click', () => {
+    if (dadosPlayback.log) exibirLancePlayback(dadosPlayback.totalLances - 1);
+  });
+}
+
+const sliderPlayback = document.getElementById('sliderPlayback');
+if (sliderPlayback) {
+  const handlerSlider = (e) => exibirLancePlayback(Number(e.target.value));
+  sliderPlayback.addEventListener('input', handlerSlider);
+  sliderPlayback.addEventListener('change', handlerSlider);
+}
+
+const selectVelocidade = document.getElementById('selectVelocidadePlayback');
+if (selectVelocidade) {
+  selectVelocidade.addEventListener('change', (e) => ajustarVelocidadePlayback(Number(e.target.value)));
+}
+
+const btnSairPlayback = document.getElementById('btnSairPlayback');
+if (btnSairPlayback) {
+  btnSairPlayback.addEventListener('click', sairPlayback);
+}
+
+const btnReverFimJogo = document.getElementById('btnReverPartidaFimJogo');
+if (btnReverFimJogo) {
+  btnReverFimJogo.addEventListener('click', () => {
+    if (logPartida) {
+      iniciarPlayback(logPartida, 'fimDeJogo');
+    } else {
+      mostrarAviso('Nenhum registro de partida disponível.', 'info', 3000);
+    }
+  });
+}
+
+const inputArquivoLog = document.getElementById('inputArquivoLog');
+const btnCarregarArquivo = document.getElementById('btnCarregarArquivoLog');
+if (btnCarregarArquivo && inputArquivoLog) {
+  btnCarregarArquivo.addEventListener('click', () => inputArquivoLog.click());
+  inputArquivoLog.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) carregarArquivoLog(file);
+    e.target.value = '';
+  });
+}
+
+const selectAcervoEl = document.getElementById('selectPartidasAcervo');
+if (selectAcervoEl) {
+  selectAcervoEl.addEventListener('change', (e) => {
+    const caminho = e.target.value;
+    if (caminho) carregarPartidaDoAcervo(caminho);
+  });
+}
+
+const selectRecentesEl = document.getElementById('selectPartidasRecentes');
+if (selectRecentesEl) {
+  selectRecentesEl.addEventListener('change', (e) => {
+    const idx = Number(e.target.value);
+    const recentes = obterPartidasRecentesLocais();
+    if (recentes[idx]) {
+      iniciarPlayback(recentes[idx], 'recente');
+    }
+  });
+}
+
+// Inicializa catálogo do acervo e partidas salvas ao carregar a página
+if (typeof window !== 'undefined') {
+  inicializarAcervoEDropdowns();
 }
 

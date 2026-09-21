@@ -1301,3 +1301,209 @@ h1 {
     overflow-y: auto;
   }
 }
+
+/* =========================================================
+ * Estilos do Modo Playback & Acervo Didático
+ * ========================================================= */
+.badge-playback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(18, 26, 36, 0.92);
+  border: 1px solid rgba(55, 201, 225, 0.45);
+  border-radius: 999px;
+  color: #4ee3f7;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 12px rgba(55, 201, 225, 0.2);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.barra-playback {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(22, 22, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.playback-botoes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-playback {
+  background: rgba(40, 40, 52, 0.9);
+  color: #e4e4ed;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  min-width: 44px;
+  height: 40px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-playback:hover:not(:disabled) {
+  background: rgba(60, 60, 78, 1);
+  border-color: rgba(55, 201, 225, 0.5);
+  color: #4ee3f7;
+  transform: translateY(-1px);
+}
+
+.btn-playback:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-playback-play {
+  background: linear-gradient(135deg, rgba(30, 80, 100, 0.9), rgba(55, 201, 225, 0.4));
+  border-color: rgba(55, 201, 225, 0.6);
+  color: #ffffff;
+  font-size: 1.1rem;
+  padding: 0 16px;
+}
+
+.playback-timeline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.playback-timeline input[type="range"] {
+  flex: 1;
+  accent-color: #37c9e1;
+  cursor: pointer;
+  height: 6px;
+}
+
+.contador-playback {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a0a0b2;
+  min-width: 55px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.playback-velocidade {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #8e8e9c;
+}
+
+.select-velocidade {
+  background: #1e1e26;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e4e4ed;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.jogada-lance.lance-ativo {
+  background: rgba(55, 201, 225, 0.25) !important;
+  border: 1px solid rgba(55, 201, 225, 0.8) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(55, 201, 225, 0.4);
+}
+
+.card-acervo-playback {
+  background: rgba(22, 23, 29, 0.95);
+  border: 1px solid rgba(55, 201, 225, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.acervo-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acervo-icone {
+  font-size: 1.6rem;
+}
+
+.acervo-topo h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  color: #f2e9dc;
+}
+
+.acervo-subtitulo {
+  margin: 2px 0 0 0;
+  font-size: 0.76rem;
+  color: #8e8e9c;
+}
+
+.acervo-controles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .acervo-controles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.acervo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.acervo-item label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #c4c4d0;
+}
+
+.acervo-item select {
+  background: #181820;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e4e4ed;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.acervo-botoes {
+  display: flex;
+  justify-content: flex-start;
+}
+
