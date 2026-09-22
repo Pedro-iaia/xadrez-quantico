@@ -1345,10 +1345,25 @@ function escolherLanceComMinimax(nivel = 'dificil') {
       variante: configuracaoPartida.variante
     } : {};
 
+    // Histórico de FENs para detectar iminência de tripla repetição
+    const historicoFensContagem = {};
+    for (const snap of historicoDesfazer) {
+      if (snap && snap.fen) {
+        const chaveFen = snap.fen.split(' ').slice(0, 4).join(' ');
+        historicoFensContagem[chaveFen] = (historicoFensContagem[chaveFen] || 0) + 1;
+      }
+    }
+    const fenAtual = chess.fen();
+    const chaveAtual = fenAtual.split(' ').slice(0, 4).join(' ');
+    historicoFensContagem[chaveAtual] = (historicoFensContagem[chaveAtual] || 0) + 1;
+
     worker.postMessage({
-      fen: chess.fen(),
+      fen: fenAtual,
       dadosQuanticos,
-      opcoes
+      opcoes: {
+        ...opcoes,
+        historicoFensContagem
+      }
     });
   });
 }

@@ -35,15 +35,29 @@
   /**
    * Avaliação estática posicional e material do ponto de vista das Brancas (em centipawns).
    * @param {object} chess - Instância do tabuleiro chess.js
+   * @param {object} historicoFensContagem - Mapa de chave FEN simplificada -> contagem de ocorrências
    * @returns {number} Pontuação em centipawns (>0 Brancas melhores, <0 Pretas melhores)
    */
-  function staticEval(chess) {
-    if (typeof chess.isGameOver === 'function' ? chess.isGameOver() : (chess.game_over && chess.game_over())) {
-      const emXequeMate = typeof chess.isCheckmate === 'function' ? chess.isCheckmate() : (chess.in_checkmate && chess.in_checkmate());
-      if (emXequeMate) {
+  function staticEval(chess, historicoFensContagem = null) {
+    const isGameOver = typeof chess.isGameOver === 'function' ? chess.isGameOver() : (chess.game_over && chess.game_over());
+    const isCheckmate = typeof chess.isCheckmate === 'function' ? chess.isCheckmate() : (chess.in_checkmate && chess.in_checkmate());
+
+    if (isGameOver) {
+      if (isCheckmate) {
         return chess.turn() === 'w' ? -20000 : 20000;
       }
-      return 0; // Empate, afogamento ou repetição
+      // Empate clássico oficial (afogamento, material insuficiente, etc.)
+      return 0;
+    }
+
+    // Detecção de repetição iminente (tripla repetição acumulada na partida real)
+    if (historicoFensContagem) {
+      const fenBase = chess.fen().split(' ').slice(0, 4).join(' ');
+      const repeticoes = historicoFensContagem[fenBase] || 0;
+      if (repeticoes >= 2) {
+        // Se este estado já ocorreu 2 vezes no histórico real, entrar nele causará a 3ª repetição (empate)
+        return 0;
+      }
     }
 
     let pontuacao = 0;
@@ -80,6 +94,50 @@
   function winProbability(evalCp) {
     // Sigmoide logística padrão de xadrez: 1 / (1 + 10^(-eval / 400))
     return 1 / (1 + Math.pow(10, -evalCp / 400));
+  }
+
+  /**
+   * Avalia a utilidade de um estado folha com aversão dinâmica a empates indesejados.
+   * Se o jogador que move está em vantagem e o lance causa repetição/empate, penaliza severamente o empate.
+   * Se o jogador está perdendo, o empate é valorizado como tábua de salvação (U = 0.5).
+   * 
+   * @param {object} chess - Instância do tabuleiro após o lance
+   * @param {boolean} isWhite - Se as Brancas estão sendo avaliadas
+   * @param {number} evalInicialDaPosicao - Avaliação pré-lance do jogador
+   * @param {object} historicoFensContagem - Mapa de FENs da partida
+   * @returns {number} Utilidade na perspectiva das Brancas [0, 1]
+   */
+  function calcularUtilidadeFolha(chess, isWhite, evalInicialDaPosicao, historicoFensContagem) {
+    const isGameOver = typeof chess.isGameOver === 'function' ? chess.isGameOver() : (chess.game_over && chess.game_over());
+    const isCheckmate = typeof chess.isCheckmate === 'function' ? chess.isCheckmate() : (chess.in_checkmate && chess.in_checkmate());
+
+    let ehEmpate = false;
+    if (isGameOver && !isCheckmate) {
+      ehEmpate = true;
+    } else if (historicoFensContagem) {
+      const fenBase = chess.fen().split(' ').slice(0, 4).join(' ');
+      if ((historicoFensContagem[fenBase] || 0) >= 2) {
+        ehEmpate = true;
+      }
+    }
+
+    if (ehEmpate) {
+      // Jogador que está avaliando (Brancas se isWhite, Pretas se !isWhite)
+      const vantagemDoJogador = isWhite ? evalInicialDaPosicao : -evalInicialDaPosicao;
+      if (vantagemDoJogador > 150) {
+        // Estava ganhando (+1.5 peões): empatar agora é uma tragédia (penalidade severa)
+        return isWhite ? 0.05 : 0.95;
+      }
+      if (vantagemDoJogador < -150) {
+        // Estava perdendo: empatar é uma façanha tática (U = 50%)
+        return 0.5;
+      }
+      // Posição equilibrada: empate neutro
+      return 0.5;
+    }
+
+    const leafEval = staticEval(chess, historicoFensContagem);
+    return winProbability(leafEval);
   }
 
   /**
@@ -127,27 +185,31 @@
   /**
    * Avalia um lance em uma posição clássica usando Joint Expected Value (JEV) sobre as respostas do oponente.
    * @param {object} chess - Instância clonada ou posicionada do chess.js
-   * @param {object} opcoes - { tau, topK }
+   * @param {object} opcoes - { tau, topK, historicoFensContagem }
    * @returns {{ bestMove: object|null, bestJev: number }}
    */
   function avaliarJevPosicaoClassica(chess, opcoes = {}) {
     const tau = opcoes.tau !== undefined ? opcoes.tau : 1.2;
     const topK = opcoes.topK || 6;
+    const historicoFensContagem = opcoes.historicoFensContagem || null;
     const moves = chess.moves({ verbose: true });
     if (moves.length === 0) return { bestMove: null, bestJev: 0.5 };
 
     const isWhite = chess.turn() === 'w';
+    const evalInicial = staticEval(chess, historicoFensContagem);
     let bestMove = null;
     let bestJev = isWhite ? -Infinity : Infinity;
 
     for (const move of moves) {
       chess.move(move);
 
-      // Se o lance encerra a partida imediatamente
+      // Se o lance encerra a partida ou dispara repetição imediatamente
       const gameOver = typeof chess.isGameOver === 'function' ? chess.isGameOver() : (chess.game_over && chess.game_over());
-      if (gameOver) {
-        const leafEval = staticEval(chess);
-        const expectedUtility = winProbability(leafEval);
+      const fenBaseAposLance = historicoFensContagem ? chess.fen().split(' ').slice(0, 4).join(' ') : null;
+      const ehRepeticaoImediata = fenBaseAposLance && (historicoFensContagem[fenBaseAposLance] || 0) >= 2;
+
+      if (gameOver || ehRepeticaoImediata) {
+        const expectedUtility = calcularUtilidadeFolha(chess, isWhite, evalInicial, historicoFensContagem);
         chess.undo();
 
         if (isWhite && expectedUtility > bestJev) {
@@ -171,8 +233,8 @@
       const avaliacoesPreliminares = [];
       for (const oppMove of oppMoves) {
         chess.move(oppMove);
-        const leafEval = staticEval(chess);
-        const pWinWhite = winProbability(leafEval);
+        const pWinWhite = calcularUtilidadeFolha(chess, isWhite, evalInicial, historicoFensContagem);
+        const leafEval = staticEval(chess, historicoFensContagem);
         // Da perspectiva do oponente (se Brancas moveram, oponente é Pretas -> quer minimizar leafEval)
         const oppPerspectiveScore = isWhite ? -leafEval : leafEval;
         avaliacoesPreliminares.push({
@@ -219,14 +281,15 @@
    * 
    * @param {object} ChessClass - Construtor da classe Chess do chess.js
    * @param {string} fen - FEN clássico da posição
-   * @param {object} dadosQuanticos - { pecasQuanticas, gruposFlanco, variante }
-   * @param {object} opcoes - { tau, topK, maxHipoteses }
+   * @param {object} dadosQuanticos - { pecasQuanticas, gruposFlanco, variante, historicoFensContagem }
+   * @param {object} opcoes - { tau, topK, maxHipoteses, historicoFensContagem }
    * @returns {{ move: object|null, jev: number, hipotesesConsideradas: number }}
    */
   function computeQuantumJevMove(ChessClass, fen, dadosQuanticos = {}, opcoes = {}) {
     const tau = opcoes.tau !== undefined ? opcoes.tau : 1.2;
     const topK = opcoes.topK || 6;
     const maxHipoteses = opcoes.maxHipoteses || 8;
+    const historicoFensContagem = opcoes.historicoFensContagem || dadosQuanticos.historicoFensContagem || null;
 
     const chessBase = new ChessClass(fen);
     const moves = chessBase.moves({ verbose: true });
@@ -234,6 +297,7 @@
 
     const isWhite = chessBase.turn() === 'w';
     const corAtual = isWhite ? 'w' : 'b';
+    const evalInicialGlobal = staticEval(chessBase, historicoFensContagem);
 
     // Recupera hipóteses vivas do grupo quântico da cor atual ou do par
     let hipotesesVivas = [];
@@ -246,7 +310,7 @@
 
     // Se não há superposição quântica ativa, executa JEV clássico direto
     if (hipotesesVivas.length === 0) {
-      const res = avaliarJevPosicaoClassica(chessBase, { tau, topK });
+      const res = avaliarJevPosicaoClassica(chessBase, { tau, topK, historicoFensContagem });
       return {
         move: res.bestMove,
         jev: res.bestJev,
@@ -281,20 +345,21 @@
         let expectedUtility;
 
         const gameOver = typeof simChess.isGameOver === 'function' ? simChess.isGameOver() : (simChess.game_over && simChess.game_over());
-        if (gameOver) {
-          const leafEval = staticEval(simChess);
-          expectedUtility = winProbability(leafEval);
+        const fenBaseAposLance = historicoFensContagem ? simChess.fen().split(' ').slice(0, 4).join(' ') : null;
+        const ehRepeticaoImediata = fenBaseAposLance && (historicoFensContagem[fenBaseAposLance] || 0) >= 2;
+
+        if (gameOver || ehRepeticaoImediata) {
+          expectedUtility = calcularUtilidadeFolha(simChess, isWhite, evalInicialGlobal, historicoFensContagem);
         } else {
           const oppMoves = simChess.moves({ verbose: true });
           if (oppMoves.length === 0) {
-            const leafEval = staticEval(simChess);
-            expectedUtility = winProbability(leafEval);
+            expectedUtility = calcularUtilidadeFolha(simChess, isWhite, evalInicialGlobal, historicoFensContagem);
           } else {
             const oppEvals = [];
             for (const oppMove of oppMoves) {
               simChess.move(oppMove);
-              const leafEval = staticEval(simChess);
-              const pWinWhite = winProbability(leafEval);
+              const pWinWhite = calcularUtilidadeFolha(simChess, isWhite, evalInicialGlobal, historicoFensContagem);
+              const leafEval = staticEval(simChess, historicoFensContagem);
               const oppPerspectiveScore = isWhite ? -leafEval : leafEval;
               oppEvals.push({ move: oppMove, pWinWhite, oppPerspectiveScore });
               simChess.undo();
@@ -366,6 +431,7 @@
     staticEval,
     winProbability,
     opponentPolicy,
+    calcularUtilidadeFolha,
     aplicarHipoteseNoChess,
     avaliarJevPosicaoClassica,
     computeQuantumJevMove
