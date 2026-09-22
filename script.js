@@ -1280,19 +1280,41 @@ function escolherLanceFacil() {
   return movimentos.length ? movimentos[Math.floor(Math.random() * movimentos.length)] : null;
 }
 
-// O worker é criado uma única vez e reaproveitado: criar um por lance (com importScripts
-// do chess.js a cada vez) pesa em celulares e vazava uma Blob URL por jogada.
+// O worker JEV é criado uma única vez e reaproveitado: avalia lances integrando
+// a distribuição conjunta de hipóteses quânticas (Born) e de respostas do adversário (Softmax).
 function obterWorkerMinimax() {
   if (workerMinimax) return workerMinimax;
   const chessScriptUrl = new URL('vendor/chess.min.js', location.href).href;
-  const codigo = ` importScripts('${chessScriptUrl}'); const valores = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 }; function avaliar(jogo) { return jogo.board().flat().reduce((total, peca) => total + (peca ? (peca.color === 'b' ? valores[peca.type] : -valores[peca.type]) : 0), 0); } function buscar(jogo, profundidade, alpha, beta, maximizando) { if (!profundidade || jogo.game_over()) return avaliar(jogo); let melhor = maximizando ? -Infinity : Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, profundidade - 1, alpha, beta, !maximizando); jogo.undo(); melhor = maximizando ? Math.max(melhor, valor) : Math.min(melhor, valor); if (maximizando) alpha = Math.max(alpha, valor); else beta = Math.min(beta, valor); if (beta <= alpha) break; } return melhor; } self.onmessage = evento => { const jogo = new Chess(evento.data.fen); let melhorLance = null; let melhorValor = -Infinity; for (const movimento of jogo.moves({ verbose: true })) { jogo.move(movimento); const valor = buscar(jogo, evento.data.profundidade - 1, -Infinity, Infinity, false); jogo.undo(); if (valor > melhorValor) { melhorValor = valor; melhorLance = movimento; } } self.postMessage(melhorLance); };`;
+  const jevScriptUrl = new URL('jev-engine.js', location.href).href;
+
+  const codigo = `
+    importScripts('${chessScriptUrl}');
+    importScripts('${jevScriptUrl}');
+
+    self.onmessage = evento => {
+      try {
+        const dados = evento.data;
+        const ChessClass = typeof Chess === 'function' ? Chess : (self.Chess || window.Chess);
+        const resultado = self.JevEngine.computeQuantumJevMove(
+          ChessClass,
+          dados.fen,
+          dados.dadosQuanticos || {},
+          dados.opcoes || {}
+        );
+        self.postMessage(resultado ? resultado.move : null);
+      } catch (e) {
+        self.postMessage(null);
+      }
+    };
+  `;
+
   workerMinimax = new Worker(URL.createObjectURL(new Blob([codigo], {
     type: 'text/javascript'
   })));
   return workerMinimax;
 }
 
-function escolherLanceComMinimax(profundidade) {
+function escolherLanceComMinimax(nivel = 'dificil') {
   return new Promise(resolve => {
     let worker;
     try {
@@ -1307,9 +1329,26 @@ function escolherLanceComMinimax(profundidade) {
       workerMinimax = null;
       resolve(null);
     };
+
+    // Parâmetros de calibração do JEV por nível:
+    // facil: tau=2.5 (muito disperso/falho), topK=3, poucas hipóteses
+    // medio: tau=1.2 (humano amador), topK=5, amostra até 5 hipóteses
+    // dificil: tau=0.4 (estratégico refinado), topK=8, avalia até 10 hipóteses vivas
+    const opcoes = {
+      tau: nivel === 'dificil' ? 0.4 : (nivel === 'medio' ? 1.2 : 2.5),
+      topK: nivel === 'dificil' ? 8 : (nivel === 'medio' ? 5 : 3),
+      maxHipoteses: nivel === 'dificil' ? 10 : (nivel === 'medio' ? 5 : 2)
+    };
+
+    const dadosQuanticos = configuracaoPartida?.modo === 'quantico' ? {
+      gruposFlanco,
+      variante: configuracaoPartida.variante
+    } : {};
+
     worker.postMessage({
       fen: chess.fen(),
-      profundidade
+      dadosQuanticos,
+      opcoes
     });
   });
 }
@@ -1317,8 +1356,8 @@ function escolherLanceComMinimax(profundidade) {
 async function fazerLanceDaIA() {
   if (!configuracaoPartida || configuracaoPartida.oponente !== 'ia' || chess.turn() === corJogador) return;
   const fenAoPensar = chess.fen();
-  let movimento = configuracaoPartida.modo === 'classico' && configuracaoPartida.nivel !== 'facil'
-    ? await escolherLanceComMinimax(configuracaoPartida.nivel === 'dificil' ? 3 : 2)
+  let movimento = configuracaoPartida.nivel !== 'facil'
+    ? await escolherLanceComMinimax(configuracaoPartida.nivel)
     : escolherLanceFacil();
   // Se a partida mudou enquanto a IA "pensava" (voltou à configuração, nova partida, desfazer),
   // descarta o lance: ele pertenceria a uma posição que já não existe.

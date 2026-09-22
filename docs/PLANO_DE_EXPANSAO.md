@@ -13,14 +13,12 @@ Não é uma especificação fechada, é um mapa de prioridades e ideias com nív
 
 ### 1.0 Onde já estamos
 
-Hoje o `script.js` já tem duas camadas:
+Hoje o projeto conta com o motor **JEV (Joint Expected Value)** integrado tanto para o modo clássico quanto para o modo quântico:
 
-- **Fácil**: lance legal aleatório (`escolherLanceFacil`).
-- **Médio/Difícil (só no Modo Clássico)**: minimax com poda alfa-beta rodando em *Web Worker*, avaliação puramente material.
+- **Fácil**: lance legal aleatório (`escolherLanceFacil`) ou JEV sob alta temperatura estocástica ($\tau = 2.5$).
+- **Médio / Difícil**: motor estocástico e quântico **JEV** rodando isolado em *Web Worker*, integrando as hipóteses de superposição/emaranhamento dos flancos (Regra de Born) e modelagem de respostas do oponente via Softmax ($\tau = 1.2$ no Médio, $\tau = 0.4$ no Difícil) com avaliação material, posicional e mobilidade.
 
-Ou seja: a "opção 1" do brainstorming já existe como esqueleto, mas **só entende xadrez clássico** — no Modo Quântico ela trata as peças pelo tipo que `chess.js` enxerga no momento, sem saber que aquilo é uma superposição. Esse é o ponto de partida de tudo o que vem a seguir.
-
-> ⚠️ **Lacuna que ficou mais evidente após a implementação da variante GHZ.** Com duas variantes quânticas agora disponíveis — Simplificada (10 hipóteses conjuntas por jogador) e GHZ (20 hipóteses) — essa mesma IA joga de forma idêntica nas duas, porque não enxerga hipótese nenhuma: opera apenas sobre a posição clássica momentânea do `chess.js`. Isso significa que o espaço de incerteza dobrou (de 10 para 20 hipóteses por jogador) sem que o adversário automatizado ganhasse qualquer capacidade adicional de lidar com ele. Esta é, no estado atual do projeto, a lacuna de maior prioridade prática: qualquer um dos itens 1.2 ou 1.3 abaixo passaria a ter um efeito **mensuravelmente maior** na variante GHZ do que na Simplificada, justamente por haver mais incerteza para explorar — o que também torna a GHZ um ambiente de teste melhor para demonstrar, empiricamente, o valor de um motor probabilisticamente consciente (ver a atualização correspondente em `GUIA_DE_ESTUDOS_IA.md`).
+> 💡 **Concretização das Propostas 1.2 e 1.3:** O motor JEV unificou a expectativa matemática sobre os nós de colapso correlacionados (Expectiminimax) com a amostragem de hipóteses clássicas compatíveis (PIMC / determinização), operando nativamente sobre as 10 hipóteses da variante Simplificada e as 20 hipóteses da variante GHZ.
 
 ### 1.1 Comentários sobre as 4 opções propostas
 
