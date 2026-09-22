@@ -2,6 +2,8 @@
 
 Um tabuleiro de xadrez onde as peças de Torre, Cavalo e Bispo da primeira e da última fileira começam **em superposição** — até serem movidas ou capturadas, não se sabe ao certo qual é qual — e só **colapsam** para um tipo definido no momento em que essa incerteza é "medida" por uma jogada. Os dois Bispos de cada jogador nunca colapsam para a mesma cor de casa: um análogo, dentro do jogo, do Princípio de Exclusão de Pauli.
 
+Para jogar: https://pedro-iaia.github.io/xadrez-quantico/
+
 O projeto nasceu com fins **didáticos**: ensinar noções de superposição, colapso e emaranhamento quântico através de uma metáfora lúdica e familiar (o xadrez), ao mesmo tempo em que oferece um ambiente de estudo de xadrez clássico, com reconhecimento de aberturas e dicas orientadas à fase da partida.
 
 Esta é a variante oficial e estruturada com base no [`PARECER_TECNICO_COERENCIA_FISICA.md`](./PARECER_TECNICO_COERENCIA_FISICA.md), arquivado formalmente na seção de documentação técnica (`docs/`).
