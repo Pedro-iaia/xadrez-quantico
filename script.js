@@ -958,6 +958,11 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     }, mensagem || `Lance: ${lanceSAN}`);
   }
 
+  // Notifica módulo Tutor / Treinador se ativo
+  if (typeof window !== 'undefined' && window.QuantumTutor && typeof window.QuantumTutor.aoExecutarMovimento === 'function') {
+    window.QuantumTutor.aoExecutarMovimento(origem, destino, resultadoLance || { san: lanceSAN, from: origem, to: destino });
+  }
+
   if (chess.game_over()) {
     const vencedor = chess.in_checkmate() ? (chess.turn() === 'w' ? 'b' : 'w') : null;
     finalizarPartida(vencedor, chess.in_checkmate() ? 'xeque-mate' : 'empate');

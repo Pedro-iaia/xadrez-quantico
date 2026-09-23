@@ -1,0 +1,113 @@
+{
+  "versao": "1.0.0",
+  "colecao": "aberturas-classicas-fundamentais",
+  "titulo": "Aberturas Clássicas Fundamentais",
+  "descricao": "Trilhas didáticas para dominar o centro, desenvolvimento rápido e segurança do rei no modo clássico.",
+  "trilhas": [
+    {
+      "id": "italiana-giuoco-piano",
+      "titulo": "Abertura Italiana (Giuoco Piano)",
+      "modo": "classico",
+      "categoria": "Abertura Aberta",
+      "dificuldade": "Iniciante",
+      "descricao": "Desenvolvimento dinâmico das peças menores e mira estratégica no ponto vulnerável f7.",
+      "fenBase": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "passos": [
+        {
+          "lanceEsperado": "e2e4",
+          "san": "e4",
+          "mensagem": "Comece controlando as casas centrais d5 e f5 e liberando diagonais para a Dama e o Bispo.",
+          "dica": "Avance o peão do Rei duas casas.",
+          "seta": { "from": "e2", "to": "e4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": "e7e5"
+        },
+        {
+          "lanceEsperado": "g1f3",
+          "san": "Nf3",
+          "mensagem": "Desenvolva o Cavalo em direção ao centro, atacando o peão indefeso de e5 das Pretas.",
+          "dica": "Desenvolva uma peça menor que ataque o peão adversário.",
+          "seta": { "from": "g1", "to": "f3", "cor": "rgba(52, 152, 219, 0.85)" },
+          "respostaBot": "b8c6"
+        },
+        {
+          "lanceEsperado": "f1c4",
+          "san": "Bc4",
+          "mensagem": "Excelente! O Bispo de casas claras mira diretamente a fraqueza de f7, preparando o roque rápido.",
+          "dica": "Desenvolva o Bispo mirando a casa fraca f7 do adversário.",
+          "seta": { "from": "f1", "to": "c4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": null
+        }
+      ]
+    },
+    {
+      "id": "defesa-siciliana-aberta",
+      "titulo": "Defesa Siciliana (Ataque ao Centro)",
+      "modo": "classico",
+      "categoria": "Abertura Semi-Aberta",
+      "dificuldade": "Intermediário",
+      "descricao": "Resposta combativa e assimétrica das Pretas, disputando a casa d4 com peão lateral.",
+      "fenBase": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "passos": [
+        {
+          "lanceEsperado": "e2e4",
+          "san": "e4",
+          "mensagem": "Avance e4 para iniciar a disputa central.",
+          "dica": "Peão do Rei.",
+          "seta": { "from": "e2", "to": "e4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": "c7c5"
+        },
+        {
+          "lanceEsperado": "g1f3",
+          "san": "Nf3",
+          "mensagem": "Prepare a ruptura d2-d4 controlando o centro com o Cavalo.",
+          "dica": "Desenvolva o Cavalo do Rei para f3.",
+          "seta": { "from": "g1", "to": "f3", "cor": "rgba(52, 152, 219, 0.85)" },
+          "respostaBot": "d7d6"
+        },
+        {
+          "lanceEsperado": "d2d4",
+          "san": "d4",
+          "mensagem": "Ruptura d4! Abre linhas centrais para o ataque das Brancas.",
+          "dica": "Avance seu peão da Dama para o centro.",
+          "seta": { "from": "d2", "to": "d4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": "c5d4"
+        },
+        {
+          "lanceEsperado": "f3d4",
+          "san": "Nxd4",
+          "mensagem": "Recapture em d4 centralizando o Cavalo com excelente mobilidade.",
+          "dica": "Recapture o peão central com o seu Cavalo.",
+          "seta": { "from": "f3", "to": "d4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": null
+        }
+      ]
+    },
+    {
+      "id": "gambito-da-dama",
+      "titulo": "Gambito da Dama (Controle com d4-c4)",
+      "modo": "classico",
+      "categoria": "Abertura Fechada",
+      "dificuldade": "Intermediário",
+      "descricao": "Ofereça um peão lateral para desviar o peão central preto e dominar o tabuleiro.",
+      "fenBase": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "passos": [
+        {
+          "lanceEsperado": "d2d4",
+          "san": "d4",
+          "mensagem": "Inicie com d4 ocupando o centro e protegendo a ala da dama.",
+          "dica": "Avance o peão da Dama duas casas.",
+          "seta": { "from": "d2", "to": "d4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": "d7d5"
+        },
+        {
+          "lanceEsperado": "c2c4",
+          "san": "c4",
+          "mensagem": "O clássico Gambito da Dama! Desafia a estrutura de d5 e abre a coluna c.",
+          "dica": "Ataque o peão d5 com seu peão de c2.",
+          "seta": { "from": "c2", "to": "c4", "cor": "rgba(46, 204, 113, 0.85)" },
+          "respostaBot": null
+        }
+      ]
+    }
+  ]
+}

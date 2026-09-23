@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node nucleo.test.js ../script.js && node rede.test.js ../quantum-net.js && node playback.test.js ../script.js"
+    "test": "node nucleo.test.js ../script.js && node rede.test.js ../quantum-net.js && node playback.test.js ../script.js && node tutor.test.js"
   },
   "keywords": [],
   "author": "",
