@@ -302,19 +302,18 @@ h1 {
   transform: translate(-32%, -50%);
 }
 
-/* Coluna lateral contendo relógios, histórico de lances e navegação */
+/* Coluna lateral contendo histórico de lances e painel contextual didático/narrador */
 .coluna-lateral {
-  width: 220px;
+  width: 270px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   align-self: stretch;
 }
 
-/* Painel lateral de lances e didática */
+/* Painel lateral */
 .painel-lateral {
   width: 100%;
-  flex: 1;
   background-color: var(--painel-bg);
   border: 1px solid var(--painel-borda);
   border-radius: var(--raio);
@@ -322,7 +321,10 @@ h1 {
   flex-direction: column;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  min-height: 380px;
+}
+
+.painel-lances-container {
+  flex: 0 0 auto;
 }
 
 .painel-topo {
@@ -403,39 +405,170 @@ h1 {
 }
 
 #historico {
-  min-height: 120px;
-  max-height: 190px;
+  min-height: 80px;
+  max-height: 145px;
+  overflow-y: auto;
+}
+
+.historico-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 6px;
+  padding: 6px 8px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: #dcdce0;
 }
 
 #didatica {
-  font-family: inherit;
-  color: #dedee8;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  padding: 8px 10px;
-  flex: 0 0 auto;
-  min-height: 85px;
-  max-height: none;
-  overflow-y: visible;
+  display: none;
 }
 
 .jogada-linha {
   display: flex;
-  justify-content: space-between;
-  padding: 2px 0;
-  border-bottom: 1px solid #33333d;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.jogada-linha:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .jogada-num {
   color: #7c7c86;
-  width: 24px;
+  font-size: 0.7rem;
+  width: 18px;
   flex-shrink: 0;
 }
 
 .jogada-lance {
-  flex-grow: 1;
-  text-align: left;
-  padding-left: 6px;
+  color: #e2e8f0;
+  font-weight: 500;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  padding-left: 2px;
+}
+
+/* =========================================================
+ * Barra de Ações Rápidas Sob o Tabuleiro
+ * ========================================================= */
+.tabuleiro-acoes {
+  width: min(480px, 92vw);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  box-sizing: border-box;
+}
+
+.tabuleiro-acoes .btn-principal,
+.tabuleiro-acoes .btn-secundario {
+  width: auto;
+  min-width: 130px;
+  flex: 1 1 calc(50% - 8px);
+  margin-top: 0;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tabuleiro-acoes .btn-principal:active,
+.tabuleiro-acoes .btn-secundario:active {
+  transform: translateY(1px);
+}
+
+/* =========================================================
+ * Tríade Didática Dinâmica (Narrador, Tutor, Analisador)
+ * ========================================================= */
+.painel-contextual-container {
+  flex: 1 1 auto;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.badge-fase {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: rgba(55, 201, 225, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(55, 201, 225, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.narrador-caixa {
+  background: rgba(16, 18, 24, 0.85);
+  border-left: 3px solid var(--cyan);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #e4e4ed;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  margin: 8px 10px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.narrador-detalhes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 10px 10px;
+  font-size: 0.74rem;
+  color: var(--texto-fraco);
+  box-sizing: border-box;
+}
+
+.narrador-tag {
+  background: rgba(232, 201, 146, 0.15);
+  color: var(--dourado);
+  border: 1px solid rgba(232, 201, 146, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.narrador-subtexto {
+  flex: 1;
+  font-size: 0.72rem;
+  color: #a0a0b0;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Modo Analisador (Playback) */
+.painel-analisador-container {
+  border-color: rgba(232, 201, 146, 0.35);
+}
+
+.painel-analisador-container .badge-fase {
+  background: rgba(232, 201, 146, 0.15);
+  color: var(--dourado);
+  border-color: rgba(232, 201, 146, 0.4);
+}
+
+.painel-analisador-container .narrador-caixa {
+  border-left-color: var(--dourado);
 }
 
 .tela-inicial {
@@ -866,7 +999,9 @@ h1 {
 
   .barra-status,
   .relogios-topo,
-  .badge-online {
+  .badge-online,
+  .tabuleiro-acoes,
+  .barra-playback {
     width: min(480px, calc(100vw - 16px));
   }
 
@@ -932,6 +1067,12 @@ h1 {
   .relogio {
     min-width: 74px;
     padding: 4px 6px;
+  }
+
+  .tabuleiro-acoes .btn-principal,
+  .tabuleiro-acoes .btn-secundario {
+    min-width: 100%;
+    flex: 1 1 100%;
   }
 }
 
@@ -1615,5 +1756,37 @@ h1 {
   flex-direction: column;
   gap: 4px;
 }
+
+.treinador-seletor-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.treinador-label {
+  font-size: 0.76rem;
+  color: #a0aec0;
+  font-weight: 600;
+}
+
+.treinador-select {
+  width: 100%;
+  background: #14161f;
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  color: #e2e8f0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.treinador-select:focus {
+  border-color: #2ecc71;
+}
+
 
 

@@ -232,21 +232,142 @@ function dicaPorFase() {
   return 'Final de jogo: ative o seu rei, avance peões passados e busque simplificar trocando peças quando estiver em vantagem material.';
 }
 
+let ultimoNarradorTexto = 'Partida iniciada. As Brancas têm o lance inicial!';
+
+function sincronizarPaineisContextuais(modo) {
+  const painelNarrador = document.getElementById('painelNarrador');
+  const painelModoTutor = document.getElementById('painelModoTutor');
+  const painelTreinador = document.getElementById('painelTreinador');
+  const painelAnalisador = document.getElementById('painelAnalisador');
+
+  if (painelNarrador) painelNarrador.classList.toggle('oculto', modo !== 'narrador');
+  if (painelModoTutor) painelModoTutor.classList.toggle('oculto', modo !== 'tutor');
+  if (painelTreinador) painelTreinador.classList.toggle('oculto', modo !== 'treinador');
+  if (painelAnalisador) painelAnalisador.classList.toggle('oculto', modo !== 'analisador');
+}
+if (typeof window !== 'undefined') {
+  window.sincronizarPaineisContextuais = sincronizarPaineisContextuais;
+}
+
+function narrarLanceAoVivo(origem, destino, lanceObj, mensagemQuantica = '') {
+  if (!lanceObj) return;
+  const corNome = lanceObj.cor === 'w' ? 'Brancas' : 'Pretas';
+  const adversarioNome = lanceObj.cor === 'w' ? 'Pretas' : 'Brancas';
+  const tipo = lanceObj.piece || (pecasQuanticas && pecasQuanticas[destino] ? pecasQuanticas[destino].colapsada : 'p');
+  const nomePeca = (typeof nomesPecas !== 'undefined' && nomesPecas[tipo]) ? nomesPecas[tipo] : 'peça';
+
+  let acao = '';
+  if (lanceObj.flags && (lanceObj.flags.includes('k') || lanceObj.flags.includes('q'))) {
+    acao = `👑 ${corNome} realizaram o roque ${lanceObj.flags.includes('k') ? 'pequeno (lado do Rei)' : 'grande (lado da Dama)'}!`;
+  } else if (lanceObj.flags && lanceObj.flags.includes('c')) {
+    acao = `⚔️ ${corNome} capturaram em ${destino} com ${nomePeca}!`;
+  } else if (lanceObj.flags && lanceObj.flags.includes('p')) {
+    acao = `✨ Peão promovido a Dama em ${destino}!`;
+  } else {
+    acao = `${corNome} moveram ${nomePeca} (${origem} ➔ ${destino}).`;
+  }
+
+  if (mensagemQuantica) {
+    const textoLimpo = mensagemQuantica.replace(/^[🔮⛓️\s\n]+/, '').trim();
+    if (textoLimpo) acao += `\n🔮 ${textoLimpo}`;
+  }
+
+  if (chess.in_checkmate()) {
+    acao += `\n🏆 XEQUE-MATE! Vitória das ${corNome}!`;
+  } else if (chess.in_check()) {
+    acao += `\n⚠️ Xeque ao Rei das ${adversarioNome}!`;
+  }
+
+  ultimoNarradorTexto = acao;
+  atualizarDidatica();
+}
+
 function atualizarDidatica() {
   const historicoUCI = historicoPartidaLances.map(m => (m.from && m.to ? `${m.from}${m.to}` : '')).filter(Boolean);
   const abertura = identificarAbertura(historicoUCI);
   const painel = document.getElementById('didatica');
+  const painelNarradorTexto = document.getElementById('narradorTexto');
+  const badgeFase = document.getElementById('badgeFaseJogo');
+  const tagTeoria = document.getElementById('narradorTagTeoria');
+  const subtexto = document.getElementById('narradorSubtexto');
+
+  const numeroLance = historicoPartidaLances.length;
+  const pecasNoTabuleiro = chess.board().flat().filter(Boolean);
+  const materialMenor = pecasNoTabuleiro.filter(p => !['k', 'p'].includes(p.type)).length;
+  const haEmaranhadasAtivas = pecasQuanticas && Object.values(pecasQuanticas).some(p => p.emaranhadaComId && !p.colapsada);
+
+  // Determina a fase do jogo para a badge
+  let fase = 'Abertura';
+  if (chess.in_checkmate()) {
+    fase = 'Xeque-Mate';
+  } else if (chess.in_check()) {
+    fase = 'Xeque';
+  } else if (chess.in_draw()) {
+    fase = 'Empate';
+  } else if (numeroLance < 10) {
+    fase = 'Abertura';
+  } else if (materialMenor > 6) {
+    fase = 'Meio-Jogo';
+  } else {
+    fase = 'Final';
+  }
+
+  if (badgeFase) {
+    badgeFase.textContent = fase;
+    if (fase === 'Xeque-Mate' || fase === 'Xeque') {
+      badgeFase.style.color = 'var(--vermelho)';
+      badgeFase.style.borderColor = 'rgba(235, 87, 87, 0.4)';
+      badgeFase.style.background = 'rgba(235, 87, 87, 0.15)';
+    } else {
+      badgeFase.style.color = 'var(--cyan)';
+      badgeFase.style.borderColor = 'rgba(55, 201, 225, 0.35)';
+      badgeFase.style.background = 'rgba(55, 201, 225, 0.15)';
+    }
+  }
+
+  // Atualiza narrativa principal do jogo ao vivo
+  if (painelNarradorTexto) {
+    painelNarradorTexto.textContent = ultimoNarradorTexto;
+  }
+
+  // Atualiza tag de teoria e subtexto
   if (!abertura) {
-    painel.textContent = historicoUCI.length ? dicaPorFase() : 'Jogue um lance para começar a ver aberturas clássicas e dicas de estudo aqui.';
+    const dica = historicoUCI.length ? dicaPorFase() : 'Jogue um lance para começar a ver aberturas clássicas e dicas de estudo aqui.';
+    if (painel) painel.textContent = dica;
+    if (tagTeoria) {
+      if (haEmaranhadasAtivas) {
+        tagTeoria.classList.remove('oculto');
+        tagTeoria.textContent = '⛓️ Emaranhado';
+      } else {
+        tagTeoria.classList.add('oculto');
+      }
+    }
+    if (subtexto) {
+      subtexto.textContent = dicaPorFase();
+    }
     return;
   }
+
   const completa = historicoUCI.length === abertura.lances.length;
   let texto = completa ? `📖 ${abertura.nome}\n${abertura.dica}` : `📖 Rumo à: ${abertura.nome}\n${abertura.dica}`;
   if (!completa) {
     const proximo = abertura.lances[historicoUCI.length];
     texto += `\nLance da teoria a seguir: ${descreverLance(proximo.slice(0, 2), proximo.slice(2, 4))}.`;
   }
-  painel.textContent = texto;
+  if (painel) painel.textContent = texto;
+
+  if (tagTeoria) {
+    tagTeoria.classList.remove('oculto');
+    tagTeoria.textContent = `📖 ${abertura.nome}`;
+  }
+  if (subtexto) {
+    if (!completa) {
+      const proximo = abertura.lances[historicoUCI.length];
+      subtexto.textContent = `Teoria a seguir: ${descreverLance(proximo.slice(0, 2), proximo.slice(2, 4))} · ${abertura.dica}`;
+    } else {
+      subtexto.textContent = abertura.dica;
+    }
+  }
 }
 
 /* =========================================================
@@ -383,49 +504,39 @@ function aposentarDoGrupo(casa, grupoId) {
   if (indice !== -1) grupo.casas.splice(indice, 1);
 }
 
+/**
+ * Sincroniza o estado de pecasQuanticas com as peças atualmente no tabuleiro do chess.js.
+ * Utilizado para o modo clássico, modo tutor, criador de lições e restauração de lances.
+ */
+function sincronizarPecasQuanticasComChess() {
+  pecasQuanticas = {};
+  gruposFlanco = {};
+  for (let linha = 1; linha <= 8; linha++) {
+    for (const col of colunas) {
+      const casa = `${col}${linha}`;
+      const peca = chess.get(casa);
+      if (peca) {
+        pecasQuanticas[casa] = {
+          possibilidades: [peca.type],
+          cor: peca.color,
+          colapsada: peca.type,
+          emaranhadaComId: null
+        };
+      }
+    }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.sincronizarPecasQuanticasComChess = sincronizarPecasQuanticasComChess;
+}
+
 function inicializarPecasQuanticas() {
   pecasQuanticas = {};
   gruposFlanco = {};
 
   if (configuracaoPartida?.modo === 'classico') {
-    for (const coluna of colunas) {
-      pecasQuanticas[`${coluna}2`] = {
-        possibilidades: ['p'],
-        cor: 'w',
-        colapsada: 'p',
-        emaranhadaComId: null
-      };
-      pecasQuanticas[`${coluna}7`] = {
-        possibilidades: ['p'],
-        cor: 'b',
-        colapsada: 'p',
-        emaranhadaComId: null
-      };
-    }
-    const pecas = {
-      a: 'r',
-      b: 'n',
-      c: 'b',
-      d: 'q',
-      e: 'k',
-      f: 'b',
-      g: 'n',
-      h: 'r'
-    };
-    for (const coluna of colunas) {
-      pecasQuanticas[`${coluna}1`] = {
-        possibilidades: [pecas[coluna]],
-        cor: 'w',
-        colapsada: pecas[coluna],
-        emaranhadaComId: null
-      };
-      pecasQuanticas[`${coluna}8`] = {
-        possibilidades: [pecas[coluna]],
-        cor: 'b',
-        colapsada: pecas[coluna],
-        emaranhadaComId: null
-      };
-    }
+    sincronizarPecasQuanticasComChess();
     return;
   }
 
@@ -942,6 +1053,9 @@ function executarMovimento(origem, destino, lanceDaIA = false) {
     captured: pecaCapturada ? (pecaCapturada.colapsada || pecaCapturada.possibilidades.join('/')) : null
   }, mensagem || `Lance: ${lanceSAN}`);
 
+  // Narração ao vivo do lance
+  narrarLanceAoVivo(origem, destino, resultadoLance || { san: lanceSAN, from: origem, to: destino, cor: pecaQ.cor, piece: tipoEscolhido }, mensagem);
+
   // Sincroniza o novo estado quântico com o observador parceiro (se online)
   if (configuracaoPartida?.oponente === 'online' && redeQuantica && !lanceDaIA && !lanceRemotoEmAndamento) {
     redeQuantica.enviarEstado({
@@ -1453,6 +1567,9 @@ function iniciarPartida() {
   const btnRever = document.getElementById('btnReverPartidaFimJogo');
   if (btnRever) btnRever.classList.add('oculto');
   navegarParaTela('areaJogo');
+  sincronizarPaineisContextuais('narrador');
+  ultimoNarradorTexto = 'Partida iniciada. As Brancas têm o lance inicial!';
+  atualizarDidatica();
   document.getElementById('placar').textContent = configuracaoPartida.formato === 'melhor-de-tres' ? `Melhor de três · ${placarTorneio.w} x ${placarTorneio.b}` : '';
 
   // Se o jogador estiver jogando com as Pretas contra a IA,
@@ -1499,7 +1616,9 @@ document.getElementById('btnComecar').addEventListener('click', () => {
 });
 
 document.getElementById('btnVoltarConfiguracao').addEventListener('click', () => {
-  if (!partidaEncerrada) {
+  const emModoDidatico = typeof window !== 'undefined' && window.QuantumTutor && typeof window.QuantumTutor.ehModoTutorOuTreinador === 'function' && window.QuantumTutor.ehModoTutorOuTreinador();
+
+  if (!partidaEncerrada && !emModoDidatico) {
     const querDesistir = confirm('Você quer desistir da partida? (A desistência será computada como derrota)');
     if (!querDesistir) return;
 
@@ -1522,6 +1641,10 @@ document.getElementById('btnVoltarConfiguracao').addEventListener('click', () =>
         return;
       }
     }
+  }
+
+  if (emModoDidatico && typeof window !== 'undefined' && window.QuantumTutor && typeof window.QuantumTutor.encerrarTudo === 'function') {
+    window.QuantumTutor.encerrarTudo();
   }
 
   if (redeQuantica) {
@@ -1639,6 +1762,10 @@ function iniciarPartidaOnline(dadosSessao) {
   document.getElementById('areaJogo').classList.add('jogo-online');
   manterTelaAcesa();
   navegarParaTela('areaJogo');
+  sincronizarPaineisContextuais('narrador');
+  const corTexto = corJogador === 'w' ? 'Brancas' : 'Pretas';
+  ultimoNarradorTexto = `Partida online iniciada! Você joga com as ${corTexto}. As Brancas têm o lance inicial!`;
+  atualizarDidatica();
   document.getElementById('placar').textContent = '';
 }
 
@@ -1679,6 +1806,14 @@ function aplicarEstadoRemoto(estadoRemoto) {
 
   iniciarRelogioSeNecessario();
   casaSelecionada = null;
+
+  // Narração ao vivo do lance remoto
+  if (estadoRemoto.ultimoLance) {
+    const u = estadoRemoto.ultimoLance;
+    const corLance = chess.turn() === 'w' ? 'b' : 'w';
+    narrarLanceAoVivo(u.origem, u.destino, { san: u.san, from: u.origem, to: u.destino, cor: corLance }, estadoRemoto.mensagem || '');
+  }
+
   renderizarTabuleiro();
 
   if (estadoRemoto.mensagem) {
@@ -2090,6 +2225,7 @@ function iniciarPlayback(objetoLog, origem = 'manual') {
   const areaJogo = document.getElementById('areaJogo');
   if (areaJogo) areaJogo.classList.remove('oculto');
 
+  sincronizarPaineisContextuais('analisador');
   carregarHistoricoNoPlayback();
   exibirLancePlayback(0);
   return true;
@@ -2157,7 +2293,7 @@ function exibirLancePlayback(indice) {
   if (btnAvancar) btnAvancar.disabled = indice === dadosPlayback.totalLances - 1;
   if (btnFim) btnFim.disabled = indice === dadosPlayback.totalLances - 1;
 
-  // Atualiza painel didático
+  // Atualiza painel didático e painel do Analisador
   const painelDidatica = document.getElementById('didatica');
   if (painelDidatica) {
     painelDidatica.innerHTML = '';
@@ -2165,6 +2301,25 @@ function exibirLancePlayback(indice) {
     item.className = 'dica-item';
     item.textContent = quadro.descricao || 'Posição do tabuleiro neste momento.';
     painelDidatica.appendChild(item);
+  }
+
+  const analisadorTexto = document.getElementById('analisadorTexto');
+  const badgeAnalisadorCursor = document.getElementById('badgeAnalisadorCursor');
+  const analisadorTagInfo = document.getElementById('analisadorTagInfo');
+  const analisadorSubtexto = document.getElementById('analisadorSubtexto');
+
+  if (badgeAnalisadorCursor) {
+    badgeAnalisadorCursor.textContent = `Lance ${indice} / ${dadosPlayback.totalLances - 1}`;
+  }
+  if (analisadorTexto) {
+    analisadorTexto.textContent = quadro.descricao || (indice === 0 ? 'Posição inicial da partida. Use os controles para reproduzir.' : 'Posição do tabuleiro após este lance.');
+  }
+  if (analisadorTagInfo) {
+    analisadorTagInfo.textContent = indice === 0 ? '🏁 Início' : (quadro.detalhes?.san ? `♟️ ${quadro.detalhes.san}` : '📼 Histórico');
+  }
+  if (analisadorSubtexto) {
+    const vez = chess.turn() === 'w' ? 'Brancas' : 'Pretas';
+    analisadorSubtexto.textContent = `Vez das ${vez} · FEN: ${quadro.fen ? quadro.fen.split(' ')[0] : ''}`;
   }
 
   atualizarDestaqueHistoricoPlayback(indice);
@@ -2196,6 +2351,8 @@ function sairPlayback() {
   if (btnDesfazer && btnDesfazer.parentElement) {
     btnDesfazer.parentElement.classList.remove('oculto');
   }
+
+  sincronizarPaineisContextuais('narrador');
 
   const telaInicial = document.getElementById('telaInicial');
   if (telaInicial) telaInicial.classList.remove('oculto');

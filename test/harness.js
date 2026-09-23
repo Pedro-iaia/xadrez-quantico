@@ -67,6 +67,7 @@ function carregar(arquivo = path.join(__dirname, '..', 'script.js'), config = {}
   deepFreeze, validarSchemaLog,
   iniciarPlayback, exibirLancePlayback, navegarPlayback, sairPlayback,
   salvarPartidaRecenteLocal, obterPartidasRecentesLocais, ajustarVelocidadePlayback, alternarAutoplay,
+  sincronizarPaineisContextuais, narrarLanceAoVivo, atualizarDidatica,
   get modoPlayback() { return modoPlayback; },
   get dadosPlayback() { return dadosPlayback; },
   get casaSelecionada() { return casaSelecionada; },

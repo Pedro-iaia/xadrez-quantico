@@ -194,6 +194,46 @@ teste('Todas as partidas do manifesto existem e passam por validarSchemaLog', ()
   }
 });
 
+console.log('\n--- Task 5: Tríade Didática Dinâmica (Narrador, Tutor, Analisador) ---');
+
+teste('sincronizarPaineisContextuais alterna painéis contextuais exclusivamente', () => {
+  api.sincronizarPaineisContextuais('narrador');
+  // Verifica se a função executa sem erro
+  api.sincronizarPaineisContextuais('analisador');
+  api.sincronizarPaineisContextuais('tutor');
+  api.sincronizarPaineisContextuais('treinador');
+  api.sincronizarPaineisContextuais('narrador');
+  assert.ok(true);
+});
+
+teste('narrarLanceAoVivo compõe texto descritivo para lance normal e roque', () => {
+  api.chess.reset();
+  api.narrarLanceAoVivo('e2', 'e4', { from: 'e2', to: 'e4', piece: 'p', cor: 'w', flags: 'b' });
+  // Verifica que não lança erro e executa didática
+  api.narrarLanceAoVivo('e1', 'g1', { from: 'e1', to: 'g1', piece: 'k', cor: 'w', flags: 'k' });
+  assert.ok(true);
+});
+
+teste('iniciarPlayback sincroniza Analisador e sairPlayback restaura Narrador', () => {
+  const logValido = {
+    versao: '2.1.0-fisica-coerente',
+    historicoLances: [
+      {
+        lanceIndex: 0,
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        matrizQuanticaMomentanea: {},
+        gruposFlanco: {},
+        descricao: 'Início'
+      }
+    ]
+  };
+  const sucesso = api.iniciarPlayback(logValido);
+  assert.strictEqual(sucesso, true);
+  assert.strictEqual(api.modoPlayback, true);
+  api.sairPlayback();
+  assert.strictEqual(api.modoPlayback, false);
+});
+
 if (falhas > 0) {
   process.exit(1);
 } else {

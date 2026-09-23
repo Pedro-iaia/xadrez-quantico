@@ -93,3 +93,86 @@ test('--- Módulo Tutor: Conversões e Importações ---', async (t) => {
   });
 
 });
+
+test('--- Módulo Tutor: Sincronização de Peças e Modo Treinador ---', async (t) => {
+  // Configura ambiente global para simular o jogo
+  global.chess = new Chess();
+  global.pecasQuanticas = {};
+  global.gruposFlanco = {};
+  global.configuracaoPartida = { modo: 'classico', oponente: 'humano' };
+
+  await t.test('sincronizarPecasLocais preenche exatamente as 32 peças da posição inicial', () => {
+    global.chess.reset();
+    global.pecasQuanticas = {};
+    assert.equal(Object.keys(global.pecasQuanticas).length, 0);
+
+    if (quantumTutorModule.sincronizarPecasLocais) {
+      quantumTutorModule.sincronizarPecasLocais();
+    }
+
+    assert.equal(Object.keys(global.pecasQuanticas).length, 32, 'Deve ter exatamente 32 peças no tabuleiro clássico');
+    assert.deepEqual(global.pecasQuanticas['e1'], {
+      possibilidades: ['k'],
+      cor: 'w',
+      colapsada: 'k',
+      emaranhadaComId: null
+    }, 'Rei branco em e1 deve estar devidamente populado');
+    assert.deepEqual(global.pecasQuanticas['d8'], {
+      possibilidades: ['q'],
+      cor: 'b',
+      colapsada: 'q',
+      emaranhadaComId: null
+    }, 'Dama preta em d8 deve estar devidamente populada');
+  });
+
+  await t.test('abrirModoTreinador inicializa o tabuleiro na posição inicial com 32 peças', () => {
+    global.chess.load('8/8/8/8/8/8/8/8 w - - 0 1'); // Tabuleiro vazio
+    global.pecasQuanticas = {};
+
+    if (quantumTutorModule.abrirModoTreinador) {
+      quantumTutorModule.abrirModoTreinador();
+    }
+
+    assert.equal(Object.keys(global.pecasQuanticas).length, 32, 'Abrir o treinador deve restaurar todas as 32 peças');
+    assert.equal(global.chess.fen(), 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  });
+
+  await t.test('iniciarTrilha sincroniza tabuleiro inicial da lição', () => {
+    const trilha = {
+      id: 'teste_italiana',
+      titulo: 'Italiana',
+      passos: [{ lanceEsperado: 'e2e4', mensagem: 'Jogue e4', respostaBot: 'e7e5' }]
+    };
+    global.pecasQuanticas = {};
+    quantumTutorModule.iniciarTrilha(trilha);
+
+    assert.equal(Object.keys(global.pecasQuanticas).length, 32, 'Iniciar trilha deve popular 32 peças');
+    assert.ok(global.pecasQuanticas['e2'], 'Peão em e2 deve existir');
+  });
+
+  await t.test('lance do aluno seguido de resposta do bot mantém integridade de pecasQuanticas', async () => {
+    const trilha = {
+      id: 'teste_fluxo',
+      titulo: 'Fluxo Italiana',
+      passos: [{ lanceEsperado: 'e2e4', san: 'e4', mensagem: 'Jogue e4', respostaBot: 'e7e5' }]
+    };
+    quantumTutorModule.iniciarTrilha(trilha);
+
+    // Aluno executa e4 no chess.js e notifica tutor
+    global.chess.move({ from: 'e2', to: 'e4' });
+    quantumTutorModule.sincronizarPecasLocais();
+    quantumTutorModule.aoExecutarMovimento('e2', 'e4', { from: 'e2', to: 'e4', san: 'e4' });
+
+    // Aguarda timeout da resposta do bot (600ms + margem)
+    await new Promise(r => setTimeout(r, 700));
+
+    // Após resposta do bot e7e5:
+    assert.equal(global.chess.turn(), 'w', 'Deve ser vez das brancas após resposta preta');
+    assert.ok(global.pecasQuanticas['e4'], 'Peão branco deve estar em e4');
+    assert.ok(global.pecasQuanticas['e5'], 'Peão preto do bot deve estar em e5');
+    assert.equal(global.pecasQuanticas['e7'], undefined, 'Casa e7 deve estar vazia');
+    assert.equal(Object.keys(global.pecasQuanticas).length, 32, 'Total de peças deve se manter em 32');
+  });
+});
+
+

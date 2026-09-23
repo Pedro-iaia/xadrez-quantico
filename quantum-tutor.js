@@ -36,6 +36,54 @@
   const catalogoTrilhas = {};
 
   /**
+   * Sincroniza o mapa de pecasQuanticas do ambiente com as peças de chess.js
+   */
+  function sincronizarPecasLocais() {
+    const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+    if (!ch) return;
+
+    let target = null;
+    if (typeof pecasQuanticas !== 'undefined') {
+      target = pecasQuanticas;
+    } else if (typeof window !== 'undefined' && window.pecasQuanticas) {
+      target = window.pecasQuanticas;
+    } else if (typeof global !== 'undefined' && global.pecasQuanticas) {
+      target = global.pecasQuanticas;
+    }
+    if (!target) return;
+
+    for (const k in target) {
+      delete target[k];
+    }
+
+    const colunasTab = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    for (let r = 1; r <= 8; r++) {
+      for (const c of colunasTab) {
+        const sq = `${c}${r}`;
+        const p = ch.get(sq);
+        if (p) {
+          target[sq] = {
+            possibilidades: [p.type],
+            cor: p.color,
+            colapsada: p.type,
+            emaranhadaComId: null
+          };
+        }
+      }
+    }
+  }
+
+  function sincronizarTabuleiroClassico() {
+    if (typeof sincronizarPecasQuanticasComChess === 'function') {
+      sincronizarPecasQuanticasComChess();
+    } else if (typeof window !== 'undefined' && typeof window.sincronizarPecasQuanticasComChess === 'function') {
+      window.sincronizarPecasQuanticasComChess();
+    } else {
+      sincronizarPecasLocais();
+    }
+  }
+
+  /**
    * Inicializa o Tutor e registra listeners nos elementos da interface
    */
   function inicializar() {
@@ -71,6 +119,12 @@
       btnSair.addEventListener('click', encerrarModoTutor);
     }
 
+    // Sair / Fechar Painel do Treinador
+    const btnTreinadorSair = document.getElementById('btnTreinadorSair');
+    if (btnTreinadorSair) {
+      btnTreinadorSair.addEventListener('click', encerrarTudo);
+    }
+
     // Alternar Gravação no Painel do Treinador
     const btnGravar = document.getElementById('btnTreinadorGravar');
     if (btnGravar) {
@@ -101,16 +155,26 @@
       });
     }
 
-    // Dropdown de trilhas da tela inicial e do painel
-    const selectTrilhas = document.getElementById('selectTrilhasTutor');
-    if (selectTrilhas) {
-      selectTrilhas.addEventListener('change', (e) => {
-        const id = e.target.value;
-        if (id && catalogoTrilhas[id]) {
-          iniciarTrilha(catalogoTrilhas[id]);
-        }
-      });
-    }
+    // Dropdown de trilhas da tela inicial e dos painéis laterais
+    const conectarDropdown = (idElemento) => {
+      const el = document.getElementById(idElemento);
+      if (el) {
+        el.addEventListener('change', (e) => {
+          const id = e.target.value;
+          if (id && catalogoTrilhas[id]) {
+            iniciarTrilha(catalogoTrilhas[id]);
+            ['selectTrilhasTutor', 'selectTrilhasLateral', 'selectTrilhasLateralTutor'].forEach(outroId => {
+              const outroSel = document.getElementById(outroId);
+              if (outroSel && outroSel.value !== id) outroSel.value = id;
+            });
+          }
+        });
+      }
+    };
+
+    conectarDropdown('selectTrilhasTutor');
+    conectarDropdown('selectTrilhasLateral');
+    conectarDropdown('selectTrilhasLateralTutor');
   }
 
   /**
@@ -140,22 +204,25 @@
   function atualizarDropdownTrilhas() {
     const selects = [
       document.getElementById('selectTrilhasTutor'),
-      document.getElementById('selectTrilhasLateral')
+      document.getElementById('selectTrilhasLateral'),
+      document.getElementById('selectTrilhasLateralTutor')
     ].filter(Boolean);
 
     selects.forEach(sel => {
+      const valorAtual = sel.value;
       sel.innerHTML = '';
       const optDefault = document.createElement('option');
       optDefault.value = '';
-      optDefault.textContent = 'Escolha uma trilha ou desafio...';
+      optDefault.textContent = 'Escolha uma trilha didática...';
       optDefault.disabled = true;
-      optDefault.selected = true;
+      optDefault.selected = !valorAtual;
       sel.appendChild(optDefault);
 
       Object.values(catalogoTrilhas).forEach(trilha => {
         const opt = document.createElement('option');
         opt.value = trilha.id;
         opt.textContent = `[${trilha.dificuldade || 'Básico'}] ${trilha.titulo}`;
+        if (valorAtual && opt.value === valorAtual) opt.selected = true;
         sel.appendChild(opt);
       });
     });
@@ -173,6 +240,7 @@
     trilhaAtiva = trilha;
     indicePasso = 0;
     modoTutorAtivo = true;
+    modoGravacao = false;
     nivelDicaAtual = 0;
 
     // Ajusta visualização da área de jogo
@@ -181,20 +249,46 @@
     const areaJogo = document.getElementById('areaJogo');
     if (areaJogo) areaJogo.classList.remove('oculto');
 
-    // Exibe o painel do tutor na coluna lateral
-    const painelTutor = document.getElementById('painelModoTutor');
-    if (painelTutor) painelTutor.classList.remove('oculto');
+    // Exibe o painel do tutor na coluna lateral e sincroniza demais painéis contextuais
+    if (typeof window !== 'undefined' && typeof window.sincronizarPaineisContextuais === 'function') {
+      window.sincronizarPaineisContextuais('tutor');
+    } else {
+      const painelTutor = document.getElementById('painelModoTutor');
+      if (painelTutor) painelTutor.classList.remove('oculto');
+      const painelTreinador = document.getElementById('painelTreinador');
+      if (painelTreinador) painelTreinador.classList.add('oculto');
+      const painelNarrador = document.getElementById('painelNarrador');
+      if (painelNarrador) painelNarrador.classList.add('oculto');
+      const painelAnalisador = document.getElementById('painelAnalisador');
+      if (painelAnalisador) painelAnalisador.classList.add('oculto');
+    }
+
+    // Configura ambiente para modo didático clássico
+    if (typeof configuracaoPartida !== 'undefined') {
+      configuracaoPartida = {
+        modo: 'classico',
+        oponente: 'humano',
+        nivel: '1',
+        relogio: 'sem-relogio',
+        formato: 'unica',
+        inicio: 'brancas'
+      };
+    }
+    if (typeof corJogador !== 'undefined') corJogador = 'w';
+    if (typeof partidaEncerrada !== 'undefined') partidaEncerrada = false;
 
     // Reseta o tabuleiro clássico ou com FEN customizado
-    if (typeof chess !== 'undefined') {
+    const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+    if (ch) {
       if (trilha.fenBase) {
-        chess.load(trilha.fenBase);
+        ch.load(trilha.fenBase);
       } else {
-        chess.reset();
+        ch.reset();
       }
     }
 
-    if (typeof pecasQuanticas !== 'undefined') pecasQuanticas = {};
+    sincronizarTabuleiroClassico();
+
     if (typeof gruposFlanco !== 'undefined') gruposFlanco = {};
     if (typeof casaSelecionada !== 'undefined') casaSelecionada = null;
 
@@ -207,6 +301,7 @@
     }
 
     atualizarUITutor();
+    atualizarDropdownTrilhas();
     return true;
   }
 
@@ -292,26 +387,36 @@
       }
 
       // Executa contra-resposta automática do Bot após pequeno intervalo
-      if (passo.respostaBot && typeof chess !== 'undefined') {
-        setTimeout(() => {
-          const resp = passo.respostaBot;
-          const de = resp.slice(0, 2);
-          const para = resp.slice(2, 4);
-          const m = chess.move({ from: de, to: para, promotion: 'q' });
-          if (m && typeof renderizarTabuleiro === 'function') {
-            renderizarTabuleiro();
-          }
+      if (passo.respostaBot) {
+        const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+        if (ch) {
+          setTimeout(() => {
+            const resp = passo.respostaBot;
+            const de = resp.slice(0, 2);
+            const para = resp.slice(2, 4);
+            const m = ch.move({ from: de, to: para, promotion: 'q' });
+            if (m) {
+              sincronizarTabuleiroClassico();
+            }
+            if (m && typeof renderizarTabuleiro === 'function') {
+              renderizarTabuleiro();
+            }
+            atualizarUITutor();
+          }, 600);
+        } else {
           atualizarUITutor();
-        }, 600);
+        }
       } else {
         atualizarUITutor();
       }
     } else {
       // Lance incorreto: desfaz o lance e orienta o aluno
       setTimeout(() => {
-        if (typeof chess !== 'undefined') {
-          chess.undo();
+        const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+        if (ch) {
+          ch.undo();
         }
+        sincronizarTabuleiroClassico();
         if (typeof renderizarTabuleiro === 'function') {
           renderizarTabuleiro();
         }
@@ -348,17 +453,23 @@
     }
   }
 
-  function encerrarModoTutor() {
+  function encerrarTudo() {
     modoTutorAtivo = false;
+    modoGravacao = false;
     trilhaAtiva = null;
     indicePasso = 0;
-    if (TutorCanvas) TutorCanvas.limparSetas();
+    if (TutorCanvas && TutorCanvas.limparSetas) TutorCanvas.limparSetas();
 
-    const painelTutor = document.getElementById('painelModoTutor');
-    if (painelTutor) painelTutor.classList.add('oculto');
-
-    const painelTreinador = document.getElementById('painelTreinador');
-    if (painelTreinador) painelTreinador.classList.add('oculto');
+    if (typeof window !== 'undefined' && typeof window.sincronizarPaineisContextuais === 'function') {
+      window.sincronizarPaineisContextuais('narrador');
+    } else {
+      const painelTutor = document.getElementById('painelModoTutor');
+      if (painelTutor) painelTutor.classList.add('oculto');
+      const painelTreinador = document.getElementById('painelTreinador');
+      if (painelTreinador) painelTreinador.classList.add('oculto');
+      const painelNarrador = document.getElementById('painelNarrador');
+      if (painelNarrador) painelNarrador.classList.remove('oculto');
+    }
 
     const telaInicial = document.getElementById('telaInicial');
     if (telaInicial) telaInicial.classList.remove('oculto');
@@ -367,9 +478,79 @@
     if (areaJogo) areaJogo.classList.add('oculto');
   }
 
+  function encerrarModoTutor() {
+    encerrarTudo();
+  }
+
+  function ehModoTutorOuTreinador() {
+    return modoTutorAtivo || modoGravacao ||
+      (document.getElementById('painelTreinador') && !document.getElementById('painelTreinador').classList.contains('oculto')) ||
+      (document.getElementById('painelModoTutor') && !document.getElementById('painelModoTutor').classList.contains('oculto'));
+  }
+
   /* =========================================================
    * Painel do Treinador (Criador de Desafios & Exportador .tutor)
    * ========================================================= */
+  function abrirModoTreinador() {
+    modoTutorAtivo = false;
+    trilhaAtiva = null;
+    indicePasso = 0;
+    modoGravacao = false;
+    passosGravados = [];
+    ultimoLanceGravadoUCI = null;
+    ultimoLanceGravadoObj = null;
+
+    if (TutorCanvas && TutorCanvas.limparSetas) {
+      TutorCanvas.limparSetas();
+    }
+
+    const telaInicial = document.getElementById('telaInicial');
+    if (telaInicial) telaInicial.classList.add('oculto');
+    const areaJogo = document.getElementById('areaJogo');
+    if (areaJogo) areaJogo.classList.remove('oculto');
+
+    if (typeof window !== 'undefined' && typeof window.sincronizarPaineisContextuais === 'function') {
+      window.sincronizarPaineisContextuais('treinador');
+    } else {
+      const painelTreinador = document.getElementById('painelTreinador');
+      if (painelTreinador) painelTreinador.classList.remove('oculto');
+      const painelTutor = document.getElementById('painelModoTutor');
+      if (painelTutor) painelTutor.classList.add('oculto');
+      const painelNarrador = document.getElementById('painelNarrador');
+      if (painelNarrador) painelNarrador.classList.add('oculto');
+      const painelAnalisador = document.getElementById('painelAnalisador');
+      if (painelAnalisador) painelAnalisador.classList.add('oculto');
+    }
+
+    // Configuração para permitir jogar livremente no modo didático
+    if (typeof configuracaoPartida !== 'undefined') {
+      configuracaoPartida = {
+        modo: 'classico',
+        oponente: 'humano',
+        nivel: '1',
+        relogio: 'sem-relogio',
+        formato: 'unica',
+        inicio: 'brancas'
+      };
+    }
+    if (typeof corJogador !== 'undefined') corJogador = 'w';
+    if (typeof partidaEncerrada !== 'undefined') partidaEncerrada = false;
+
+    // Reseta o tabuleiro clássico e sincroniza peças
+    const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+    if (ch) {
+      ch.reset();
+    }
+    sincronizarTabuleiroClassico();
+
+    if (typeof casaSelecionada !== 'undefined') casaSelecionada = null;
+    if (typeof renderizarTabuleiro === 'function') {
+      renderizarTabuleiro();
+    }
+
+    atualizarDropdownTrilhas();
+  }
+
   function alternarModoGravacao() {
     modoGravacao = !modoGravacao;
     const btnGravar = document.getElementById('btnTreinadorGravar');
@@ -385,8 +566,10 @@
         btnGravar.style.backgroundColor = '#c0392b';
       }
 
-      if (typeof chess !== 'undefined') chess.reset();
-      if (typeof pecasQuanticas !== 'undefined') pecasQuanticas = {};
+      const ch = (typeof chess !== 'undefined') ? chess : (typeof global !== 'undefined' ? global.chess : null);
+      if (ch) ch.reset();
+      sincronizarTabuleiroClassico();
+
       if (typeof gruposFlanco !== 'undefined') gruposFlanco = {};
       if (typeof renderizarTabuleiro === 'function') renderizarTabuleiro();
       if (TutorCanvas) TutorCanvas.limparSetas();
@@ -619,6 +802,10 @@
     inicializar,
     iniciarTrilha,
     encerrarModoTutor,
+    encerrarTudo,
+    abrirModoTreinador,
+    ehModoTutorOuTreinador,
+    sincronizarPecasLocais,
     aoExecutarMovimento,
     solicitarDica,
     alternarModoGravacao,

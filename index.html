@@ -16,7 +16,7 @@
        requisições bloqueantes e inúteis, sobretudo em redes móveis. Ver quantum-net.js.) -->
   <script src="vendor/peerjs.min.js"></script>
   <script src="quantum-net.js?v=20260921"></script>
-  <link rel="stylesheet" href="style.css?v=20260922-tutor">
+  <link rel="stylesheet" href="style.css?v=20260923-narrador">
 </head>
 
 <body>
@@ -345,9 +345,20 @@
             </select>
           </div>
         </div>
+
+        <!-- Barra de Ações Rápidas Sob o Tabuleiro -->
+        <div class="tabuleiro-acoes" id="tabuleiroAcoes">
+          <button type="button" class="btn-principal btn-secundario" id="btnVoltarConfiguracao">⚙️ Voltar à Configuração</button>
+          <button type="button" class="btn-principal btn-secundario" id="btnBaixarLog">📥 Baixar Log (.json)</button>
+          <button type="button" class="btn-principal btn-secundario oculto" id="btnCompartilharTelespectador">👁️ Copiar Convite</button>
+          <button type="button" class="btn-principal oculto" id="btnReverPartidaFimJogo">📼 Rever Partida</button>
+          <button type="button" class="btn-principal btn-secundario oculto" id="btnSairPlayback">🚪 Sair do Playback</button>
+        </div>
       </div>
+
       <div class="coluna-lateral">
-        <div class="painel-lateral">
+        <!-- Bloco Superior: Lances em 2 Colunas -->
+        <div class="painel-lateral painel-lances-container">
           <div class="painel-topo">
             <span class="painel-titulo">Lances</span>
             <div class="painel-nav">
@@ -357,21 +368,39 @@
                 aria-label="Refazer">↻</button>
             </div>
           </div>
-          <div class="historico-lista" id="historico"></div>
-          <div class="painel-subtitulo">Dica de Estudo</div>
-          <div class="historico-lista" id="didatica"></div>
+          <div class="historico-lista historico-grid" id="historico"></div>
         </div>
-        <button class="btn-principal oculto" id="btnReverPartidaFimJogo" style="margin-top: 8px;">📼 Rever Partida (Playback)</button>
-        <button class="btn-principal btn-secundario oculto" id="btnSairPlayback" style="margin-top: 8px;">🚪 Sair do Playback</button>
-        <button class="btn-principal btn-secundario" id="btnVoltarConfiguracao">Voltar à página de configuração</button>
-        <button class="btn-principal btn-secundario oculto" id="btnCompartilharTelespectador" style="margin-top: 8px;">👁️ Copiar Convite de Telespectador</button>
-        <button class="btn-principal btn-secundario" id="btnBaixarLog" style="margin-top: 8px;">📥 Baixar Log da Partida</button>
 
-        <!-- Painel Interativo do Modo Tutor (Aluno) -->
-        <div class="painel-lateral painel-tutor-container oculto" id="painelModoTutor" style="margin-top: 12px;">
+        <!-- Bloco Inferior: Tríade Didática Dinâmica (Narrador, Tutor, Treinador, Analisador) -->
+
+        <!-- 1. Modo Narrador (Partidas ao Vivo: Humano & Online) -->
+        <div class="painel-lateral painel-contextual-container" id="painelNarrador">
+          <div class="painel-topo">
+            <span class="painel-titulo">🎙️ Modo Narrador</span>
+            <span class="badge-fase" id="badgeFaseJogo">Abertura</span>
+          </div>
+          <div class="narrador-caixa" id="narradorTexto">
+            Partida iniciada. As Brancas têm o lance inicial!
+          </div>
+          <div class="narrador-detalhes" id="narradorDetalhes">
+            <span id="narradorTagTeoria" class="narrador-tag oculto">📖 Teoria</span>
+            <span id="narradorSubtexto" class="narrador-subtexto">Controle o centro e desenvolva peças menores.</span>
+          </div>
+          <!-- Elemento de retrocompatibilidade para scripts legados -->
+          <div id="didatica" class="oculto"></div>
+        </div>
+
+        <!-- 2. Modo Tutor (Treinamento com Desafios) -->
+        <div class="painel-lateral painel-contextual-container painel-tutor-container oculto" id="painelModoTutor">
           <div class="painel-topo">
             <span class="painel-titulo">🎓 Modo Tutor</span>
             <button class="btn-nav" id="btnTutorSair" title="Encerrar Modo Tutor" aria-label="Sair">✖</button>
+          </div>
+          <div class="treinador-seletor-bloco" style="margin-bottom: 8px;">
+            <label for="selectTrilhasLateralTutor" class="treinador-label">📖 Alternar Trilha:</label>
+            <select id="selectTrilhasLateralTutor" class="treinador-select">
+              <option value="" selected disabled>Escolha uma trilha didática...</option>
+            </select>
           </div>
           <div class="tutor-header-info">
             <strong id="tutorTrilhaTitulo">Trilha Teórica</strong>
@@ -389,12 +418,21 @@
           </div>
         </div>
 
-        <!-- Painel do Treinador (Criador de Desafios) -->
-        <div class="painel-lateral painel-treinador-container oculto" id="painelTreinador" style="margin-top: 12px;">
+        <!-- 3. Painel do Treinador (Criador de Desafios) -->
+        <div class="painel-lateral painel-contextual-container painel-treinador-container oculto" id="painelTreinador">
           <div class="painel-topo">
             <span class="painel-titulo">👨‍🏫 Painel do Treinador</span>
+            <button class="btn-nav" id="btnTreinadorSair" title="Encerrar Modo Treinador" aria-label="Sair">✖</button>
           </div>
-          <p class="treinador-instrucao">Grave os lances no tabuleiro e crie instruções para seus alunos.</p>
+
+          <div class="treinador-seletor-bloco">
+            <label for="selectTrilhasLateral" class="treinador-label">📖 Escolher Trilha de Treinamento:</label>
+            <select id="selectTrilhasLateral" class="treinador-select">
+              <option value="" selected disabled>Escolha uma trilha didática...</option>
+            </select>
+          </div>
+
+          <p class="treinador-instrucao" style="margin-top: 8px;">Ou grave seus lances para criar lições personalizadas (.tutor):</p>
           <div class="treinador-botoes-topo">
             <button type="button" class="btn-principal" id="btnTreinadorGravar">🔴 Iniciar Gravação</button>
             <button type="button" class="btn-principal btn-secundario" id="btnTreinadorExportar">💾 Exportar .tutor</button>
@@ -409,6 +447,21 @@
           <div class="treinador-passos-lista" id="treinadorPassosLista" style="margin-top: 8px;"></div>
         </div>
 
+        <!-- 4. Modo Analisador (Playback de Partidas Gravadas) -->
+        <div class="painel-lateral painel-contextual-container painel-analisador-container oculto" id="painelAnalisador">
+          <div class="painel-topo">
+            <span class="painel-titulo">📼 Analisador / Playback</span>
+            <span class="badge-fase" id="badgeAnalisadorCursor">Lance 0</span>
+          </div>
+          <div class="narrador-caixa" id="analisadorTexto">
+            Início da partida gravada. Use os controles de reprodução abaixo para navegar pelos lances.
+          </div>
+          <div class="narrador-detalhes" id="analisadorDetalhes">
+            <span id="analisadorTagInfo" class="narrador-tag">📼 Quadro Histórico</span>
+            <span id="analisadorSubtexto" class="narrador-subtexto">Posição inicial da partida.</span>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -419,9 +472,9 @@
   <footer class="rodape-creditos">
     <p>Peças em SVG por <a href="https://commons.wikimedia.org/wiki/User:Cburnett" target="_blank" rel="noopener">Cburnett</a> (CC BY-SA 3.0 / BSD) · Regras clássicas por <a href="https://github.com/jhlywa/chess.js" target="_blank" rel="noopener">chess.js</a> (BSD-2-Clause) · Projeto sob licença MIT.</p>
   </footer>
-  <script src="script.js?v=20260922-jev-anti-draw"></script>
-  <script src="tutor-canvas.js?v=20260922"></script>
-  <script src="quantum-tutor.js?v=20260922"></script>
+  <script src="script.js?v=20260923-narrador"></script>
+  <script src="tutor-canvas.js?v=20260923-narrador"></script>
+  <script src="quantum-tutor.js?v=20260923-narrador"></script>
   <script>
     // Inicialização do botão do treinador na tela inicial
     document.addEventListener('DOMContentLoaded', () => {
@@ -429,17 +482,9 @@
       const btnTreinador = document.getElementById('btnAbrirModoTreinador');
       if (btnTreinador) {
         btnTreinador.addEventListener('click', () => {
-          const telaInicial = document.getElementById('telaInicial');
-          if (telaInicial) telaInicial.classList.add('oculto');
-          const areaJogo = document.getElementById('areaJogo');
-          if (areaJogo) areaJogo.classList.remove('oculto');
-          const painelTreinador = document.getElementById('painelTreinador');
-          if (painelTreinador) painelTreinador.classList.remove('oculto');
-          if (typeof chess !== 'undefined') chess.reset();
-          if (typeof pecasQuanticas !== 'undefined') pecasQuanticas = {};
-          if (typeof gruposFlanco !== 'undefined') gruposFlanco = {};
-          if (typeof renderizarTabuleiro === 'function') renderizarTabuleiro();
-          if (window.QuantumTutor) window.QuantumTutor.alternarModoGravacao();
+          if (window.QuantumTutor && window.QuantumTutor.abrirModoTreinador) {
+            window.QuantumTutor.abrirModoTreinador();
+          }
         });
       }
     });
